@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Dream Catcher Logo Generator</title>
+</head>
+<body>
+    <canvas id="canvas" width="1024" height="1024"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Background
+        ctx.fillStyle = '#E8D5F2';
+        ctx.fillRect(0, 0, 1024, 1024);
+        
+        // Dreamcatcher outer circle
+        ctx.strokeStyle = '#1E3A8A';
+        ctx.lineWidth = 12;
+        ctx.beginPath();
+        ctx.arc(512, 512, 400, 0, 2 * Math.PI);
+        ctx.stroke();
+        
+        // Inner circles
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(512, 512, 300, 0, 2 * Math.PI);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(512, 512, 200, 0, 2 * Math.PI);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(512, 512, 100, 0, 2 * Math.PI);
+        ctx.stroke();
+        
+        // Spokes
+        ctx.beginPath();
+        ctx.moveTo(512, 112);
+        ctx.lineTo(512, 912);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(112, 512);
+        ctx.lineTo(912, 512);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(212, 212);
+        ctx.lineTo(812, 812);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(812, 212);
+        ctx.lineTo(212, 812);
+        ctx.stroke();
+        
+        // AI Box
+        ctx.fillStyle = '#1E3A8A';
+        ctx.fillRect(462, 462, 100, 100);
+        ctx.strokeRect(462, 462, 100, 100);
+        
+        // AI Text
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('AI', 512, 512);
+        
+        // Feathers
+        ctx.fillStyle = '#1E3A8A';
+        ctx.beginPath();
+        ctx.ellipse(512, 650, 8, 60, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.ellipse(492, 660, 8, 50, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.ellipse(532, 660, 8, 50, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Beads
+        ctx.beginPath();
+        ctx.arc(512, 620, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(492, 630, 5, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.arc(532, 630, 5, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Download button
+        const button = document.createElement('button');
+        button.textContent = 'Download Logo';
+        button.onclick = function() {
+            const link = document.createElement('a');
+            link.download = 'ai-dream-catcher-logo.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        };
+        document.body.appendChild(button);
+    </script>
+</body>
+</html>

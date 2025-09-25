@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+
+# Expo/React Native
+.expo/
+*.log
+
+# Env
+.env
+backend/.env
+frontend/.env
+
+# Build outputs
+frontend/ios/build/
+frontend/android/
+frontend/web-build/
+
+# Local dev
+*.local
+.env.*.local
+
+# Xcode
+frontend/ios/Pods/
+frontend/ios/*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+frontend/ios/*/xcuserdata/
