@@ -1,0 +1,11 @@
+{
+  "name": "ai-dream-catcher-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "start": "bash start.sh"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
