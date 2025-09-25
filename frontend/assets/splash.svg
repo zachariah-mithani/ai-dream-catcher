@@ -1,0 +1,40 @@
+<svg width="1242" height="2688" viewBox="0 0 1242 2688" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1242" height="2688" fill="#0f172a"/>
+  
+  <!-- Dreamcatcher -->
+  <g transform="translate(621, 1000)">
+    <!-- Outer circle -->
+    <circle cx="0" cy="0" r="300" fill="none" stroke="#22c55e" stroke-width="8"/>
+    
+    <!-- Web pattern -->
+    <circle cx="0" cy="0" r="240" fill="none" stroke="#22c55e" stroke-width="3"/>
+    <circle cx="0" cy="0" r="180" fill="none" stroke="#22c55e" stroke-width="3"/>
+    <circle cx="0" cy="0" r="120" fill="none" stroke="#22c55e" stroke-width="3"/>
+    <circle cx="0" cy="0" r="60" fill="none" stroke="#22c55e" stroke-width="3"/>
+    
+    <!-- Web spokes -->
+    <line x1="0" y1="-300" x2="0" y2="300" stroke="#22c55e" stroke-width="3"/>
+    <line x1="-300" y1="0" x2="300" y2="0" stroke="#22c55e" stroke-width="3"/>
+    <line x1="-212" y1="-212" x2="212" y2="212" stroke="#22c55e" stroke-width="3"/>
+    <line x1="212" y1="-212" x2="-212" y2="212" stroke="#22c55e" stroke-width="3"/>
+    
+    <!-- AI Box -->
+    <rect x="-50" y="-50" width="100" height="100" rx="15" fill="#22c55e" stroke="#22c55e" stroke-width="4"/>
+    <text x="0" y="0" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="white" text-anchor="middle" dominant-baseline="middle">AI</text>
+    
+    <!-- Feathers -->
+    <ellipse cx="0" cy="200" rx="6" ry="45" fill="#22c55e"/>
+    <ellipse cx="-15" cy="210" rx="6" ry="38" fill="#22c55e"/>
+    <ellipse cx="15" cy="210" rx="6" ry="38" fill="#22c55e"/>
+    
+    <!-- Beads -->
+    <circle cx="0" cy="170" r="4" fill="#22c55e"/>
+    <circle cx="-15" cy="180" r="3" fill="#22c55e"/>
+    <circle cx="15" cy="180" r="3" fill="#22c55e"/>
+  </g>
+  
+  <!-- App Name -->
+  <text x="621" y="1500" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#22c55e" text-anchor="middle">AI Dream Catcher</text>
+  <text x="621" y="1580" font-family="Arial, sans-serif" font-size="32" fill="#94a3b8" text-anchor="middle">AI-Powered Dream Journal</text>
+</svg>
