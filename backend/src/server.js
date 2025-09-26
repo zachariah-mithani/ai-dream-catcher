@@ -22,8 +22,25 @@ const APP_ORIGIN = process.env.APP_ORIGIN || '*';
 app.set('trust proxy', 1);
 
 app.use(helmet());
-app.use(cors({ origin: APP_ORIGIN === '*' ? true : APP_ORIGIN.split(',').map(s => s.trim()), credentials: true }));
+app.use(cors({ 
+  origin: APP_ORIGIN === '*' ? false : APP_ORIGIN.split(',').map(s => s.trim()), 
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json({ limit: '2mb' }));
+
+// Basic input sanitization
+app.use((req, res, next) => {
+  if (req.body && typeof req.body === 'object') {
+    for (const key in req.body) {
+      if (typeof req.body[key] === 'string') {
+        req.body[key] = req.body[key].trim();
+      }
+    }
+  }
+  next();
+});
 app.use(morgan('dev'));
 
 const limiter = rateLimit({ windowMs: 60 * 1000, max: 120 });
