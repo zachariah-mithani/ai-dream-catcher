@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 
-import { db } from './sqlite.js';
+import { db, initSchema } from './database.js';
 import { authRouter } from './routes/auth.js';
 import { dreamsRouter } from './routes/dreams.js';
 import { analysisRouter } from './routes/analysis.js';
@@ -29,9 +29,12 @@ app.use(morgan('dev'));
 const limiter = rateLimit({ windowMs: 60 * 1000, max: 120 });
 app.use(limiter);
 
-app.get('/health', (_req, res) => {
+// Initialize database schema on startup
+initSchema();
+
+app.get('/health', async (_req, res) => {
   try {
-    db.prepare('SELECT 1').get();
+    const result = await db.prepare('SELECT 1 as test').get();
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ ok: false, error: 'db' });

@@ -1,6 +1,6 @@
 import express from 'express';
 import { z } from 'zod';
-import { db } from '../sqlite.js';
+import { db } from '../database.js';
 import { requireAuth } from '../auth.js';
 
 export const dreamsRouter = express.Router();
@@ -17,8 +17,8 @@ const dreamSchema = z.object({
   dream_date: z.string().optional()
 });
 
-dreamsRouter.get('/', (req, res) => {
-  const rows = db.prepare('SELECT * FROM dreams WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
+dreamsRouter.get('/', async (req, res) => {
+  const rows = await db.prepare('SELECT * FROM dreams WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
   res.json({ items: rows });
 });
 
@@ -69,13 +69,13 @@ dreamsRouter.post('/', async (req, res) => {
   // Use custom date if provided, otherwise use current timestamp
   const createdAt = dream_date ? `${dream_date} 00:00:00` : undefined;
   
-  const info = db.prepare('INSERT INTO dreams (user_id, title, content, voice_uri, mood, moods, tags, ai_tags, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+  const info = await db.prepare('INSERT INTO dreams (user_id, title, content, voice_uri, mood, moods, tags, ai_tags, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
     .run(req.user.id, title || null, content, voice_uri || null, mood || null, JSON.stringify(moods || []), JSON.stringify(tags || []), JSON.stringify(aiTags), createdAt);
-  const row = db.prepare('SELECT * FROM dreams WHERE id = ?').get(info.lastInsertRowid);
+  const row = await db.prepare('SELECT * FROM dreams WHERE id = ?').get(info.lastInsertRowid);
   res.status(201).json(row);
 });
 
-dreamsRouter.put('/:id', (req, res) => {
+dreamsRouter.put('/:id', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return res.status(400).json({ error: 'Invalid id' });
   const parse = dreamSchema.safeParse(req.body);
@@ -86,21 +86,21 @@ dreamsRouter.put('/:id', (req, res) => {
   const createdAt = dream_date ? `${dream_date} 00:00:00` : undefined;
   
   if (createdAt) {
-    db.prepare('UPDATE dreams SET title = ?, content = ?, voice_uri = ?, mood = ?, moods = ?, tags = ?, created_at = ? WHERE id = ? AND user_id = ?')
+    await db.prepare('UPDATE dreams SET title = ?, content = ?, voice_uri = ?, mood = ?, moods = ?, tags = ?, created_at = ? WHERE id = ? AND user_id = ?')
       .run(title || null, content, voice_uri || null, mood || null, JSON.stringify(moods || []), JSON.stringify(tags || []), createdAt, id, req.user.id);
   } else {
-    db.prepare('UPDATE dreams SET title = ?, content = ?, voice_uri = ?, mood = ?, moods = ?, tags = ? WHERE id = ? AND user_id = ?')
+    await db.prepare('UPDATE dreams SET title = ?, content = ?, voice_uri = ?, mood = ?, moods = ?, tags = ? WHERE id = ? AND user_id = ?')
       .run(title || null, content, voice_uri || null, mood || null, JSON.stringify(moods || []), JSON.stringify(tags || []), id, req.user.id);
   }
   
-  const row = db.prepare('SELECT * FROM dreams WHERE id = ? AND user_id = ?').get(id, req.user.id);
+  const row = await db.prepare('SELECT * FROM dreams WHERE id = ? AND user_id = ?').get(id, req.user.id);
   res.json(row);
 });
 
-dreamsRouter.delete('/:id', (req, res) => {
+dreamsRouter.delete('/:id', async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return res.status(400).json({ error: 'Invalid id' });
-  db.prepare('DELETE FROM dreams WHERE id = ? AND user_id = ?').run(id, req.user.id);
+  await db.prepare('DELETE FROM dreams WHERE id = ? AND user_id = ?').run(id, req.user.id);
   res.status(204).send();
 });
 
