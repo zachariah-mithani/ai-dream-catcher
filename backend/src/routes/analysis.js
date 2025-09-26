@@ -1,6 +1,6 @@
 import express from 'express';
 import { z } from 'zod';
-import { db } from '../sqlite.js';
+import { db } from '../database.js';
 import { requireAuth } from '../auth.js';
 import { analyzeDreamText } from '../openrouter.js';
 

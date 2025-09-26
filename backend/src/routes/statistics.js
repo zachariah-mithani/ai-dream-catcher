@@ -1,5 +1,5 @@
 import express from 'express';
-import { db } from '../sqlite.js';
+import { db } from '../database.js';
 import { requireAuth } from '../auth.js';
 
 export const statisticsRouter = express.Router();
@@ -7,15 +7,16 @@ export const statisticsRouter = express.Router();
 statisticsRouter.use(requireAuth);
 
 // Get basic dream statistics
-statisticsRouter.get('/', (req, res) => {
+statisticsRouter.get('/', async (req, res) => {
   try {
     const userId = req.user.id;
     
     // Total dreams
-    const totalDreams = db.prepare('SELECT COUNT(*) as count FROM dreams WHERE user_id = ?').get(userId).count;
+    const totalResult = await db.prepare('SELECT COUNT(*) as count FROM dreams WHERE user_id = ?').get(userId);
+    const totalDreams = totalResult.count;
   
   // Dreams by month (last 6 months)
-  const monthlyDreams = db.prepare(`
+  const monthlyDreams = await db.prepare(`
     SELECT 
       strftime('%Y-%m', created_at) as month,
       COUNT(*) as count
@@ -27,7 +28,7 @@ statisticsRouter.get('/', (req, res) => {
   `).all(userId);
   
   // Most common tags
-  const commonTags = db.prepare(`
+  const commonTags = await db.prepare(`
     SELECT 
       json_each.value as tag,
       COUNT(*) as count
@@ -39,7 +40,7 @@ statisticsRouter.get('/', (req, res) => {
   `).all(userId);
   
   // Most common AI tags
-  const commonAiTags = db.prepare(`
+  const commonAiTags = await db.prepare(`
     SELECT 
       json_each.value as tag,
       COUNT(*) as count
@@ -51,7 +52,7 @@ statisticsRouter.get('/', (req, res) => {
   `).all(userId);
   
   // Mood distribution
-  const moodDistribution = db.prepare(`
+  const moodDistribution = await db.prepare(`
     SELECT 
       mood,
       COUNT(*) as count
@@ -62,7 +63,7 @@ statisticsRouter.get('/', (req, res) => {
   `).all(userId);
   
   // Recurring themes (dreams with same tags)
-  const recurringThemes = db.prepare(`
+  const recurringThemes = await db.prepare(`
     SELECT 
       json_each.value as theme,
       COUNT(*) as frequency
