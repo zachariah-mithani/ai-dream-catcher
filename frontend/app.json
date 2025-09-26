@@ -11,8 +11,12 @@
       "resizeMode": "contain",
       "backgroundColor": "#0f172a"
     },
-    "updates": { "fallbackToCacheTimeout": 0 },
-    "assetBundlePatterns": ["**/*"],
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yourcompany.aidreamcatcher",
@@ -35,14 +39,27 @@
       ]
     },
     "extra": {
-      "eas": { "projectId": "your-project-id" },
+      "eas": {
+        "projectId": "your-project-id"
+      },
       "API_URL": "http://10.0.1.33:4000"
     },
     "privacy": "public",
     "description": "AI-powered dream journaling app that analyzes your dreams and tracks patterns to help you understand your subconscious mind.",
-    "keywords": ["dreams", "journal", "AI", "analysis", "sleep", "psychology"],
-    "category": "lifestyle"
+    "keywords": [
+      "dreams",
+      "journal",
+      "AI",
+      "analysis",
+      "sleep",
+      "psychology"
+    ],
+    "category": "lifestyle",
+    "plugins": [
+      "expo-asset",
+      "expo-font",
+      "expo-sqlite",
+      "expo-secure-store"
+    ]
   }
 }
-
-

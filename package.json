@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.1.0",
   "scripts": {
-    "start": "bash start.sh"
+    "start": "cd backend && npm start",
+    "build": "cd backend && npm install"
   },
   "engines": {
     "node": ">=18"
