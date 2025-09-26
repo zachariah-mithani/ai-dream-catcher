@@ -42,7 +42,7 @@
       "eas": {
         "projectId": "your-project-id"
       },
-      "API_URL": "http://10.0.1.33:4000"
+      "API_URL": "https://your-api-url.onrender.com"
     },
     "privacy": "public",
     "description": "AI-powered dream journaling app that analyzes your dreams and tracks patterns to help you understand your subconscious mind.",
