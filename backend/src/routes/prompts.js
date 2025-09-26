@@ -1,5 +1,5 @@
 import express from 'express';
-import { db } from '../sqlite.js';
+import { db } from '../database.js';
 import { requireAuth } from '../auth.js';
 
 export const promptsRouter = express.Router();
