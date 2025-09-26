@@ -7,7 +7,7 @@ import path from 'path';
 const isProduction = process.env.NODE_ENV === 'production' || process.env.DATABASE_URL;
 const useSQLite = !process.env.DATABASE_URL;
 
-let pool, db;
+let pool, sqliteDb;
 
 // Initialize PostgreSQL or SQLite
 if (isProduction) {
@@ -25,8 +25,8 @@ if (isProduction) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 
-  db = new Database(DB_FILE);
-  db.pragma('journal_mode = WAL');
+  sqliteDb = new Database(DB_FILE);
+  sqliteDb.pragma('journal_mode = WAL');
 }
 
 // Database abstraction layer
@@ -66,7 +66,7 @@ export class DatabaseWrapper {
       };
     } else {
       // SQLite wrapper
-      return db.prepare(query);
+      return sqliteDb.prepare(query);
     }
   }
 
@@ -78,7 +78,7 @@ export class DatabaseWrapper {
         throw error;
       }
     } else {
-      db.exec(query);
+      sqliteDb.exec(query);
     }
   }
 
@@ -91,7 +91,7 @@ export class DatabaseWrapper {
         throw error;
       }
     } else {
-      const stmt = db.prepare(sql);
+      const stmt = sqliteDb.prepare(sql);
       return stmt.all(...params);
     }
   }
@@ -341,11 +341,12 @@ export async function initSchema() {
   await dbWrapper.exec(createDreamPromptsTable);
 }
 
-export const db = new DatabaseWrapper();
-
+// Create database instance but export immediately with rename to eliminate shadows
 if (process.argv.includes('--init')) {
   initSchema().then(() => {
     console.log('Database initialized');
     process.exit(0);
   });
 }
+
+export const db = (() => new DatabaseWrapper())();
