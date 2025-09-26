@@ -6,9 +6,10 @@ export const promptsRouter = express.Router();
 
 // Initialize default prompts if they don't exist
 function initializePrompts() {
-  const existingPrompts = db.prepare('SELECT COUNT(*) as count FROM dream_prompts').get();
-  
-  if (existingPrompts.count === 0) {
+  try {
+    const existingPrompts = db.prepare('SELECT COUNT(*) as count FROM dream_prompts').get();
+    
+    if (existingPrompts.count === 0) {
     const defaultPrompts = [
       { prompt: "What colors stood out in your dream?", category: "Visual" },
       { prompt: "Who was in your dream? (people, animals, characters)", category: "Characters" },
@@ -31,6 +32,10 @@ function initializePrompts() {
     defaultPrompts.forEach(({ prompt, category }) => {
       stmt.run(prompt, category);
     });
+  }
+  } catch (err) {
+    // Table doesn't exist yet, schema not initialized - skip for now
+    console.log('dream_prompts table not ready yet, skipping prompts initialization');
   }
 }
 
