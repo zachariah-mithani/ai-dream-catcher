@@ -39,8 +39,10 @@ function initializePrompts() {
   }
 }
 
-// Initialize prompts on startup
-initializePrompts();
+// Initialize prompts later - wait for schema to be ready
+setTimeout(() => {
+  initializePrompts();
+}, 2000); // Wait 2 seconds for schema to complete
 
 // Get all active prompts
 promptsRouter.get('/', (req, res) => {
