@@ -19,6 +19,7 @@ import SettingsScreen from './screens/SettingsScreen';
 import TabsHomeScreen from './screens/TabsHomeScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
+import { api } from './api';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -72,24 +73,11 @@ function AppContent() {
     
     try {
       // Validate token by calling profile endpoint
-      const response = await fetch('http://localhost:4000/auth/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        setAuthed(true);
-      } else {
-        // Token is invalid, clear it
-        await AsyncStorage.removeItem('token');
-        await AsyncStorage.removeItem('user');
-        setAuthed(false);
-      }
+      const response = await api.get('/auth/profile');
+      setAuthed(true);
     } catch (error) {
       console.log('Auth validation error:', error);
-      // Network error or other issue, clear token to be safe
+      // Token is invalid or network error, clear it
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
       setAuthed(false);
