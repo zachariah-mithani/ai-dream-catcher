@@ -43,12 +43,12 @@ authRouter.post('/register', (req, res) => {
   }
 });
 
-authRouter.post('/login', (req, res) => {
+authRouter.post('/login', async (req, res) => {
   const parse = loginSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
   const { email, password } = parse.data;
   try {
-    const user = authenticate(email, password);
+    const user = await authenticate(email, password);
     const token = signToken(user);
     res.json({ token, user });
   } catch (e) {

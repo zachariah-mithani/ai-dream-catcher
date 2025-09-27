@@ -37,32 +37,23 @@ export class DatabaseWrapper {
 
   prepare(query) {
     if (this.isPostgres) {
-      // PostgreSQL wrapper
+      // PostgreSQL wrapper - use async/await but return promises that can be awaited
       const queryString = query; // Capture the query parameter
       return {
-        run: async (...params) => {
-          try {
-            const result = await pool.query(queryString, params);
+        run: (...params) => {
+          return pool.query(queryString, params).then(result => {
             return { lastInsertRowid: result.rows[0]?.id || null };
-          } catch (error) {
-            throw error;
-          }
+          });
         },
-        get: async (...params) => {
-          try {
-            const result = await pool.query(queryString, params);
+        get: (...params) => {
+          return pool.query(queryString, params).then(result => {
             return result.rows[0] || null;
-          } catch (error) {
-            throw error;
-          }
+          });
         },
-        all: async (...params) => {
-          try {
-            const result = await pool.query(queryString, params);
+        all: (...params) => {
+          return pool.query(queryString, params).then(result => {
             return result.rows;
-          } catch (error) {
-            throw error;
-          }
+          });
         }
       };
     } else {
