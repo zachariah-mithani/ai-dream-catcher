@@ -51,4 +51,5 @@ export async function chatWithAnalyst(history, userMessage) {
   return await callOpenRouter({ messages });
 }
 
+export { callOpenRouter };
 
