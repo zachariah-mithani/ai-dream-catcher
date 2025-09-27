@@ -38,10 +38,11 @@ export class DatabaseWrapper {
   prepare(query) {
     if (this.isPostgres) {
       // PostgreSQL wrapper
+      const queryString = query; // Capture the query parameter
       return {
         run: async (...params) => {
           try {
-            const result = await pool.query(query, params);
+            const result = await pool.query(queryString, params);
             return { lastInsertRowid: result.rows[0]?.id || null };
           } catch (error) {
             throw error;
@@ -49,7 +50,7 @@ export class DatabaseWrapper {
         },
         get: async (...params) => {
           try {
-            const result = await pool.query(query, params);
+            const result = await pool.query(queryString, params);
             return result.rows[0] || null;
           } catch (error) {
             throw error;
@@ -57,7 +58,7 @@ export class DatabaseWrapper {
         },
         all: async (...params) => {
           try {
-            const result = await pool.query(query, params);
+            const result = await pool.query(queryString, params);
             return result.rows;
           } catch (error) {
             throw error;
