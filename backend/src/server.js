@@ -61,14 +61,26 @@ app.get('/health', async (_req, res) => {
 // Debug endpoint to test auth queries
 app.get('/debug-auth', async (req, res) => {
   try {
-    console.log('Testing auth query...');
-    const query = 'SELECT id, email FROM users WHERE email = ?';
-    console.log('Query string:', query);
-    const result = await db.prepare(query).get('test@example.com');
-    console.log('Auth query result:', result);
-    res.json({ success: true, result });
+    console.log('Testing database queries...');
+    
+    // Test 1: Simple query without parameters
+    console.log('Test 1: Simple query');
+    const result1 = await db.prepare('SELECT 1 as test').get();
+    console.log('Simple query result:', result1);
+    
+    // Test 2: Check if users table exists
+    console.log('Test 2: Check users table');
+    const result2 = await db.prepare("SELECT table_name FROM information_schema.tables WHERE table_name = 'users'").get();
+    console.log('Users table check:', result2);
+    
+    // Test 3: Simple query with parameters
+    console.log('Test 3: Query with parameters');
+    const result3 = await db.prepare('SELECT ? as test_param').get('hello');
+    console.log('Parameter query result:', result3);
+    
+    res.json({ success: true, results: { simple: result1, tableCheck: result2, parameter: result3 } });
   } catch (error) {
-    console.error('Auth query error:', error);
+    console.error('Debug query error:', error);
     res.json({ success: false, error: error.message });
   }
 });
