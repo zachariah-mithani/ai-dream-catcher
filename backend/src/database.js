@@ -40,7 +40,6 @@ export class DatabaseWrapper {
       // PostgreSQL wrapper - convert SQLite ? parameters to PostgreSQL $1, $2, $3 format
       const queryString = query; // Capture the query parameter
       
-      // Debug logging
       if (!queryString || queryString.trim() === '') {
         console.error('Empty or undefined query passed to prepare:', query);
         throw new Error('Empty query string');
@@ -55,11 +54,10 @@ export class DatabaseWrapper {
               return `$${paramIndex}`;
             });
             
-            console.log('Executing query:', pgQuery, 'with params:', params);
             const result = await pool.query(pgQuery, params);
             return { lastInsertRowid: result.rows[0]?.id || null };
           } catch (error) {
-            console.error('Query error:', error.message, 'Query:', pgQuery, 'Params:', params);
+            console.error('Query error:', error.message);
             throw error;
           }
         },
@@ -71,11 +69,10 @@ export class DatabaseWrapper {
               return `$${paramIndex}`;
             });
             
-            console.log('Executing query:', pgQuery, 'with params:', params);
             const result = await pool.query(pgQuery, params);
             return result.rows[0] || null;
           } catch (error) {
-            console.error('Query error:', error.message, 'Query:', pgQuery, 'Params:', params);
+            console.error('Query error:', error.message);
             throw error;
           }
         },
@@ -87,11 +84,10 @@ export class DatabaseWrapper {
               return `$${paramIndex}`;
             });
             
-            console.log('Executing query:', pgQuery, 'with params:', params);
             const result = await pool.query(pgQuery, params);
             return result.rows;
           } catch (error) {
-            console.error('Query error:', error.message, 'Query:', pgQuery, 'Params:', params);
+            console.error('Query error:', error.message);
             throw error;
           }
         }

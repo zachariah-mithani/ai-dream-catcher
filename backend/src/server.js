@@ -58,27 +58,6 @@ app.get('/health', async (_req, res) => {
   }
 });
 
-// Debug endpoint to test auth queries
-app.get('/debug-auth', async (req, res) => {
-  try {
-    console.log('Testing database queries...');
-    
-    // Test 1: Direct pool query without wrapper
-    console.log('Test 1: Direct pool query');
-    const result1 = await pool.query('SELECT 1 as test');
-    console.log('Direct pool result:', result1.rows);
-    
-    // Test 2: Simple query with wrapper
-    console.log('Test 2: Wrapper query');
-    const result2 = await db.prepare('SELECT 1').get();
-    console.log('Wrapper result:', result2);
-    
-    res.json({ success: true, results: { direct: result1.rows, wrapper: result2 } });
-  } catch (error) {
-    console.error('Debug query error:', error);
-    res.json({ success: false, error: error.message });
-  }
-});
 
 app.use('/auth', authRouter);
 app.use('/dreams', dreamsRouter);
