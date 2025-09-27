@@ -47,7 +47,7 @@ const limiter = rateLimit({ windowMs: 60 * 1000, max: 120 });
 app.use(limiter);
 
 // Initialize database schema on startup
-initSchema();
+initSchema(); // Force redeploy
 
 app.get('/health', async (_req, res) => {
   try {
