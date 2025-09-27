@@ -30,12 +30,12 @@ const profileUpdateSchema = z.object({
   notifications_enabled: z.boolean().optional()
 });
 
-authRouter.post('/register', (req, res) => {
+authRouter.post('/register', async (req, res) => {
   const parse = registerSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
   const { email, password, ...profile } = parse.data;
   try {
-    const user = createUser(email, password, profile);
+    const user = await createUser(email, password, profile);
     const token = signToken(user);
     res.json({ token, user });
   } catch (e) {
@@ -56,29 +56,29 @@ authRouter.post('/login', async (req, res) => {
   }
 });
 
-authRouter.get('/profile', requireAuth, (req, res) => {
+authRouter.get('/profile', requireAuth, async (req, res) => {
   try {
-    const profile = getUserProfile(req.user.id);
+    const profile = await getUserProfile(req.user.id);
     res.json(profile);
   } catch (e) {
     res.status(404).json({ error: e.message });
   }
 });
 
-authRouter.put('/profile', requireAuth, (req, res) => {
+authRouter.put('/profile', requireAuth, async (req, res) => {
   const parse = profileUpdateSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
   try {
-    const updatedProfile = updateUserProfile(req.user.id, parse.data);
+    const updatedProfile = await updateUserProfile(req.user.id, parse.data);
     res.json(updatedProfile);
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
 });
 
-authRouter.delete('/account', requireAuth, (req, res) => {
+authRouter.delete('/account', requireAuth, async (req, res) => {
   try {
-    deleteUserAccount(req.user.id);
+    await deleteUserAccount(req.user.id);
     res.json({ message: 'Account and all data deleted successfully' });
   } catch (e) {
     res.status(500).json({ error: 'Failed to delete account' });
