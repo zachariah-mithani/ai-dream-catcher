@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 
-import { db, initSchema } from './database.js';
+import { db, initSchema, pool } from './database.js';
 import { authRouter } from './routes/auth.js';
 import { dreamsRouter } from './routes/dreams.js';
 import { analysisRouter } from './routes/analysis.js';
@@ -63,22 +63,17 @@ app.get('/debug-auth', async (req, res) => {
   try {
     console.log('Testing database queries...');
     
-    // Test 1: Simple query without parameters
-    console.log('Test 1: Simple query');
-    const result1 = await db.prepare('SELECT 1 as test').get();
-    console.log('Simple query result:', result1);
+    // Test 1: Direct pool query without wrapper
+    console.log('Test 1: Direct pool query');
+    const result1 = await pool.query('SELECT 1 as test');
+    console.log('Direct pool result:', result1.rows);
     
-    // Test 2: Check if users table exists
-    console.log('Test 2: Check users table');
-    const result2 = await db.prepare("SELECT table_name FROM information_schema.tables WHERE table_name = 'users'").get();
-    console.log('Users table check:', result2);
+    // Test 2: Simple query with wrapper
+    console.log('Test 2: Wrapper query');
+    const result2 = await db.prepare('SELECT 1').get();
+    console.log('Wrapper result:', result2);
     
-    // Test 3: Simple query with parameters
-    console.log('Test 3: Query with parameters');
-    const result3 = await db.prepare('SELECT ? as test_param').get('hello');
-    console.log('Parameter query result:', result3);
-    
-    res.json({ success: true, results: { simple: result1, tableCheck: result2, parameter: result3 } });
+    res.json({ success: true, results: { direct: result1.rows, wrapper: result2 } });
   } catch (error) {
     console.error('Debug query error:', error);
     res.json({ success: false, error: error.message });

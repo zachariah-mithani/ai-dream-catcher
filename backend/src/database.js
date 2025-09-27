@@ -364,3 +364,6 @@ if (process.argv.includes('--init')) {
 }
 
 export const db = (() => new DatabaseWrapper())();
+
+// Export pool for debugging
+export { pool };
