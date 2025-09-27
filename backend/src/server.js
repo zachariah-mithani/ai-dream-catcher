@@ -58,6 +58,21 @@ app.get('/health', async (_req, res) => {
   }
 });
 
+// Debug endpoint to test auth queries
+app.get('/debug-auth', async (req, res) => {
+  try {
+    console.log('Testing auth query...');
+    const query = 'SELECT id, email FROM users WHERE email = ?';
+    console.log('Query string:', query);
+    const result = await db.prepare(query).get('test@example.com');
+    console.log('Auth query result:', result);
+    res.json({ success: true, result });
+  } catch (error) {
+    console.error('Auth query error:', error);
+    res.json({ success: false, error: error.message });
+  }
+});
+
 app.use('/auth', authRouter);
 app.use('/dreams', dreamsRouter);
 app.use('/analysis', analysisRouter);
