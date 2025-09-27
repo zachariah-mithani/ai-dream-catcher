@@ -37,23 +37,45 @@ export class DatabaseWrapper {
 
   prepare(query) {
     if (this.isPostgres) {
-      // PostgreSQL wrapper - use async/await but return promises that can be awaited
+      // PostgreSQL wrapper
       const queryString = query; // Capture the query parameter
+      
+      // Debug logging
+      if (!queryString || queryString.trim() === '') {
+        console.error('Empty or undefined query passed to prepare:', query);
+        throw new Error('Empty query string');
+      }
+      
       return {
-        run: (...params) => {
-          return pool.query(queryString, params).then(result => {
+        run: async (...params) => {
+          try {
+            console.log('Executing query:', queryString, 'with params:', params);
+            const result = await pool.query(queryString, params);
             return { lastInsertRowid: result.rows[0]?.id || null };
-          });
+          } catch (error) {
+            console.error('Query error:', error.message, 'Query:', queryString, 'Params:', params);
+            throw error;
+          }
         },
-        get: (...params) => {
-          return pool.query(queryString, params).then(result => {
+        get: async (...params) => {
+          try {
+            console.log('Executing query:', queryString, 'with params:', params);
+            const result = await pool.query(queryString, params);
             return result.rows[0] || null;
-          });
+          } catch (error) {
+            console.error('Query error:', error.message, 'Query:', queryString, 'Params:', params);
+            throw error;
+          }
         },
-        all: (...params) => {
-          return pool.query(queryString, params).then(result => {
+        all: async (...params) => {
+          try {
+            console.log('Executing query:', queryString, 'with params:', params);
+            const result = await pool.query(queryString, params);
             return result.rows;
-          });
+          } catch (error) {
+            console.error('Query error:', error.message, 'Query:', queryString, 'Params:', params);
+            throw error;
+          }
         }
       };
     } else {
