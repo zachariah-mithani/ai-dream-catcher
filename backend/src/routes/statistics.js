@@ -18,12 +18,12 @@ statisticsRouter.get('/', async (req, res) => {
   // Dreams by month (last 6 months)
   const monthlyDreams = await db.prepare(`
     SELECT 
-      strftime('%Y-%m', created_at) as month,
+      to_char(created_at, 'YYYY-MM') as month,
       COUNT(*) as count
     FROM dreams 
     WHERE user_id = ? 
-      AND created_at >= datetime('now', '-6 months')
-    GROUP BY strftime('%Y-%m', created_at)
+      AND created_at >= NOW() - INTERVAL '6 months'
+    GROUP BY to_char(created_at, 'YYYY-MM')
     ORDER BY month DESC
   `).all(userId);
   
@@ -96,12 +96,12 @@ statisticsRouter.get('/monthly', (req, res) => {
   
   const monthlyData = db.prepare(`
     SELECT 
-      strftime('%Y-%m', created_at) as month,
+      to_char(created_at, 'YYYY-MM') as month,
       COUNT(*) as count
     FROM dreams 
     WHERE user_id = ? 
-      AND created_at >= datetime('now', '-${months} months')
-    GROUP BY strftime('%Y-%m', created_at)
+      AND created_at >= NOW() - INTERVAL '${months} months'
+    GROUP BY to_char(created_at, 'YYYY-MM')
     ORDER BY month ASC
   `).all(userId);
   
