@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-flash-1.5';
+const DEFAULT_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-flash-1.5-8b';
 
 async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0.7, max_tokens = 800 }) {
   if (!OPENROUTER_API_KEY) {
