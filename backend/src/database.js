@@ -37,7 +37,7 @@ export class DatabaseWrapper {
 
   prepare(query) {
     if (this.isPostgres) {
-      // PostgreSQL wrapper
+      // PostgreSQL wrapper - convert SQLite ? parameters to PostgreSQL $1, $2, $3 format
       const queryString = query; // Capture the query parameter
       
       // Debug logging
@@ -49,31 +49,49 @@ export class DatabaseWrapper {
       return {
         run: async (...params) => {
           try {
-            console.log('Executing query:', queryString, 'with params:', params);
-            const result = await pool.query(queryString, params);
+            // Convert SQLite ? parameters to PostgreSQL $1, $2, $3 format
+            const pgQuery = queryString.replace(/\?/g, (match, offset) => {
+              const paramIndex = queryString.substring(0, offset).split('?').length;
+              return `$${paramIndex}`;
+            });
+            
+            console.log('Executing query:', pgQuery, 'with params:', params);
+            const result = await pool.query(pgQuery, params);
             return { lastInsertRowid: result.rows[0]?.id || null };
           } catch (error) {
-            console.error('Query error:', error.message, 'Query:', queryString, 'Params:', params);
+            console.error('Query error:', error.message, 'Query:', pgQuery, 'Params:', params);
             throw error;
           }
         },
         get: async (...params) => {
           try {
-            console.log('Executing query:', queryString, 'with params:', params);
-            const result = await pool.query(queryString, params);
+            // Convert SQLite ? parameters to PostgreSQL $1, $2, $3 format
+            const pgQuery = queryString.replace(/\?/g, (match, offset) => {
+              const paramIndex = queryString.substring(0, offset).split('?').length;
+              return `$${paramIndex}`;
+            });
+            
+            console.log('Executing query:', pgQuery, 'with params:', params);
+            const result = await pool.query(pgQuery, params);
             return result.rows[0] || null;
           } catch (error) {
-            console.error('Query error:', error.message, 'Query:', queryString, 'Params:', params);
+            console.error('Query error:', error.message, 'Query:', pgQuery, 'Params:', params);
             throw error;
           }
         },
         all: async (...params) => {
           try {
-            console.log('Executing query:', queryString, 'with params:', params);
-            const result = await pool.query(queryString, params);
+            // Convert SQLite ? parameters to PostgreSQL $1, $2, $3 format
+            const pgQuery = queryString.replace(/\?/g, (match, offset) => {
+              const paramIndex = queryString.substring(0, offset).split('?').length;
+              return `$${paramIndex}`;
+            });
+            
+            console.log('Executing query:', pgQuery, 'with params:', params);
+            const result = await pool.query(pgQuery, params);
             return result.rows;
           } catch (error) {
-            console.error('Query error:', error.message, 'Query:', queryString, 'Params:', params);
+            console.error('Query error:', error.message, 'Query:', pgQuery, 'Params:', params);
             throw error;
           }
         }
