@@ -46,7 +46,7 @@ export default function CollapsibleTimePicker({
 
   const heightInterpolate = animation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 120],
+    outputRange: [0, 140],
   });
 
   return (
@@ -119,15 +119,15 @@ export default function CollapsibleTimePicker({
                   onPress={() => adjustHour(1)}
                   style={{
                     backgroundColor: colors.primary,
-                    borderRadius: 20,
-                    width: 40,
-                    height: 40,
+                    borderRadius: 16,
+                    width: 32,
+                    height: 32,
                     justifyContent: 'center',
                     alignItems: 'center',
                     marginBottom: spacing(1)
                   }}
                 >
-                  <Ionicons name="chevron-up" size={20} color="white" />
+                  <Ionicons name="chevron-up" size={16} color="white" />
                 </TouchableOpacity>
                 
                 <Text style={{ 
@@ -143,15 +143,15 @@ export default function CollapsibleTimePicker({
                   onPress={() => adjustHour(-1)}
                   style={{
                     backgroundColor: colors.primary,
-                    borderRadius: 20,
-                    width: 40,
-                    height: 40,
+                    borderRadius: 16,
+                    width: 32,
+                    height: 32,
                     justifyContent: 'center',
                     alignItems: 'center',
                     marginTop: spacing(1)
                   }}
                 >
-                  <Ionicons name="chevron-down" size={20} color="white" />
+                  <Ionicons name="chevron-down" size={16} color="white" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -179,15 +179,15 @@ export default function CollapsibleTimePicker({
                   onPress={() => adjustMinute(1)}
                   style={{
                     backgroundColor: colors.primary,
-                    borderRadius: 20,
-                    width: 40,
-                    height: 40,
+                    borderRadius: 16,
+                    width: 32,
+                    height: 32,
                     justifyContent: 'center',
                     alignItems: 'center',
                     marginBottom: spacing(1)
                   }}
                 >
-                  <Ionicons name="chevron-up" size={20} color="white" />
+                  <Ionicons name="chevron-up" size={16} color="white" />
                 </TouchableOpacity>
                 
                 <Text style={{ 
@@ -203,18 +203,37 @@ export default function CollapsibleTimePicker({
                   onPress={() => adjustMinute(-1)}
                   style={{
                     backgroundColor: colors.primary,
-                    borderRadius: 20,
-                    width: 40,
-                    height: 40,
+                    borderRadius: 16,
+                    width: 32,
+                    height: 32,
                     justifyContent: 'center',
                     alignItems: 'center',
                     marginTop: spacing(1)
                   }}
                 >
-                  <Ionicons name="chevron-down" size={20} color="white" />
+                  <Ionicons name="chevron-down" size={16} color="white" />
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+          
+          {/* Down arrow for easier access */}
+          <View style={{ alignItems: 'center', marginTop: spacing(1) }}>
+            <TouchableOpacity
+              onPress={toggleExpanded}
+              style={{
+                backgroundColor: colors.input,
+                borderRadius: 20,
+                width: 40,
+                height: 40,
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderWidth: 1,
+                borderColor: colors.border
+              }}
+            >
+              <Ionicons name="chevron-down" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
           </View>
         </View>
       </Animated.View>

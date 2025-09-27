@@ -2,6 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import { db } from '../database.js';
 import { requireAuth } from '../auth.js';
+import { callOpenRouter } from '../openrouter.js';
 
 export const moodsRouter = express.Router();
 
@@ -175,35 +176,22 @@ moodsRouter.get('/insights', async (req, res) => {
   console.log('AI Prompt preview:', aiPrompt.substring(0, 500) + '...');
   console.log('======================');
 
-  try {
-    const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'http://localhost:3000',
-        'X-Title': 'AI Dream Catcher'
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-flash-1.5',
+    try {
+      const aiResult = await callOpenRouter({
         messages: [{
           role: 'user',
           content: aiPrompt
-        }]
-      })
-    });
-    
-    if (aiResponse.ok) {
-      const aiData = await aiResponse.json();
-      const insights = aiData.choices?.[0]?.message?.content || "Unable to generate insights at this time.";
+        }],
+        temperature: 0.7,
+        max_tokens: 500
+      });
+      
+      const insights = aiResult.text || "Unable to generate insights at this time.";
       res.json({ insights });
-    } else {
+    } catch (e) {
+      console.log('Mood insights generation failed:', e.message);
       res.json({ insights: "Unable to generate insights at this time." });
     }
-  } catch (e) {
-    console.log('Mood insights generation failed:', e.message);
-    res.json({ insights: "Unable to generate insights at this time." });
-  }
   } catch (error) {
     console.error('Mood insights error:', error);
     res.status(500).json({ error: 'Failed to load mood insights' });
