@@ -70,8 +70,8 @@ export function createUser(email, password, profile = {}) {
   };
 }
 
-export function authenticate(email, password) {
-  const user = db.prepare('SELECT id, email, password_hash, first_name, last_name, username, theme_preference, bedtime_hour, bedtime_minute, wakeup_hour, wakeup_minute, notifications_enabled FROM users WHERE email = ?').get(email);
+export async function authenticate(email, password) {
+  const user = await db.prepare('SELECT id, email, password_hash, first_name, last_name, username, theme_preference, bedtime_hour, bedtime_minute, wakeup_hour, wakeup_minute, notifications_enabled FROM users WHERE email = ?').get(email);
   if (!user) throw new Error('Invalid credentials');
   const ok = bcrypt.compareSync(password, user.password_hash);
   if (!ok) throw new Error('Invalid credentials');
