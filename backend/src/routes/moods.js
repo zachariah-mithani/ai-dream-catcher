@@ -75,7 +75,7 @@ moodsRouter.get('/stats', async (req, res) => {
         COUNT(*) as count
       FROM user_moods 
       WHERE user_id = ? 
-        AND created_at >= datetime('now', '-30 days')
+        AND created_at >= NOW() - INTERVAL '30 days'
       GROUP BY DATE(created_at), mood
       ORDER BY date DESC
     `).all(userId);
@@ -84,13 +84,13 @@ moodsRouter.get('/stats', async (req, res) => {
     const moodDreamCorrelation = await db.prepare(`
       SELECT 
         um.mood,
-        json_each.value as tag,
+        tag,
         COUNT(*) as count
       FROM user_moods um
       JOIN dreams d ON um.dream_id = d.id
-      JOIN json_each(d.tags) ON d.tags IS NOT NULL
+      JOIN jsonb_array_elements_text(d.tags::jsonb) as tag ON d.tags IS NOT NULL
       WHERE um.user_id = ?
-      GROUP BY um.mood, json_each.value
+      GROUP BY um.mood, tag
       ORDER BY um.mood, count DESC
     `).all(userId);
     
@@ -177,6 +177,10 @@ moodsRouter.get('/insights', async (req, res) => {
   console.log('======================');
 
     try {
+      console.log('=== MOOD INSIGHTS AI CALL ===');
+      console.log('Calling OpenRouter with model:', process.env.OPENROUTER_MODEL || 'x-ai/grok-4-fast:free');
+      console.log('Prompt length:', aiPrompt.length);
+      
       const aiResult = await callOpenRouter({
         messages: [{
           role: 'user',
@@ -186,11 +190,20 @@ moodsRouter.get('/insights', async (req, res) => {
         max_tokens: 500
       });
       
+      console.log('AI response received:', {
+        textLength: aiResult.text?.length || 0,
+        model: aiResult.model
+      });
+      
       const insights = aiResult.text || "Unable to generate insights at this time.";
       res.json({ insights });
     } catch (e) {
-      console.log('Mood insights generation failed:', e.message);
-      res.json({ insights: "Unable to generate insights at this time." });
+      console.error('=== MOOD INSIGHTS ERROR ===');
+      console.error('Error type:', e.constructor.name);
+      console.error('Error message:', e.message);
+      console.error('Error stack:', e.stack);
+      console.error('==========================');
+      res.json({ insights: `Unable to generate insights at this time. Error: ${e.message}` });
     }
   } catch (error) {
     console.error('Mood insights error:', error);
