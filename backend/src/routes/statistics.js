@@ -30,11 +30,11 @@ statisticsRouter.get('/', async (req, res) => {
   // Most common tags
   const commonTags = await db.prepare(`
     SELECT 
-      json_each.value as tag,
+      tag,
       COUNT(*) as count
-    FROM dreams, json_each(tags)
+    FROM dreams, jsonb_array_elements_text(tags::jsonb) as tag
     WHERE user_id = ? AND tags IS NOT NULL
-    GROUP BY json_each.value
+    GROUP BY tag
     ORDER BY count DESC
     LIMIT 10
   `).all(userId);
@@ -42,11 +42,11 @@ statisticsRouter.get('/', async (req, res) => {
   // Most common AI tags
   const commonAiTags = await db.prepare(`
     SELECT 
-      json_each.value as tag,
+      tag,
       COUNT(*) as count
-    FROM dreams, json_each(ai_tags)
+    FROM dreams, jsonb_array_elements_text(ai_tags::jsonb) as tag
     WHERE user_id = ? AND ai_tags IS NOT NULL
-    GROUP BY json_each.value
+    GROUP BY tag
     ORDER BY count DESC
     LIMIT 10
   `).all(userId);
@@ -65,11 +65,11 @@ statisticsRouter.get('/', async (req, res) => {
   // Recurring themes (dreams with same tags)
   const recurringThemes = await db.prepare(`
     SELECT 
-      json_each.value as theme,
+      theme,
       COUNT(*) as frequency
-    FROM dreams, json_each(tags)
+    FROM dreams, jsonb_array_elements_text(tags::jsonb) as theme
     WHERE user_id = ? AND tags IS NOT NULL
-    GROUP BY json_each.value
+    GROUP BY theme
     HAVING COUNT(*) > 1
     ORDER BY frequency DESC
     LIMIT 5
@@ -114,21 +114,21 @@ statisticsRouter.get('/tags', (req, res) => {
   
   const userTags = db.prepare(`
     SELECT 
-      json_each.value as tag,
+      tag,
       COUNT(*) as count
-    FROM dreams, json_each(tags)
+    FROM dreams, jsonb_array_elements_text(tags::jsonb) as tag
     WHERE user_id = ? AND tags IS NOT NULL
-    GROUP BY json_each.value
+    GROUP BY tag
     ORDER BY count DESC
   `).all(userId);
   
   const aiTags = db.prepare(`
     SELECT 
-      json_each.value as tag,
+      tag,
       COUNT(*) as count
-    FROM dreams, json_each(ai_tags)
+    FROM dreams, jsonb_array_elements_text(ai_tags::jsonb) as tag
     WHERE user_id = ? AND ai_tags IS NOT NULL
-    GROUP BY json_each.value
+    GROUP BY tag
     ORDER BY count DESC
   `).all(userId);
   
