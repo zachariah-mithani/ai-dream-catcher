@@ -12,8 +12,8 @@ export default function DreamDetailScreen({ route }) {
   const runAnalysis = async () => {
     setBusy(true);
     try {
-      const res = await analyzeDream(item);
-      setAnalysis(res.response);
+      const text = await analyzeDream(item);
+      setAnalysis(text);
     } catch (e) {
       Alert.alert('Error', 'AI analysis failed. Please try again.');
     } finally {
