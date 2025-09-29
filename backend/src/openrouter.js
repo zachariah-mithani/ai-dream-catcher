@@ -3,6 +3,11 @@ import axios from 'axios';
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_MODEL = process.env.OPENROUTER_MODEL || 'x-ai/grok-4-fast:free';
+const FALLBACK_MODELS = [
+  'meta-llama/llama-3.1-8b-instruct:free',
+  'microsoft/phi-3-mini-128k-instruct:free',
+  'deepseek/deepseek-chat:free'
+];
 
 async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0.7, max_tokens = 800 }) {
   console.log('=== OPENROUTER DEBUG ===');
@@ -24,6 +29,7 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
     'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
     'HTTP-Referer': process.env.APP_PUBLIC_URL || 'https://ai-dream-catcher-api.onrender.com',
     'X-Title': 'AI Dream Catcher',
+    'Content-Type': 'application/json'
   };
 
   const body = { model, messages, temperature, max_tokens, top_p: 0.9 };
@@ -31,17 +37,18 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
   console.log('Request headers:', { ...headers, 'Authorization': 'Bearer [REDACTED]' });
   console.log('Request body:', { ...body, messages: `[${messages.length} messages]` });
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  let currentModel = model;
+  for (let attempt = 0; attempt < 4; attempt++) {
     try {
       console.log(`Attempt ${attempt + 1}/3`);
-      const { data } = await axios.post(OPENROUTER_BASE_URL, body, { headers, timeout: 30_000 });
+      const { data } = await axios.post(OPENROUTER_BASE_URL, { ...body, model: currentModel }, { headers, timeout: 30_000 });
       console.log('OpenRouter response received:', {
         model: data?.model,
         choices: data?.choices?.length || 0,
         usage: data?.usage
       });
       const text = data?.choices?.[0]?.message?.content || '';
-      return { text, model: data?.model || model, raw: data };
+      return { text, model: data?.model || currentModel, raw: data };
     } catch (err) {
       console.error(`OpenRouter attempt ${attempt + 1} failed:`, {
         status: err?.response?.status,
@@ -52,9 +59,18 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
       });
       
       const status = err?.response?.status;
-      if (status === 429 && attempt < 2) {
+      if ((status === 429 || status === 502 || status === 503) && attempt < 3) {
         console.log(`Rate limited, waiting ${1000 * (attempt + 1)}ms before retry...`);
         await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+
+      // Try a fallback free model if available
+      const isModelError = status === 404 || String(err?.response?.data?.error?.message || '').toLowerCase().includes('model');
+      const nextModel = FALLBACK_MODELS[attempt];
+      if (isModelError && nextModel) {
+        console.log(`Switching to fallback model: ${nextModel}`);
+        currentModel = nextModel;
         continue;
       }
       
