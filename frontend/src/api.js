@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = Constants?.expoConfig?.extra?.API_URL || 'http://localhost:4000';
 
-export const api = axios.create({ baseURL: API_URL, timeout: 20000 });
+export const api = axios.create({ baseURL: API_URL, timeout: 60000 });
 
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('token');
