@@ -16,6 +16,7 @@ import DreamLogScreen from './screens/AnalysisScreen';
 import MoodTrackingScreen from './screens/MoodTrackingScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import ChangePasswordScreen from './screens/ChangePasswordScreen';
 import TabsHomeScreen from './screens/TabsHomeScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
@@ -121,6 +122,7 @@ function AppContent() {
               <Stack.Screen name="DreamDetail" component={DreamDetailScreen} options={{ title: 'Dream' }} />
               <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Ask the Analyst' }} />
               <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+              <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'Change Password' }} />
             </>
           )}
         </Stack.Navigator>

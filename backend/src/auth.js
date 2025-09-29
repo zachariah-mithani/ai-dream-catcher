@@ -53,7 +53,7 @@ export async function createUser(email, password, profile = {}) {
     profile.bedtime_minute || 0,
     profile.wakeup_hour || 7,
     profile.wakeup_minute || 0,
-    profile.notifications_enabled !== false ? 1 : 0
+    profile.notifications_enabled !== false
   );
   return { 
     id: info.lastInsertRowid, 
@@ -86,7 +86,7 @@ export async function authenticate(email, password) {
     bedtime_minute: user.bedtime_minute || 0,
     wakeup_hour: user.wakeup_hour || 7,
     wakeup_minute: user.wakeup_minute || 0,
-    notifications_enabled: user.notifications_enabled !== 0
+    notifications_enabled: Boolean(user.notifications_enabled)
   };
 }
 
@@ -99,7 +99,7 @@ export async function getUserProfile(userId) {
     bedtime_minute: user.bedtime_minute || 0,
     wakeup_hour: user.wakeup_hour || 7,
     wakeup_minute: user.wakeup_minute || 0,
-    notifications_enabled: user.notifications_enabled !== 0
+    notifications_enabled: Boolean(user.notifications_enabled)
   };
 }
 
@@ -147,7 +147,7 @@ export async function updateUserProfile(userId, updates) {
   }
   if (updates.notifications_enabled !== undefined) {
     fields.push('notifications_enabled = ?');
-    values.push(updates.notifications_enabled ? 1 : 0);
+    values.push(!!updates.notifications_enabled);
   }
   
   if (fields.length === 0) return await getUserProfile(userId);
@@ -168,4 +168,14 @@ export async function deleteUserAccount(userId) {
   return true;
 }
 
+
+export async function changeUserPassword(userId, currentPassword, newPassword) {
+  const user = await db.prepare('SELECT id, password_hash FROM users WHERE id = ?').get(userId);
+  if (!user) throw new Error('User not found');
+  const ok = bcrypt.compareSync(currentPassword, user.password_hash);
+  if (!ok) throw new Error('Current password is incorrect');
+  const newHash = bcrypt.hashSync(newPassword, 10);
+  await db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newHash, userId);
+  return true;
+}
 
