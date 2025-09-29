@@ -47,7 +47,8 @@ setTimeout(() => {
 // Get all active prompts
 promptsRouter.get('/', (req, res) => {
   const category = req.query.category;
-  let query = 'SELECT * FROM dream_prompts WHERE active = 1';
+  const activeCond = db.isPostgres ? 'active = TRUE' : 'active = 1';
+  let query = `SELECT * FROM dream_prompts WHERE ${activeCond}`;
   let params = [];
   
   if (category) {
@@ -63,12 +64,13 @@ promptsRouter.get('/', (req, res) => {
 
 // Get prompts by category
 promptsRouter.get('/categories', (req, res) => {
+  const activeCond = db.isPostgres ? 'active = TRUE' : 'active = 1';
   const categories = db.prepare(`
     SELECT 
       category,
       COUNT(*) as count
     FROM dream_prompts 
-    WHERE active = 1
+    WHERE ${activeCond}
     GROUP BY category
     ORDER BY category
   `).all();
@@ -79,7 +81,8 @@ promptsRouter.get('/categories', (req, res) => {
 // Get random prompt
 promptsRouter.get('/random', (req, res) => {
   const category = req.query.category;
-  let query = 'SELECT * FROM dream_prompts WHERE active = 1';
+  const activeCond = db.isPostgres ? 'active = TRUE' : 'active = 1';
+  let query = `SELECT * FROM dream_prompts WHERE ${activeCond}`;
   let params = [];
   
   if (category) {
@@ -97,8 +100,9 @@ promptsRouter.get('/random', (req, res) => {
 promptsRouter.get('/random/:count', (req, res) => {
   const count = parseInt(req.params.count) || 3;
   const category = req.query.category;
+  const activeCond = db.isPostgres ? 'active = TRUE' : 'active = 1';
   
-  let query = 'SELECT * FROM dream_prompts WHERE active = 1';
+  let query = `SELECT * FROM dream_prompts WHERE ${activeCond}`;
   let params = [];
   
   if (category) {
