@@ -49,7 +49,9 @@ export class DatabaseWrapper {
         run: async (...params) => {
           try {
             // Convert SQLite ? parameters to PostgreSQL $1, $2, $3 format
-            const pgQuery = queryString.replace(/\?/g, (match, offset) => {
+            const needsReturning = /^\s*insert\b/i.test(queryString) && !/returning\s+/i.test(queryString);
+            const queryWithReturning = needsReturning ? `${queryString} RETURNING id` : queryString;
+            const pgQuery = queryWithReturning.replace(/\?/g, (match, offset) => {
               const paramIndex = queryString.substring(0, offset).split('?').length;
               return `$${paramIndex}`;
             });
