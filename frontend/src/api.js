@@ -48,6 +48,14 @@ export async function deleteAccount() {
   await AsyncStorage.removeItem('user');
 }
 
+export async function changePassword(currentPassword, newPassword) {
+  const { data } = await api.post('/auth/change-password', {
+    current_password: currentPassword,
+    new_password: newPassword
+  });
+  return data;
+}
+
 export async function listDreams() {
   const { data } = await api.get('/dreams');
   return data.items;

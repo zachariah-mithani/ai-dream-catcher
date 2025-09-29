@@ -1,6 +1,6 @@
 import express from 'express';
 import { z } from 'zod';
-import { authenticate, createUser, signToken, getUserProfile, updateUserProfile, deleteUserAccount, requireAuth } from '../auth.js';
+import { authenticate, createUser, signToken, getUserProfile, updateUserProfile, deleteUserAccount, requireAuth, changeUserPassword } from '../auth.js';
 
 export const authRouter = express.Router();
 
@@ -82,6 +82,24 @@ authRouter.delete('/account', requireAuth, async (req, res) => {
     res.json({ message: 'Account and all data deleted successfully' });
   } catch (e) {
     res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
+
+
+const changePasswordSchema = z.object({
+  current_password: z.string().min(1),
+  new_password: z.string().min(6)
+});
+
+authRouter.post('/change-password', requireAuth, async (req, res) => {
+  const parse = changePasswordSchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
+  const { current_password, new_password } = parse.data;
+  try {
+    await changeUserPassword(req.user.id, current_password, new_password);
+    res.json({ message: 'Password updated successfully' });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 

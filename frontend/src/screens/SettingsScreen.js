@@ -146,6 +146,10 @@ export default function SettingsScreen({ navigation }) {
         <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginBottom: 16 }}>
           Settings
         </Text>
+        <Card style={{ marginBottom: spacing(2) }}>
+          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: spacing(1) }}>Security</Text>
+          <Button title="Change Password" onPress={() => navigation.navigate('ChangePassword')} />
+        </Card>
 
         <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: spacing(2) }}>
