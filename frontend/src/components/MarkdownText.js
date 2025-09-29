@@ -151,7 +151,9 @@ export default function MarkdownText({ children, style }) {
         return (
           <View key={index} style={{ flexDirection: 'row', marginVertical: 2 }}>
             <Text style={[baseStyle, { marginRight: 8 }]}>•</Text>
-            <Text style={[baseStyle, { flex: 1 }]}>{part.text}</Text>
+            <View style={{ flex: 1 }}>
+              <MarkdownText style={baseStyle}>{part.text}</MarkdownText>
+            </View>
           </View>
         );
       case 'orderedList':
@@ -160,9 +162,11 @@ export default function MarkdownText({ children, style }) {
             <Text style={[baseStyle, { marginRight: 8, fontWeight: 'bold' }]}>
               {part.text.match(/^\d+\./)?.[0] || '•'}
             </Text>
-            <Text style={[baseStyle, { flex: 1 }]}>
-              {part.text.replace(/^\d+\.\s*/, '')}
-            </Text>
+            <View style={{ flex: 1 }}>
+              <MarkdownText style={baseStyle}>
+                {part.text.replace(/^\d+\.\s*/, '')}
+              </MarkdownText>
+            </View>
           </View>
         );
       default:
