@@ -15,13 +15,13 @@ analysisRouter.post('/', async (req, res) => {
   const { dreamId, content } = parse.data;
   try {
     const { text, model } = await analyzeDreamText(content);
-    const info = db.prepare('INSERT INTO analyses (user_id, dream_id, type, prompt, response, model) VALUES (?, ?, ?, ?, ?, ?)')
+    const info = await db.prepare('INSERT INTO analyses (user_id, dream_id, type, prompt, response, model) VALUES (?, ?, ?, ?, ?, ?)')
       .run(req.user.id, dreamId || null, 'immediate', content, text, model || null);
-    const row = db.prepare('SELECT * FROM analyses WHERE id = ?').get(info.lastInsertRowid);
+    const row = await db.prepare('SELECT * FROM analyses WHERE id = ?').get(info.lastInsertRowid);
     res.json(row);
   } catch (e) {
     const status = e?.response?.status || 500;
-    res.status(status).json({ error: 'AI service error' });
+    res.status(status).json({ error: 'AI service error', details: e.message });
   }
 });
 
