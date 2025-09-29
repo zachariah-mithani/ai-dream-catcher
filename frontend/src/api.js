@@ -77,7 +77,8 @@ export async function deleteDream(id) {
 
 export async function analyzeDream(dream) {
   const { data } = await api.post('/analysis', { dreamId: dream.id, content: dream.content });
-  return data;
+  // Return just the response text for convenience
+  return data?.response ?? data;
 }
 
 export async function getPatterns() {
