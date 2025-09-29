@@ -45,13 +45,14 @@ export default function ChatScreen({ route }) {
       const analysisMessage = { role: 'user', content: 'Please analyze this dream for me' };
       setHistory(prev => [...prev, analysisMessage]);
       
-      // Get AI analysis (string)
-      const analysisText = await analyzeDream(seed);
+      // Get AI analysis and coerce to string robustly
+      const raw = await analyzeDream(seed);
+      const analysisText = typeof raw === 'string' ? raw : (raw?.response ?? raw?.text ?? '');
       
       // Add the analysis response to chat
       const analysisResponse = { 
         role: 'assistant', 
-        content: `Here's my analysis of your dream:\n\n${analysisText || 'I could not generate an analysis at this time.'}\n\nWhat would you like to know more about?` 
+        content: `Here's my analysis of your dream:\n\n${(typeof analysisText === 'string' && analysisText.trim()) ? analysisText : 'I could not generate an analysis at this time.'}\n\nWhat would you like to know more about?` 
       };
       setHistory(prev => [...prev, analysisResponse]);
     } catch (e) {
