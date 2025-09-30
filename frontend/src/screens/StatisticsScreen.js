@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Screen, Card } from '../ui/components';
-import { spacing } from '../ui/Theme';
+import { useTheme } from '../contexts/ThemeContext';
 import { api } from '../api';
 
 export default function StatisticsScreen({ navigation }) {
+  const { colors, spacing } = useTheme();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -102,7 +103,7 @@ export default function StatisticsScreen({ navigation }) {
                 marginBottom: 6
               }}
             >
-              <Text style={{ color: 'white', fontSize: 12 }}>{tag.tag} ({tag.count})</Text>
+              <Text style={{ color: colors.primaryText, fontSize: 12 }}>{tag.tag} ({tag.count})</Text>
             </View>
           ))}
         </View>
@@ -227,7 +228,7 @@ export default function StatisticsScreen({ navigation }) {
         <TouchableOpacity 
           onPress={loadStats}
           style={{
-            backgroundColor: '#22c55e',
+            backgroundColor: colors.accent,
             paddingVertical: 12,
             paddingHorizontal: 24,
             borderRadius: 8,
@@ -235,7 +236,7 @@ export default function StatisticsScreen({ navigation }) {
             marginTop: 16
           }}
         >
-          <Text style={{ color: 'white', fontWeight: '600' }}>Refresh Statistics</Text>
+          <Text style={{ color: colors.primaryText, fontWeight: '600' }}>Refresh Statistics</Text>
         </TouchableOpacity>
       </ScrollView>
     </Screen>

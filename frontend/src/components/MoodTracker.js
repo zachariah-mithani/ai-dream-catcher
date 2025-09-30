@@ -113,7 +113,7 @@ export default function MoodTracker() {
           }}
         >
           <Text style={{ 
-            color: selectedPeriod === period.days ? 'white' : colors.text, 
+            color: selectedPeriod === period.days ? colors.primaryText : colors.text, 
             fontSize: 12,
             fontWeight: '600'
           }}>
@@ -285,7 +285,7 @@ export default function MoodTracker() {
           marginTop: spacing(2)
         }}
       >
-        <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>
+        <Text style={{ color: colors.primaryText, fontSize: 12, fontWeight: '600' }}>
           {loading ? 'Loading...' : 'Refresh Data'}
         </Text>
       </TouchableOpacity>

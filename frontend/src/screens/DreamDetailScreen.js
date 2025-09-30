@@ -44,7 +44,7 @@ export default function DreamDetailScreen({ route }) {
                   marginRight: 8, 
                   marginBottom: 8 
                 }}>
-                  <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>{item.mood}</Text>
+                  <Text style={{ color: colors.primaryText, fontSize: 12, fontWeight: '600' }}>{item.mood}</Text>
                 </View>
               )}
               {item.tags && JSON.parse(item.tags).map((tag, index) => (
@@ -56,7 +56,7 @@ export default function DreamDetailScreen({ route }) {
                   marginRight: 8, 
                   marginBottom: 8 
                 }}>
-                  <Text style={{ color: 'white', fontSize: 12, fontWeight: '600' }}>{tag}</Text>
+                  <Text style={{ color: colors.primaryText, fontSize: 12, fontWeight: '600' }}>{tag}</Text>
                 </View>
               ))}
             </View>
