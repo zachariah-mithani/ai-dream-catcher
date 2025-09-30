@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-nati
 import { Screen, Card, Button } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import CloudLogo from '../components/CloudLogo';
+import DreamCatcherLogo from '../components/DreamCatcherLogo';
 
 const { width } = Dimensions.get('window');
 
@@ -92,7 +92,7 @@ export default function OnboardingScreen({ onComplete }) {
         justifyContent: 'center'
       }}>
         {slide.id === 1 ? (
-          <CloudLogo size={120} style={{ marginBottom: spacing(3) }} />
+          <DreamCatcherLogo size={120} style={{ marginBottom: spacing(3) }} />
         ) : (
           <Text style={{ fontSize: 80, marginBottom: spacing(3) }}>
             {slide.emoji}
