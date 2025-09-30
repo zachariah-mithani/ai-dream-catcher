@@ -1,6 +1,6 @@
 import express from 'express';
 import { z } from 'zod';
-import { authenticate, createUser, signToken, getUserProfile, updateUserProfile, deleteUserAccount, requireAuth, changeUserPassword, createPasswordResetToken, resetPasswordWithToken, issueRefreshToken, rotateRefreshToken, createEmailVerificationToken, verifyEmailWithToken } from '../auth.js';
+import { authenticate, createUser, signToken, getUserProfile, updateUserProfile, deleteUserAccount, requireAuth, changeUserPassword, createPasswordResetToken, resetPasswordWithToken, issueRefreshToken, rotateRefreshToken } from '../auth.js';
 
 export const authRouter = express.Router();
 
@@ -38,9 +38,7 @@ authRouter.post('/register', async (req, res) => {
     const user = await createUser(email, password, profile);
     const access = signToken(user);
     const refresh = await issueRefreshToken(user.id);
-    // Create email verification token (to be emailed). Return for testing.
-    const verify = await createEmailVerificationToken(user.id);
-    res.json({ token: access, refresh, user, verify_token: verify.token });
+    res.json({ token: access, refresh, user });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
@@ -67,19 +65,6 @@ authRouter.post('/refresh', async (req, res) => {
   try {
     const result = await rotateRefreshToken(parse.data.refresh);
     res.json(result);
-  } catch (e) {
-    res.status(400).json({ error: e.message });
-  }
-});
-
-// Email verification endpoint (token via email normally)
-const verifySchema = z.object({ token: z.string().min(10) });
-authRouter.post('/verify', async (req, res) => {
-  const parse = verifySchema.safeParse(req.body);
-  if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
-  try {
-    await verifyEmailWithToken(parse.data.token);
-    res.json({ ok: true });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
