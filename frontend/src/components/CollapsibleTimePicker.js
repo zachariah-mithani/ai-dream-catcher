@@ -127,7 +127,7 @@ export default function CollapsibleTimePicker({
                     marginBottom: spacing(0.75)
                   }}
                 >
-                  <Ionicons name="chevron-up" size={14} color="white" />
+                  <Ionicons name="chevron-up" size={14} color={colors.primaryText} />
                 </TouchableOpacity>
                 
                 <Text style={{ 
@@ -151,7 +151,7 @@ export default function CollapsibleTimePicker({
                     marginTop: spacing(0.75)
                   }}
                 >
-                  <Ionicons name="chevron-down" size={14} color="white" />
+                  <Ionicons name="chevron-down" size={14} color={colors.primaryText} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -187,7 +187,7 @@ export default function CollapsibleTimePicker({
                     marginBottom: spacing(0.75)
                   }}
                 >
-                  <Ionicons name="chevron-up" size={14} color="white" />
+                  <Ionicons name="chevron-up" size={14} color={colors.primaryText} />
                 </TouchableOpacity>
                 
                 <Text style={{ 
@@ -211,7 +211,7 @@ export default function CollapsibleTimePicker({
                     marginTop: spacing(0.75)
                   }}
                 >
-                  <Ionicons name="chevron-down" size={14} color="white" />
+                  <Ionicons name="chevron-down" size={14} color={colors.primaryText} />
                 </TouchableOpacity>
               </View>
             </View>

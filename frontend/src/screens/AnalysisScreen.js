@@ -15,11 +15,11 @@ export default function DreamLogScreen({ navigation }) {
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
-  const loadDreams = async (reset = false) => {
+  const loadDreams = async (reset = false, pageParam = page) => {
     setLoading(true);
     try {
       console.log('Loading dreams...');
-      const res = await listDreams({ q, page, page_size: 20 });
+      const res = await listDreams({ q, page: pageParam, page_size: 20 });
       setDreams(reset ? res.items : [...dreams, ...res.items]);
       setTotal(res.total);
     } catch (e) {
@@ -47,7 +47,7 @@ export default function DreamLogScreen({ navigation }) {
   const onRefresh = async () => {
     setRefreshing(true);
     setPage(1);
-    await Promise.all([loadDreams(true), loadStatistics()]);
+    await Promise.all([loadDreams(true, 1), loadStatistics()]);
     setRefreshing(false);
   };
 
@@ -214,7 +214,7 @@ export default function DreamLogScreen({ navigation }) {
           onPress={() => navigation.navigate('EditDream', { dream: item })}
           style={{ 
             flex: 1, 
-            backgroundColor: colors.surface,
+            backgroundColor: colors.buttonSecondary || colors.surface,
             minWidth: 80
           }}
         />
@@ -233,8 +233,9 @@ export default function DreamLogScreen({ navigation }) {
 
   const loadMore = async () => {
     if (dreams.length >= total || loading) return;
-    setPage(page + 1);
-    await loadDreams();
+    const nextPage = page + 1;
+    setPage(nextPage);
+    await loadDreams(false, nextPage);
   };
 
   return (
