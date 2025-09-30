@@ -6,7 +6,7 @@ import { getProfile, updateProfile, deleteAccount } from '../api';
 import CollapsibleTimePicker from '../components/CollapsibleTimePicker';
 
 export default function SettingsScreen({ navigation }) {
-  const { theme, colors, spacing, toggleTheme } = useTheme();
+  const { theme, themeName, colors, spacing, changeTheme, availableThemes } = useTheme();
   const [profile, setProfile] = useState({
     first_name: '',
     last_name: '',
@@ -193,24 +193,26 @@ export default function SettingsScreen({ navigation }) {
             Appearance
           </Text>
           
-          <View style={{ 
-            flexDirection: 'row', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            marginBottom: spacing(1)
-          }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.text, fontSize: 16, marginBottom: 4 }}>
-                {theme === 'light' ? 'Light Mode' : 'Dark Mode'}
-              </Text>
-              <Subtle>Switch between light and dark themes</Subtle>
-            </View>
-            <Switch
-              value={theme === 'light'}
-              onValueChange={toggleTheme}
-              trackColor={colors.switchTrack}
-              thumbColor={colors.switchThumb}
-            />
+          <Text style={{ color: colors.text, fontSize: 16, marginBottom: spacing(1) }}>
+            Theme: {themeName}
+          </Text>
+          <Subtle style={{ marginBottom: spacing(2) }}>
+            Choose your preferred theme
+          </Subtle>
+          
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(1) }}>
+            {availableThemes.map((themeOption) => (
+              <Button
+                key={themeOption.key}
+                title={themeOption.name}
+                onPress={() => changeTheme(themeOption.key)}
+                style={{
+                  backgroundColor: theme === themeOption.key ? colors.primary : colors.surface,
+                  flex: 1,
+                  minWidth: 100
+                }}
+              />
+            ))}
           </View>
         </Card>
 

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfile, updateProfile } from '../api';
-import { colors, spacing, shadow, borderRadius, gradients } from '../ui/Theme';
+import { themes, spacing, getShadow, borderRadius } from '../ui/Theme';
 
 const ThemeContext = createContext();
 
@@ -14,7 +14,7 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('dreamy');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,21 +24,20 @@ export const ThemeProvider = ({ children }) => {
   const loadTheme = async () => {
     try {
       const profile = await getProfile();
-      setTheme(profile.theme_preference || 'dark');
+      setTheme(profile.theme_preference || 'dreamy');
     } catch (e) {
       console.log('Failed to load theme:', e.message);
       // Fallback to stored user data
       const userJson = await AsyncStorage.getItem('user');
       const user = userJson ? JSON.parse(userJson) : null;
-      setTheme(user?.theme_preference || 'dark');
+      setTheme(user?.theme_preference || 'dreamy');
     } finally {
       setLoading(false);
     }
   };
 
-  const toggleTheme = async () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    console.log('Toggling theme from', theme, 'to', newTheme);
+  const changeTheme = async (newTheme) => {
+    console.log('Changing theme to:', newTheme);
     setTheme(newTheme);
     
     try {
@@ -55,14 +54,20 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
+  const currentTheme = themes[theme] || themes.dreamy;
   const value = {
     theme,
-    colors,
+    themeName: currentTheme.name,
+    colors: currentTheme.colors,
+    gradients: currentTheme.gradients,
     spacing,
-    shadow,
+    shadow: getShadow(theme),
     borderRadius,
-    gradients,
-    toggleTheme,
+    changeTheme,
+    availableThemes: Object.keys(themes).map(key => ({
+      key,
+      name: themes[key].name
+    })),
     loading
   };
 
