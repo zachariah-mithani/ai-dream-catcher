@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { register } from '../api';
 import { Screen, Card, Text, Input, Button, Subtle } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
-import CloudLogo from '../components/CloudLogo';
+import DreamCatcherLogo from '../components/DreamCatcherLogo';
 
 export default function RegisterScreen({ navigation }) {
   const { colors, spacing } = useTheme();
@@ -40,7 +40,7 @@ export default function RegisterScreen({ navigation }) {
     <Screen style={{ justifyContent: 'center', padding: 24 }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
         <View style={{ alignItems: 'center', marginBottom: spacing(4) }}>
-          <CloudLogo size={100} />
+          <DreamCatcherLogo size={100} />
           <Text style={{ 
             fontSize: 28, 
             fontWeight: '800', 

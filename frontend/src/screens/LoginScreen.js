@@ -3,7 +3,7 @@ import { View, Alert, TouchableOpacity } from 'react-native';
 import { login } from '../api';
 import { Screen, Card, Text, Input, Button, Subtle } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
-import CloudLogo from '../components/CloudLogo';
+import DreamCatcherLogo from '../components/DreamCatcherLogo';
 
 export default function LoginScreen({ navigation }) {
   const { colors, spacing } = useTheme();
@@ -27,7 +27,7 @@ export default function LoginScreen({ navigation }) {
   return (
     <Screen style={{ justifyContent: 'center', padding: 24 }}>
       <View style={{ alignItems: 'center', marginBottom: spacing(4) }}>
-        <CloudLogo size={100} />
+        <DreamCatcherLogo size={100} />
         <Text style={{ 
           fontSize: 28, 
           fontWeight: '800', 
