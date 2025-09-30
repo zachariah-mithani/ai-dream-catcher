@@ -30,7 +30,7 @@ export const themes = {
     }
   },
   minimalistLight: {
-    name: 'Minimalist Light',
+    name: 'Light',
     colors: {
       background: '#ffffff', // Pure white
       card: '#ffffff', // Pure white
@@ -46,7 +46,10 @@ export const themes = {
       warning: '#ff8800', // Orange
       input: '#fafafa',
       switchTrack: { false: '#e0e0e0', true: '#000000' },
-      switchThumb: '#ffffff'
+      switchThumb: '#ffffff',
+      // Better contrast for buttons
+      buttonSecondary: '#000000', // Black for unselected buttons
+      buttonSecondaryText: '#ffffff' // White text for better contrast
     },
     gradients: {
       background: ['#ffffff', '#fafafa'], // White to very light gray
@@ -55,7 +58,7 @@ export const themes = {
     }
   },
   minimalistBlack: {
-    name: 'Minimalist Black',
+    name: 'Dark',
     colors: {
       background: '#000000', // Pure black
       card: '#000000', // Pure black
@@ -71,7 +74,10 @@ export const themes = {
       warning: '#ffaa66', // Light orange
       input: '#111111',
       switchTrack: { false: '#333333', true: '#ffffff' },
-      switchThumb: '#000000'
+      switchThumb: '#000000',
+      // Better contrast for buttons
+      buttonSecondary: '#ffffff', // White for unselected buttons
+      buttonSecondaryText: '#000000' // Black text for better contrast
     },
     gradients: {
       background: ['#000000', '#111111'], // Black to very dark gray
