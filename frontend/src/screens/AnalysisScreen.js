@@ -136,7 +136,7 @@ export default function DreamLogScreen({ navigation }) {
                 marginRight: 6, 
                 marginBottom: 4 
               }}>
-                <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '600' }}>{item.mood}</Text>
+                  <Text style={{ color: colors.primaryText, fontSize: 10, fontWeight: '600' }}>{item.mood}</Text>
               </View>
             )}
             {item.moods && (() => {
@@ -151,7 +151,7 @@ export default function DreamLogScreen({ navigation }) {
                     marginRight: 6, 
                     marginBottom: 4 
                   }}>
-                    <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '600' }}>{mood}</Text>
+                    <Text style={{ color: colors.primaryText, fontSize: 10, fontWeight: '600' }}>{mood}</Text>
                   </View>
                 )) : null;
               } catch (e) {
@@ -170,7 +170,7 @@ export default function DreamLogScreen({ navigation }) {
                     marginRight: 6, 
                     marginBottom: 4 
                   }}>
-                    <Text style={{ color: '#ffffff', fontSize: 10, fontWeight: '600' }}>{tag}</Text>
+                    <Text style={{ color: colors.primaryText, fontSize: 10, fontWeight: '600' }}>{tag}</Text>
                   </View>
                 )) : null;
               } catch (e) {
