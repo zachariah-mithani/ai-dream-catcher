@@ -1,16 +1,8 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Path, Ellipse } from 'react-native-svg';
 
 export default function DreamCatcherLogo({ size = 80, style }) {
-  const centerX = size / 2;
-  const centerY = size / 2;
-  const radius = size * 0.35;
-  const featherLength = size * 0.15;
-  const featherWidth = size * 0.08;
-  const beadSize = size * 0.04;
-
   return (
     <View style={[{ width: size, height: size }, style]}>
       <LinearGradient
@@ -28,89 +20,50 @@ export default function DreamCatcherLogo({ size = 80, style }) {
           elevation: 10
         }}
       >
-        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          {/* Main hoop */}
-          <Circle
-            cx={centerX}
-            cy={centerY}
-            r={radius}
-            stroke="#ffffff"
-            strokeWidth="3"
-            fill="none"
-          />
-          
-          {/* Inner web pattern - 8-pointed star */}
-          <Path
-            d={`M ${centerX} ${centerY - radius * 0.7} 
-                L ${centerX + radius * 0.5} ${centerY - radius * 0.35}
-                L ${centerX + radius * 0.7} ${centerY}
-                L ${centerX + radius * 0.5} ${centerY + radius * 0.35}
-                L ${centerX} ${centerY + radius * 0.7}
-                L ${centerX - radius * 0.5} ${centerY + radius * 0.35}
-                L ${centerX - radius * 0.7} ${centerY}
-                L ${centerX - radius * 0.5} ${centerY - radius * 0.35}
-                Z`}
-            fill="#ffffff"
-            stroke="#ffffff"
-            strokeWidth="1"
-          />
-          
-          {/* Center circle */}
-          <Circle
-            cx={centerX}
-            cy={centerY}
-            r={radius * 0.15}
-            fill="#ffffff"
-          />
+        {/* Simple dream catcher representation using text and shapes */}
+        <View style={{
+          width: size * 0.7,
+          height: size * 0.7,
+          justifyContent: 'center',
+          alignItems: 'center',
+          position: 'relative'
+        }}>
+          {/* Main hoop - using a circular border */}
+          <View style={{
+            width: size * 0.6,
+            height: size * 0.6,
+            borderRadius: size * 0.3,
+            borderWidth: 3,
+            borderColor: '#ffffff',
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative'
+          }}>
+            {/* Inner web pattern - using text symbols */}
+            <Text style={{
+              fontSize: size * 0.3,
+              color: '#ffffff',
+              textAlign: 'center',
+              fontWeight: 'bold'
+            }}>
+              ✨
+            </Text>
+          </View>
           
           {/* Dangling feathers */}
-          {/* Left feather */}
-          <Circle
-            cx={centerX - radius * 0.3}
-            cy={centerY + radius * 0.8}
-            r={beadSize}
-            fill="#ffffff"
-          />
-          <Ellipse
-            cx={centerX - radius * 0.3}
-            cy={centerY + radius * 0.8 + featherLength * 0.5}
-            rx={featherWidth * 0.5}
-            ry={featherLength * 0.8}
-            fill="#ffffff"
-            transform={`rotate(-15 ${centerX - radius * 0.3} ${centerY + radius * 0.8 + featherLength * 0.5})`}
-          />
-          
-          {/* Center feather */}
-          <Circle
-            cx={centerX}
-            cy={centerY + radius * 0.8}
-            r={beadSize}
-            fill="#ffffff"
-          />
-          <Ellipse
-            cx={centerX}
-            cy={centerY + radius * 0.8 + featherLength * 0.5}
-            rx={featherWidth * 0.5}
-            ry={featherLength * 0.8}
-            fill="#ffffff"
-          />
-          
-          {/* Right feather */}
-          <Circle
-            cx={centerX + radius * 0.3}
-            cy={centerY + radius * 0.8}
-            r={beadSize}
-            fill="#ffffff"
-          />
-          <Ellipse
-            cx={centerX + radius * 0.3}
-            cy={centerY + radius * 0.8 + featherLength * 0.5}
-            rx={featherWidth * 0.5}
-            ry={featherLength * 0.8}
-            fill="#ffffff"
-            transform={`rotate(15 ${centerX + radius * 0.3} ${centerY + radius * 0.8 + featherLength * 0.5})`}
-          />
-        </Svg>
+          <View style={{
+            position: 'absolute',
+            bottom: -size * 0.1,
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            width: size * 0.5,
+            alignItems: 'flex-end'
+          }}>
+            <Text style={{ fontSize: size * 0.15, color: '#ffffff' }}>🪶</Text>
+            <Text style={{ fontSize: size * 0.15, color: '#ffffff' }}>🪶</Text>
+            <Text style={{ fontSize: size * 0.15, color: '#ffffff' }}>🪶</Text>
+          </View>
+        </View>
       </LinearGradient>
     </View>
   );
