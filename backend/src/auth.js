@@ -1,15 +1,41 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from './database.js';
+import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is required');
 }
-const JWT_EXPIRES_IN = '30d';
+const JWT_EXPIRES_IN = '15m';
+const REFRESH_EXPIRES_DAYS = 30;
 
 export function signToken(user) {
   return jwt.sign({ sub: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
+
+export async function issueRefreshToken(userId) {
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + REFRESH_EXPIRES_DAYS * 24 * 60 * 60 * 1000);
+  await db.prepare('INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)').run(
+    userId,
+    token,
+    db.isPostgres ? expiresAt.toISOString().replace('T', ' ').replace('Z', '') : expiresAt.toISOString()
+  );
+  return token;
+}
+
+export async function rotateRefreshToken(oldToken) {
+  const row = await db.prepare('SELECT id, user_id, expires_at, revoked FROM refresh_tokens WHERE token = ?').get(oldToken);
+  if (!row) throw new Error('Invalid refresh token');
+  const now = Date.now();
+  const exp = new Date(row.expires_at).getTime();
+  if (row.revoked || isNaN(exp) || exp < now) throw new Error('Expired refresh token');
+  await db.prepare('UPDATE refresh_tokens SET revoked = ? WHERE id = ?').run(true, row.id);
+  const newToken = await issueRefreshToken(row.user_id);
+  const user = await db.prepare('SELECT id, email FROM users WHERE id = ?').get(row.user_id);
+  const access = signToken(user);
+  return { access, refresh: newToken };
 }
 
 export async function requireAuth(req, res, next) {
@@ -58,6 +84,7 @@ export async function createUser(email, password, profile = {}) {
   return { 
     id: info.lastInsertRowid, 
     email,
+    email_verified: false,
     first_name: profile.first_name,
     last_name: profile.last_name,
     username: profile.username,
@@ -78,6 +105,7 @@ export async function authenticate(email, password) {
   return { 
     id: user.id, 
     email: user.email,
+    email_verified: Boolean(user.email_verified),
     first_name: user.first_name,
     last_name: user.last_name,
     username: user.username,
@@ -91,7 +119,7 @@ export async function authenticate(email, password) {
 }
 
 export async function getUserProfile(userId) {
-  const user = await db.prepare('SELECT id, email, first_name, last_name, username, theme_preference, bedtime_hour, bedtime_minute, wakeup_hour, wakeup_minute, notifications_enabled, created_at FROM users WHERE id = ?').get(userId);
+  const user = await db.prepare('SELECT id, email, email_verified, first_name, last_name, username, theme_preference, bedtime_hour, bedtime_minute, wakeup_hour, wakeup_minute, notifications_enabled, created_at FROM users WHERE id = ?').get(userId);
   if (!user) throw new Error('User not found');
   return {
     ...user,
@@ -124,6 +152,10 @@ export async function updateUserProfile(userId, updates) {
   if (updates.username !== undefined) {
     fields.push('username = ?');
     values.push(updates.username);
+  }
+  if (updates.email_verified !== undefined) {
+    fields.push('email_verified = ?');
+    values.push(!!updates.email_verified);
   }
   if (updates.theme_preference !== undefined) {
     fields.push('theme_preference = ?');
@@ -176,6 +208,56 @@ export async function changeUserPassword(userId, currentPassword, newPassword) {
   if (!ok) throw new Error('Current password is incorrect');
   const newHash = bcrypt.hashSync(newPassword, 10);
   await db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newHash, userId);
+  return true;
+}
+
+
+// Forgot password helpers
+export async function createPasswordResetToken(email) {
+  const user = await db.prepare('SELECT id, email FROM users WHERE email = ?').get(email);
+  if (!user) return null; // Do not reveal account existence
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 30); // 30 minutes
+  await db.prepare('INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)').run(
+    user.id,
+    token,
+    db.isPostgres ? expiresAt.toISOString().replace('T', ' ').replace('Z', '') : expiresAt.toISOString()
+  );
+  return { token };
+}
+
+// Email verification helpers
+export async function createEmailVerificationToken(userId) {
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
+  await db.prepare('INSERT INTO email_verifications (user_id, token, expires_at) VALUES (?, ?, ?)').run(
+    userId,
+    token,
+    db.isPostgres ? expiresAt.toISOString().replace('T', ' ').replace('Z', '') : expiresAt.toISOString()
+  );
+  return { token };
+}
+
+export async function verifyEmailWithToken(token) {
+  const row = await db.prepare('SELECT id, user_id, expires_at, used FROM email_verifications WHERE token = ?').get(token);
+  if (!row) throw new Error('Invalid or expired token');
+  const now = Date.now();
+  const exp = new Date(row.expires_at).getTime();
+  if (row.used || isNaN(exp) || exp < now) throw new Error('Invalid or expired token');
+  await db.prepare('UPDATE users SET email_verified = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(true, row.user_id);
+  await db.prepare('UPDATE email_verifications SET used = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(true, row.id);
+  return true;
+}
+
+export async function resetPasswordWithToken(token, newPassword) {
+  const reset = await db.prepare('SELECT id, user_id, token, expires_at, used FROM password_resets WHERE token = ?').get(token);
+  if (!reset) throw new Error('Invalid or expired token');
+  const now = Date.now();
+  const expires = new Date(reset.expires_at).getTime();
+  if (reset.used || isNaN(expires) || expires < now) throw new Error('Invalid or expired token');
+  const newHash = bcrypt.hashSync(newPassword, 10);
+  await db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newHash, reset.user_id);
+  await db.prepare('UPDATE password_resets SET used = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(true, reset.id);
   return true;
 }
 

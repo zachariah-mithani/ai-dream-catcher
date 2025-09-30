@@ -23,10 +23,13 @@ import TermsScreen from './screens/legal/TermsScreen';
 import PrivacyScreen from './screens/legal/PrivacyScreen';
 import AboutScreen from './screens/legal/AboutScreen';
 import ChangePasswordScreen from './screens/ChangePasswordScreen';
+import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
+import ResetPasswordScreen from './screens/ResetPasswordScreen';
 import TabsHomeScreen from './screens/TabsHomeScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { api } from './api';
+import { onAuthChanged } from './utils/events';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -131,12 +134,8 @@ function AppContent() {
 
   // Listen for authentication state changes
   useEffect(() => {
-    const handleAppStateChange = () => {
-      checkAuth();
-    };
-    
-    // Only check auth state when app comes to foreground, not continuously
-    // Remove the frequent interval that was causing theme resets
+    const unsubscribe = onAuthChanged(() => checkAuth());
+    return unsubscribe;
   }, []);
 
   if (authed === null) return null;
@@ -154,6 +153,8 @@ function AppContent() {
             <>
               <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'AI Dream Catcher' }} />
               <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create Account' }} />
+              <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Forgot Password' }} />
+              <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: 'Reset Password' }} />
             </>
           ) : showThemeSelection ? (
             <Stack.Screen 

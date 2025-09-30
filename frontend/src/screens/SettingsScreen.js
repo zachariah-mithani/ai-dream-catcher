@@ -7,6 +7,7 @@ import CollapsibleTimePicker from '../components/CollapsibleTimePicker';
 import TermsScreen from './legal/TermsScreen';
 import PrivacyScreen from './legal/PrivacyScreen';
 import AboutScreen from './legal/AboutScreen';
+import { rescheduleAllReminders } from '../utils/notifications';
 
 export default function SettingsScreen({ navigation }) {
   const { theme, themeName, colors, spacing, changeTheme, availableThemes } = useTheme();
@@ -67,6 +68,18 @@ export default function SettingsScreen({ navigation }) {
       
       const updated = await updateProfile(updates);
       setProfile(prev => ({ ...prev, ...updated }));
+      // Reschedule notifications after successful save
+      try {
+        await rescheduleAllReminders({
+          notifications_enabled: updated.notifications_enabled ?? profile.notifications_enabled,
+          bedtime_hour: updated.bedtime_hour ?? profile.bedtime_hour,
+          bedtime_minute: updated.bedtime_minute ?? profile.bedtime_minute,
+          wakeup_hour: updated.wakeup_hour ?? profile.wakeup_hour,
+          wakeup_minute: updated.wakeup_minute ?? profile.wakeup_minute,
+        });
+      } catch (e) {
+        console.log('Failed to reschedule notifications on save:', e.message);
+      }
       Alert.alert('Success', 'Profile updated successfully');
     } catch (e) {
       console.log('Failed to update profile:', e.message);
@@ -124,7 +137,20 @@ export default function SettingsScreen({ navigation }) {
     }));
     
     try {
-      await updateProfile({ notifications_enabled: value });
+      const updated = await updateProfile({ notifications_enabled: value });
+      // Reflect any server canonical values
+      setProfile(prev => ({ ...prev, ...updated }));
+      try {
+        await rescheduleAllReminders({
+          notifications_enabled: updated.notifications_enabled ?? value,
+          bedtime_hour: updated.bedtime_hour ?? profile.bedtime_hour,
+          bedtime_minute: updated.bedtime_minute ?? profile.bedtime_minute,
+          wakeup_hour: updated.wakeup_hour ?? profile.wakeup_hour,
+          wakeup_minute: updated.wakeup_minute ?? profile.wakeup_minute,
+        });
+      } catch (e) {
+        console.log('Failed to reschedule after toggle:', e.message);
+      }
     } catch (e) {
       console.log('Failed to save notification preference:', e.message);
       setProfile(prev => ({
@@ -149,10 +175,7 @@ export default function SettingsScreen({ navigation }) {
         <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800', marginBottom: 16 }}>
           Settings
         </Text>
-        <Card style={{ marginBottom: spacing(2) }}>
-          <Text style={{ color: colors.text, fontSize: 16, fontWeight: '700', marginBottom: spacing(1) }}>Security</Text>
-          <Button title="Change Password" onPress={() => navigation.navigate('ChangePassword')} />
-        </Card>
+        {/* Move change password near bottom; remove this top Security card */}
 
         <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: spacing(2) }}>
@@ -176,6 +199,7 @@ export default function SettingsScreen({ navigation }) {
           <Input
             placeholder="Username"
             value={profile.username || ''}
+            autoCapitalize='none'
             onChangeText={(text) => setProfile(prev => ({ ...prev, username: text }))}
             style={{ marginBottom: spacing(2) }}
           />
@@ -221,59 +245,7 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </Card>
 
-        <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
-          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: spacing(2) }}>
-            Sleep Schedule
-          </Text>
-          
-          <CollapsibleTimePicker
-            label="Bedtime"
-            hour={profile.bedtime_hour}
-            minute={profile.bedtime_minute}
-            onHourChange={async (hour) => {
-              setProfile(prev => ({ ...prev, bedtime_hour: hour }));
-              try {
-                await updateProfile({ bedtime_hour: hour });
-              } catch (e) {
-                console.log('Failed to save bedtime hour:', e.message);
-              }
-            }}
-            onMinuteChange={async (minute) => {
-              setProfile(prev => ({ ...prev, bedtime_minute: minute }));
-              try {
-                await updateProfile({ bedtime_minute: minute });
-              } catch (e) {
-                console.log('Failed to save bedtime minute:', e.message);
-              }
-            }}
-          />
-          
-          <CollapsibleTimePicker
-            label="Wake-up Time"
-            hour={profile.wakeup_hour}
-            minute={profile.wakeup_minute}
-            onHourChange={async (hour) => {
-              setProfile(prev => ({ ...prev, wakeup_hour: hour }));
-              try {
-                await updateProfile({ wakeup_hour: hour });
-              } catch (e) {
-                console.log('Failed to save wakeup hour:', e.message);
-              }
-            }}
-            onMinuteChange={async (minute) => {
-              setProfile(prev => ({ ...prev, wakeup_minute: minute }));
-              try {
-                await updateProfile({ wakeup_minute: minute });
-              } catch (e) {
-                console.log('Failed to save wakeup minute:', e.message);
-              }
-            }}
-          />
-          
-          <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: spacing(1) }}>
-            Notifications will be sent at your wake-up time to remind you to log your dreams.
-          </Text>
-        </Card>
+        {/* Notifications + inline sleep schedule */}
 
         <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: spacing(2) }}>
@@ -299,6 +271,88 @@ export default function SettingsScreen({ navigation }) {
               thumbColor={colors.switchThumb}
             />
           </View>
+
+          {profile.notifications_enabled && (
+            <View>
+              <CollapsibleTimePicker
+                label="Bedtime"
+                hour={profile.bedtime_hour}
+                minute={profile.bedtime_minute}
+                onHourChange={async (hour) => {
+                  setProfile(prev => ({ ...prev, bedtime_hour: hour }));
+                  try {
+                    const updated = await updateProfile({ bedtime_hour: hour });
+                    setProfile(prev => ({ ...prev, ...updated }));
+                    await rescheduleAllReminders({
+                      notifications_enabled: updated.notifications_enabled ?? profile.notifications_enabled,
+                      bedtime_hour: updated.bedtime_hour ?? hour,
+                      bedtime_minute: updated.bedtime_minute ?? profile.bedtime_minute,
+                      wakeup_hour: updated.wakeup_hour ?? profile.wakeup_hour,
+                      wakeup_minute: updated.wakeup_minute ?? profile.wakeup_minute,
+                    });
+                  } catch (e) {
+                    console.log('Failed to save bedtime hour:', e.message);
+                  }
+                }}
+                onMinuteChange={async (minute) => {
+                  setProfile(prev => ({ ...prev, bedtime_minute: minute }));
+                  try {
+                    const updated = await updateProfile({ bedtime_minute: minute });
+                    setProfile(prev => ({ ...prev, ...updated }));
+                    await rescheduleAllReminders({
+                      notifications_enabled: updated.notifications_enabled ?? profile.notifications_enabled,
+                      bedtime_hour: updated.bedtime_hour ?? profile.bedtime_hour,
+                      bedtime_minute: updated.bedtime_minute ?? minute,
+                      wakeup_hour: updated.wakeup_hour ?? profile.wakeup_hour,
+                      wakeup_minute: updated.wakeup_minute ?? profile.wakeup_minute,
+                    });
+                  } catch (e) {
+                    console.log('Failed to save bedtime minute:', e.message);
+                  }
+                }}
+              />
+              <CollapsibleTimePicker
+                label="Wake-up Time"
+                hour={profile.wakeup_hour}
+                minute={profile.wakeup_minute}
+                onHourChange={async (hour) => {
+                  setProfile(prev => ({ ...prev, wakeup_hour: hour }));
+                  try {
+                    const updated = await updateProfile({ wakeup_hour: hour });
+                    setProfile(prev => ({ ...prev, ...updated }));
+                    await rescheduleAllReminders({
+                      notifications_enabled: updated.notifications_enabled ?? profile.notifications_enabled,
+                      bedtime_hour: updated.bedtime_hour ?? profile.bedtime_hour,
+                      bedtime_minute: updated.bedtime_minute ?? profile.bedtime_minute,
+                      wakeup_hour: updated.wakeup_hour ?? hour,
+                      wakeup_minute: updated.wakeup_minute ?? profile.wakeup_minute,
+                    });
+                  } catch (e) {
+                    console.log('Failed to save wakeup hour:', e.message);
+                  }
+                }}
+                onMinuteChange={async (minute) => {
+                  setProfile(prev => ({ ...prev, wakeup_minute: minute }));
+                  try {
+                    const updated = await updateProfile({ wakeup_minute: minute });
+                    setProfile(prev => ({ ...prev, ...updated }));
+                    await rescheduleAllReminders({
+                      notifications_enabled: updated.notifications_enabled ?? profile.notifications_enabled,
+                      bedtime_hour: updated.bedtime_hour ?? profile.bedtime_hour,
+                      bedtime_minute: updated.bedtime_minute ?? profile.bedtime_minute,
+                      wakeup_hour: updated.wakeup_hour ?? profile.wakeup_hour,
+                      wakeup_minute: updated.wakeup_minute ?? minute,
+                    });
+                  } catch (e) {
+                    console.log('Failed to save wakeup minute:', e.message);
+                  }
+                }}
+              />
+              <Text style={{ color: colors.textSecondary, fontSize: 12, marginTop: spacing(1) }}>
+                Notifications will be sent at your wake-up time to remind you to log your dreams.
+              </Text>
+            </View>
+          )}
         </Card>
 
             <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
@@ -309,6 +363,13 @@ export default function SettingsScreen({ navigation }) {
                 <Button title="About" onPress={() => navigation.navigate('About')} style={{ flex: 1 }} />
               </View>
             </Card>
+
+        <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: spacing(2) }}>
+            Security
+          </Text>
+          <Button title="Change Password" onPress={() => navigation.navigate('ChangePassword')} />
+        </Card>
 
         <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: spacing(2) }}>

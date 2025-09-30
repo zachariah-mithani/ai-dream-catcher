@@ -1,6 +1,7 @@
 import axios from 'axios';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { emitAuthChanged } from './utils/events';
 
 const API_URL = Constants?.expoConfig?.extra?.API_URL || 'http://localhost:4000';
 
@@ -15,25 +16,50 @@ api.interceptors.request.use(async (config) => {
 export async function login(email, password) {
   const { data } = await api.post('/auth/login', { email, password });
   await AsyncStorage.setItem('token', data.token);
+  if (data.refresh) await AsyncStorage.setItem('refresh', data.refresh);
   await AsyncStorage.setItem('user', JSON.stringify(data.user));
+  emitAuthChanged();
   return data.user;
 }
 
 export async function register(email, password, profile = {}) {
   const { data } = await api.post('/auth/register', { email, password, ...profile });
   await AsyncStorage.setItem('token', data.token);
+  if (data.refresh) await AsyncStorage.setItem('refresh', data.refresh);
   await AsyncStorage.setItem('user', JSON.stringify(data.user));
+  emitAuthChanged();
   return data.user;
 }
 
 export async function logout() {
   await AsyncStorage.removeItem('token');
+  await AsyncStorage.removeItem('refresh');
   await AsyncStorage.removeItem('user');
+  emitAuthChanged();
 }
 
 export async function getProfile() {
-  const { data } = await api.get('/auth/profile');
-  return data;
+  try {
+    const { data } = await api.get('/auth/profile');
+    return data;
+  } catch (e) {
+    // Attempt refresh on 401
+    if (e.response?.status === 401) {
+      const refresh = await AsyncStorage.getItem('refresh');
+      if (refresh) {
+        try {
+          const res = await api.post('/auth/refresh', { refresh });
+          if (res.data?.access && res.data?.refresh) {
+            await AsyncStorage.setItem('token', res.data.access);
+            await AsyncStorage.setItem('refresh', res.data.refresh);
+            const retry = await api.get('/auth/profile');
+            return retry.data;
+          }
+        } catch {}
+      }
+    }
+    throw e;
+  }
 }
 
 export async function updateProfile(updates) {
@@ -54,6 +80,16 @@ export async function changePassword(currentPassword, newPassword) {
     new_password: newPassword
   });
   return data;
+}
+
+export async function requestPasswordReset(email) {
+  const { data } = await api.post('/auth/forgot', { email });
+  return data; // { ok, token? }
+}
+
+export async function resetPassword(token, newPassword) {
+  const { data } = await api.post('/auth/reset', { token, new_password: newPassword });
+  return data; // { ok: true }
 }
 
 export async function listDreams(params = {}) {

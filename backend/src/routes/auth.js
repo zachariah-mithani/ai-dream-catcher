@@ -1,6 +1,6 @@
 import express from 'express';
 import { z } from 'zod';
-import { authenticate, createUser, signToken, getUserProfile, updateUserProfile, deleteUserAccount, requireAuth, changeUserPassword } from '../auth.js';
+import { authenticate, createUser, signToken, getUserProfile, updateUserProfile, deleteUserAccount, requireAuth, changeUserPassword, createPasswordResetToken, resetPasswordWithToken, issueRefreshToken, rotateRefreshToken, createEmailVerificationToken, verifyEmailWithToken } from '../auth.js';
 
 export const authRouter = express.Router();
 
@@ -10,7 +10,7 @@ const registerSchema = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   username: z.string().min(3).max(20).optional(),
-  theme_preference: z.enum(['light', 'dark']).optional()
+  theme_preference: z.enum(['dreamy', 'light', 'dark']).optional()
 });
 
 const loginSchema = z.object({
@@ -22,7 +22,7 @@ const profileUpdateSchema = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   username: z.string().min(3).max(20).optional(),
-  theme_preference: z.enum(['light', 'dark']).optional(),
+  theme_preference: z.enum(['dreamy', 'light', 'dark']).optional(),
   bedtime_hour: z.number().min(0).max(23).optional(),
   bedtime_minute: z.number().min(0).max(59).optional(),
   wakeup_hour: z.number().min(0).max(23).optional(),
@@ -36,8 +36,11 @@ authRouter.post('/register', async (req, res) => {
   const { email, password, ...profile } = parse.data;
   try {
     const user = await createUser(email, password, profile);
-    const token = signToken(user);
-    res.json({ token, user });
+    const access = signToken(user);
+    const refresh = await issueRefreshToken(user.id);
+    // Create email verification token (to be emailed). Return for testing.
+    const verify = await createEmailVerificationToken(user.id);
+    res.json({ token: access, refresh, user, verify_token: verify.token });
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
@@ -49,12 +52,39 @@ authRouter.post('/login', async (req, res) => {
   const { email, password } = parse.data;
   try {
     const user = await authenticate(email, password);
-    const token = signToken(user);
-    res.json({ token, user });
+    const access = signToken(user);
+    const refresh = await issueRefreshToken(user.id);
+    res.json({ token: access, refresh, user });
   } catch (e) {
     res.status(401).json({ error: e.message });
   }
 });
+// Refresh access token
+const refreshSchema = z.object({ refresh: z.string().min(10) });
+authRouter.post('/refresh', async (req, res) => {
+  const parse = refreshSchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
+  try {
+    const result = await rotateRefreshToken(parse.data.refresh);
+    res.json(result);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// Email verification endpoint (token via email normally)
+const verifySchema = z.object({ token: z.string().min(10) });
+authRouter.post('/verify', async (req, res) => {
+  const parse = verifySchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
+  try {
+    await verifyEmailWithToken(parse.data.token);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 
 authRouter.get('/profile', requireAuth, async (req, res) => {
   try {
@@ -103,4 +133,31 @@ authRouter.post('/change-password', requireAuth, async (req, res) => {
   }
 });
 
+
+// Forgot password request
+const forgotSchema = z.object({ email: z.string().email() });
+authRouter.post('/forgot', async (req, res) => {
+  const parse = forgotSchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
+  try {
+    const result = await createPasswordResetToken(parse.data.email);
+    // In a real app, email the token link. For now return token for testing only.
+    res.json({ ok: true, token: result?.token || null });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to create reset token' });
+  }
+});
+
+// Reset password using token
+const resetSchema = z.object({ token: z.string().min(10), new_password: z.string().min(6) });
+authRouter.post('/reset', async (req, res) => {
+  const parse = resetSchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
+  try {
+    await resetPasswordWithToken(parse.data.token, parse.data.new_password);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
 
