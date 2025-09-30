@@ -1,34 +1,38 @@
 import React from 'react';
 import { View, Text as RNText, TextInput as RNInput, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../contexts/ThemeContext';
 
 export function Screen({ children, style }) {
   const insets = useSafeAreaInsets();
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, gradients } = useTheme();
   return (
-    <View style={[
-      { 
-        flex: 1, 
-        backgroundColor: colors.background, 
-        paddingTop: insets.top + 16, 
-        paddingBottom: insets.bottom + 16 
-      }, 
-      style
-    ]}>
+    <LinearGradient
+      colors={gradients.background}
+      style={[
+        { 
+          flex: 1, 
+          paddingTop: insets.top + 16, 
+          paddingBottom: insets.bottom + 16 
+        }, 
+        style
+      ]}
+    >
       {children}
-    </View>
+    </LinearGradient>
   );
 }
 
 export function Card({ children, style }) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, borderRadius, shadow } = useTheme();
   return (
     <View style={[
       { 
         backgroundColor: colors.card, 
-        borderRadius: 16, 
-        padding: spacing(2),
+        borderRadius: borderRadius.large, 
+        padding: spacing(3),
+        ...shadow,
         borderWidth: 1,
         borderColor: colors.border
       }, 
@@ -58,19 +62,20 @@ export function Subtle({ children, style }) {
 }
 
 export function Input(props) {
-  const { colors } = useTheme();
+  const { colors, borderRadius } = useTheme();
   return (
     <RNInput 
       {...props} 
-      placeholderTextColor={colors.textSecondary} 
+      placeholderTextColor={colors.subtext} 
       style={[
         { 
-          backgroundColor: colors.input, 
+          backgroundColor: colors.surface, 
           color: colors.text, 
-          padding: 14, 
-          borderRadius: 12, 
-          borderWidth: 1, 
-          borderColor: colors.border 
+          padding: 16, 
+          borderRadius: borderRadius.medium, 
+          borderWidth: 2, 
+          borderColor: colors.border,
+          fontSize: 16
         }, 
         props.style
       ]} 
@@ -78,24 +83,31 @@ export function Input(props) {
   );
 }
 
-export function Button({ title, onPress, style, kind = 'primary' }) {
-  const { colors } = useTheme();
-  const palette = kind === 'danger' ? { bg: colors.error, text: '#fff' } : { bg: colors.primary, text: '#fff' };
+export function Button({ title, onPress, style, kind = 'primary', disabled = false }) {
+  const { colors, borderRadius, gradients, shadow } = useTheme();
+  const palette = kind === 'danger' ? { bg: colors.danger, text: '#fff' } : { bg: colors.primary, text: '#fff' };
+  
   return (
     <TouchableOpacity 
       onPress={onPress} 
+      disabled={disabled}
       style={[
         { 
-          backgroundColor: palette.bg, 
-          paddingVertical: 14, 
-          paddingHorizontal: 18, 
-          borderRadius: 12, 
-          alignItems: 'center' 
+          backgroundColor: disabled ? colors.border : palette.bg, 
+          paddingVertical: 16, 
+          paddingHorizontal: 24, 
+          borderRadius: borderRadius.medium, 
+          alignItems: 'center',
+          ...shadow
         }, 
         style
       ]}
     >
-      <RNText style={{ color: palette.text, fontWeight: '800' }}>
+      <RNText style={{ 
+        color: disabled ? colors.subtext : palette.text, 
+        fontWeight: '800',
+        fontSize: 16
+      }}>
         {title}
       </RNText>
     </TouchableOpacity>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getProfile, updateProfile } from '../api';
+import { colors, spacing, shadow, borderRadius, gradients } from '../ui/Theme';
 
 const ThemeContext = createContext();
 
@@ -54,43 +55,13 @@ export const ThemeProvider = ({ children }) => {
     }
   };
 
-  const colors = {
-    light: {
-      background: '#ffffff',
-      surface: '#f8fafc',
-      card: '#ffffff',
-      text: '#1e293b',
-      textSecondary: '#64748b',
-      primary: '#22c55e',
-      accent: '#3b82f6',
-      error: '#ef4444',
-      border: '#e2e8f0',
-      input: '#f1f5f9',
-      switchTrack: { false: '#cbd5e1', true: '#22c55e' },
-      switchThumb: '#ffffff'
-    },
-    dark: {
-      background: '#0b1220',
-      surface: '#0f172a',
-      card: '#1f2937',
-      text: '#ffffff',
-      textSecondary: '#94a3b8',
-      primary: '#22c55e',
-      accent: '#3b82f6',
-      error: '#ef4444',
-      border: '#374151',
-      input: '#374151',
-      switchTrack: { false: '#374151', true: '#22c55e' },
-      switchThumb: '#ffffff'
-    }
-  };
-
-  const spacing = (multiplier) => multiplier * 8;
-
   const value = {
     theme,
-    colors: colors[theme],
+    colors,
     spacing,
+    shadow,
+    borderRadius,
+    gradients,
     toggleTheme,
     loading
   };

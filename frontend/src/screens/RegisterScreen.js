@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { View, Alert, ScrollView, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { register } from '../api';
-import { Screen, Card, Text, Input, Button } from '../ui/components';
+import { Screen, Card, Text, Input, Button, Subtle } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
+import CloudLogo from '../components/CloudLogo';
 
 export default function RegisterScreen({ navigation }) {
   const { colors, spacing } = useTheme();
@@ -38,8 +39,28 @@ export default function RegisterScreen({ navigation }) {
   return (
     <Screen style={{ justifyContent: 'center', padding: 24 }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
+        <View style={{ alignItems: 'center', marginBottom: spacing(4) }}>
+          <CloudLogo size={100} />
+          <Text style={{ 
+            fontSize: 28, 
+            fontWeight: '800', 
+            marginTop: spacing(2),
+            color: colors.text,
+            textAlign: 'center'
+          }}>
+            AI Dream Catcher
+          </Text>
+          <Subtle style={{ 
+            fontSize: 16, 
+            marginTop: spacing(1),
+            textAlign: 'center'
+          }}>
+            Start your dream journey today
+          </Subtle>
+        </View>
+        
         <Card>
-          <Text style={{ fontSize: 24, fontWeight: '800', marginBottom: 12 }}>Create account</Text>
+          <Text style={{ fontSize: 24, fontWeight: '800', marginBottom: 12, textAlign: 'center' }}>Create account</Text>
           
           <Input 
             placeholder="Email" 
