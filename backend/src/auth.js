@@ -84,7 +84,6 @@ export async function createUser(email, password, profile = {}) {
   return { 
     id: info.lastInsertRowid, 
     email,
-    email_verified: false,
     first_name: profile.first_name,
     last_name: profile.last_name,
     username: profile.username,
@@ -105,7 +104,6 @@ export async function authenticate(email, password) {
   return { 
     id: user.id, 
     email: user.email,
-    email_verified: Boolean(user.email_verified),
     first_name: user.first_name,
     last_name: user.last_name,
     username: user.username,
@@ -119,7 +117,7 @@ export async function authenticate(email, password) {
 }
 
 export async function getUserProfile(userId) {
-  const user = await db.prepare('SELECT id, email, email_verified, first_name, last_name, username, theme_preference, bedtime_hour, bedtime_minute, wakeup_hour, wakeup_minute, notifications_enabled, created_at FROM users WHERE id = ?').get(userId);
+  const user = await db.prepare('SELECT id, email, first_name, last_name, username, theme_preference, bedtime_hour, bedtime_minute, wakeup_hour, wakeup_minute, notifications_enabled, created_at FROM users WHERE id = ?').get(userId);
   if (!user) throw new Error('User not found');
   return {
     ...user,
