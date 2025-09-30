@@ -69,26 +69,26 @@ function AppContent() {
   
   const checkAuth = async () => {
     const token = await AsyncStorage.getItem('token');
-    const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
     
     if (!token) {
       setAuthed(false);
-      setShowOnboarding(!onboardingCompleted);
+      setShowOnboarding(false);
       return;
     }
     
     try {
       // Validate token by calling profile endpoint
       const response = await api.get('/auth/profile');
+      const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
       setAuthed(true);
-      setShowOnboarding(false);
+      setShowOnboarding(!onboardingCompleted);
     } catch (error) {
       console.log('Auth validation error:', error);
       // Token is invalid or network error, clear it
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
       setAuthed(false);
-      setShowOnboarding(!onboardingCompleted);
+      setShowOnboarding(false);
     }
   };
 
@@ -113,15 +113,6 @@ function AppContent() {
 
   if (authed === null) return null;
   
-  // Show onboarding for new users
-  if (showOnboarding) {
-    return (
-      <SafeAreaProvider>
-        <OnboardingScreen onComplete={handleOnboardingComplete} />
-      </SafeAreaProvider>
-    );
-  }
-  
   return (
     <SafeAreaProvider>
       <NavigationContainer>
@@ -136,6 +127,13 @@ function AppContent() {
               <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'AI Dream Catcher' }} />
               <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create Account' }} />
             </>
+          ) : showOnboarding ? (
+            <Stack.Screen 
+              name="Onboarding" 
+              options={{ headerShown: false }}
+            >
+              {() => <OnboardingScreen onComplete={handleOnboardingComplete} />}
+            </Stack.Screen>
           ) : (
             <>
               <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />

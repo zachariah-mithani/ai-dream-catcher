@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Alert, ScrollView, TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { register } from '../api';
 import { Screen, Card, Text, Input, Button } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
@@ -23,6 +24,8 @@ export default function RegisterScreen({ navigation }) {
         theme_preference: 'dark'
       };
       await register(email.trim(), password, profile);
+      // Clear onboarding flag so new users see the intro flow
+      await AsyncStorage.removeItem('onboarding_completed');
       // The App component will automatically re-render and show the authenticated stack
       // No need to navigate manually
     } catch (e) {
