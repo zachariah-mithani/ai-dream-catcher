@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, FlatList, Alert, TouchableOpacity } from 'react-native';
-import { Screen, Text, Card, Subtle, Button } from '../ui/components';
+import { Screen, Text, Card, Subtle, Button, Input } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { listDreams, deleteDream, getStatistics } from '../api';
 
@@ -9,6 +9,7 @@ export default function DreamLogScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [dreams, setDreams] = useState([]);
   const [q, setQ] = useState('');
+  const [searchText, setSearchText] = useState('');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -251,18 +252,38 @@ export default function DreamLogScreen({ navigation }) {
         </View>
         <Subtle style={{ marginBottom: spacing(2) }}>View and analyze your dreams</Subtle>
 
-        {/* Simple search input substitute */}
-        <Button
-          kind="secondary"
-          title={q ? `Clear search: ${q}` : 'Tap to search (find in title or content)'}
-          onPress={async () => {
-            const newQ = q ? '' : q; // placeholder - pressing clears current query
-            setQ(newQ);
-            setPage(1);
-            await loadDreams(true);
-          }}
-          style={{ marginBottom: spacing(2) }}
-        />
+        {/* Search */}
+        <Card style={{ marginBottom: spacing(2) }}>
+          <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 8 }}>Search Dreams</Text>
+          <Input
+            placeholder="Search in title or content..."
+            value={searchText}
+            onChangeText={setSearchText}
+            style={{ marginBottom: 8 }}
+          />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Button
+              title="Search"
+              onPress={async () => {
+                setQ(searchText.trim());
+                setPage(1);
+                await loadDreams(true, 1);
+              }}
+              style={{ flex: 1 }}
+            />
+            <Button
+              kind="secondary"
+              title="Clear"
+              onPress={async () => {
+                setSearchText('');
+                setQ('');
+                setPage(1);
+                await loadDreams(true, 1);
+              }}
+              style={{ flex: 1 }}
+            />
+          </View>
+        </Card>
         
         {renderStatisticsCards()}
       </View>
