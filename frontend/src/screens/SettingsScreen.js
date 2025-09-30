@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Alert, Switch } from 'react-native';
+import { View, ScrollView, Alert, Switch, Modal } from 'react-native';
 import { Screen, Text, Card, Input, Button, Subtle } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { getProfile, updateProfile, deleteAccount } from '../api';
@@ -25,6 +25,8 @@ export default function SettingsScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   useEffect(() => {
     loadProfile();
@@ -92,26 +94,13 @@ export default function SettingsScreen({ navigation }) {
   const onDeleteAccount = async () => {
     Alert.alert(
       'Delete Account',
-      'This will permanently delete your account and all your dream data. This action cannot be undone.\n\nAre you sure you want to continue?',
+      'This will permanently delete your account and all your dream data. This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Delete', 
+          text: 'Continue', 
           style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Final Confirmation',
-              'Type "DELETE" to confirm account deletion',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Confirm Delete',
-                  style: 'destructive',
-                  onPress: confirmDeleteAccount
-                }
-              ]
-            );
-          }
+          onPress: () => setShowDeleteConfirm(true)
         }
       ]
     );
@@ -214,6 +203,42 @@ export default function SettingsScreen({ navigation }) {
             }}
           />
         </Card>
+
+        {/* Delete confirmation modal with text input */}
+        <Modal
+          transparent
+          visible={showDeleteConfirm}
+          animationType="fade"
+          onRequestClose={() => setShowDeleteConfirm(false)}
+        >
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: spacing(2) }}>
+            <Card style={{ padding: spacing(3) }}>
+              <Text style={{ color: colors.text, fontSize: 20, fontWeight: '800', marginBottom: spacing(1) }}>Final Confirmation</Text>
+              <Subtle style={{ marginBottom: spacing(2) }}>Type "DELETE" to confirm account deletion</Subtle>
+              <Input
+                autoCapitalize='characters'
+                value={deleteConfirmText}
+                onChangeText={setDeleteConfirmText}
+                placeholder="Type DELETE"
+                style={{ marginBottom: spacing(2) }}
+              />
+              <View style={{ flexDirection: 'row', gap: spacing(1) }}>
+                <Button
+                  title="Cancel"
+                  onPress={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}
+                  style={{ flex: 1, backgroundColor: colors.buttonSecondary }}
+                />
+                <Button
+                  title="Confirm Delete"
+                  onPress={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); confirmDeleteAccount(); }}
+                  disabled={deleteConfirmText.trim() !== 'DELETE' || deletingAccount}
+                  kind="danger"
+                  style={{ flex: 1 }}
+                />
+              </View>
+            </Card>
+          </View>
+        </Modal>
 
         <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: spacing(2) }}>

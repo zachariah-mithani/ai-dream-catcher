@@ -48,8 +48,8 @@ export const themes = {
       switchTrack: { false: '#e0e0e0', true: '#000000' },
       switchThumb: '#ffffff',
       // Better contrast for buttons
-      buttonSecondary: '#000000', // Black for unselected buttons
-      buttonSecondaryText: '#ffffff' // White text for better contrast
+      buttonSecondary: '#e2e8f0', // Light gray for unselected buttons
+      buttonSecondaryText: '#111111' // Dark text for contrast
     },
     gradients: {
       background: ['#ffffff', '#fafafa'], // White to very light gray
@@ -76,8 +76,8 @@ export const themes = {
       switchTrack: { false: '#333333', true: '#ffffff' },
       switchThumb: '#000000',
       // Better contrast for buttons
-      buttonSecondary: '#ffffff', // White for unselected buttons
-      buttonSecondaryText: '#000000' // Black text for better contrast
+      buttonSecondary: '#333333', // Dark gray for unselected buttons
+      buttonSecondaryText: '#ffffff' // White text for contrast
     },
     gradients: {
       background: ['#000000', '#111111'], // Black to very dark gray

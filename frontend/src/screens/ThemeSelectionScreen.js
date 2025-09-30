@@ -69,19 +69,23 @@ export default function ThemeSelectionScreen({ onComplete }) {
           </Text>
           
           <View style={{ gap: spacing(2) }}>
-            {availableThemes.map((themeOption) => (
-              <Button
-                key={themeOption.key}
-                title={themeOption.name}
-                onPress={() => handleThemeSelect(themeOption.key)}
-                style={{
-                  backgroundColor: selectedTheme === themeOption.key ? colors.primary : (colors.buttonSecondary || colors.surface),
-                  borderWidth: selectedTheme === themeOption.key ? 2 : 1,
-                  borderColor: selectedTheme === themeOption.key ? colors.primary : colors.border,
-                  paddingVertical: spacing(2)
-                }}
-              />
-            ))}
+            {availableThemes.map((themeOption) => {
+              const isSelected = selectedTheme === themeOption.key;
+              return (
+                <Button
+                  key={themeOption.key}
+                  title={themeOption.name}
+                  onPress={() => handleThemeSelect(themeOption.key)}
+                  style={{
+                    backgroundColor: isSelected ? colors.primary : (colors.buttonSecondary || colors.surface),
+                    borderWidth: isSelected ? 2 : 1,
+                    borderColor: isSelected ? colors.primary : colors.border,
+                    paddingVertical: spacing(2),
+                    opacity: isSelected ? 1 : 0.95
+                  }}
+                />
+              );
+            })}
           </View>
           
           <Button
