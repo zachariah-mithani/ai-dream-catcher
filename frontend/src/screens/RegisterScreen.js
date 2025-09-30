@@ -25,8 +25,9 @@ export default function RegisterScreen({ navigation }) {
         theme_preference: 'dark'
       };
       await register(email.trim(), password, profile);
-      // Clear onboarding flag so new users see the intro flow
+      // Clear flags so new users see theme selection and onboarding
       await AsyncStorage.removeItem('onboarding_completed');
+      await AsyncStorage.removeItem('theme_selected');
       // The App component will automatically re-render and show the authenticated stack
       // No need to navigate manually
     } catch (e) {

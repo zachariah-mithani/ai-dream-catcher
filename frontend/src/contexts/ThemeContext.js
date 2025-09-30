@@ -38,6 +38,7 @@ export const ThemeProvider = ({ children }) => {
 
   const changeTheme = async (newTheme) => {
     console.log('Changing theme to:', newTheme);
+    const previousTheme = theme;
     setTheme(newTheme);
     
     try {
@@ -49,8 +50,8 @@ export const ThemeProvider = ({ children }) => {
       console.log('Theme saved successfully:', newTheme);
     } catch (e) {
       console.log('Failed to save theme preference:', e.message);
-      // Revert on error
-      setTheme(theme);
+      // Only revert if the theme change failed
+      setTheme(previousTheme);
     }
   };
 
