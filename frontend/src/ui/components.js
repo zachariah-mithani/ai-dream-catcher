@@ -85,7 +85,15 @@ export function Input(props) {
 
 export function Button({ title, onPress, style, kind = 'primary', disabled = false }) {
   const { colors, borderRadius, gradients, shadow } = useTheme();
-  const palette = kind === 'danger' ? { bg: colors.danger, text: '#fff' } : { bg: colors.primary, text: '#fff' };
+  
+  // Determine if this is a secondary button (unselected theme button)
+  const isSecondary = style?.backgroundColor === colors.buttonSecondary;
+  
+  const palette = kind === 'danger' 
+    ? { bg: colors.danger, text: '#fff' } 
+    : isSecondary 
+      ? { bg: colors.buttonSecondary, text: colors.buttonSecondaryText }
+      : { bg: colors.primary, text: colors.primaryText };
   
   return (
     <TouchableOpacity 
