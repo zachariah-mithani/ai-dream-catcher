@@ -3,6 +3,7 @@ import { View, Alert, TouchableOpacity } from 'react-native';
 import { login } from '../api';
 import { Screen, Card, Text, Input, Button, Subtle } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
+import CloudLogo from '../components/CloudLogo';
 
 export default function LoginScreen({ navigation }) {
   const { colors, spacing } = useTheme();
@@ -25,8 +26,28 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <Screen style={{ justifyContent: 'center', padding: 24 }}>
+      <View style={{ alignItems: 'center', marginBottom: spacing(4) }}>
+        <CloudLogo size={100} />
+        <Text style={{ 
+          fontSize: 28, 
+          fontWeight: '800', 
+          marginTop: spacing(2),
+          color: colors.text,
+          textAlign: 'center'
+        }}>
+          AI Dream Catcher
+        </Text>
+        <Subtle style={{ 
+          fontSize: 16, 
+          marginTop: spacing(1),
+          textAlign: 'center'
+        }}>
+          Discover the meaning of your dreams
+        </Subtle>
+      </View>
+      
       <Card>
-        <Text style={{ fontSize: 24, fontWeight: '800', marginBottom: 12 }}>Welcome back</Text>
+        <Text style={{ fontSize: 24, fontWeight: '800', marginBottom: 12, textAlign: 'center' }}>Welcome back</Text>
         <Input placeholder="Email" autoCapitalize='none' keyboardType='email-address' value={email} onChangeText={setEmail} style={{ marginBottom: 12 }} />
         <Input placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} style={{ marginBottom: 12 }} />
         <Button title={busy ? 'Signing in...' : 'Sign In'} onPress={onLogin} />
