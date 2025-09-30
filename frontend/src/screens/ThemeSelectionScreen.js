@@ -16,7 +16,10 @@ export default function ThemeSelectionScreen({ onComplete }) {
   const handleContinue = async () => {
     setSaving(true);
     try {
+      // Change theme and wait for it to complete
       await changeTheme(selectedTheme);
+      // Add a small delay to ensure theme is applied
+      await new Promise(resolve => setTimeout(resolve, 100));
       onComplete();
     } catch (error) {
       console.log('Failed to save theme:', error);
@@ -68,6 +71,8 @@ export default function ThemeSelectionScreen({ onComplete }) {
                 onPress={() => handleThemeSelect(themeOption.key)}
                 style={{
                   backgroundColor: selectedTheme === themeOption.key ? colors.primary : (colors.buttonSecondary || colors.surface),
+                  borderWidth: selectedTheme === themeOption.key ? 2 : 1,
+                  borderColor: selectedTheme === themeOption.key ? colors.primary : colors.border,
                   paddingVertical: spacing(2)
                 }}
               />

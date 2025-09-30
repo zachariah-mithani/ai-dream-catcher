@@ -38,20 +38,25 @@ export const ThemeProvider = ({ children }) => {
 
   const changeTheme = async (newTheme) => {
     console.log('Changing theme to:', newTheme);
-    const previousTheme = theme;
     setTheme(newTheme);
     
+    // Update local storage immediately
     try {
-      await updateProfile({ theme_preference: newTheme });
-      // Update local storage
       const userJson = await AsyncStorage.getItem('user');
       const user = userJson ? JSON.parse(userJson) : {};
       await AsyncStorage.setItem('user', JSON.stringify({ ...user, theme_preference: newTheme }));
-      console.log('Theme saved successfully:', newTheme);
+      console.log('Theme saved to local storage:', newTheme);
     } catch (e) {
-      console.log('Failed to save theme preference:', e.message);
-      // Only revert if the theme change failed
-      setTheme(previousTheme);
+      console.log('Failed to save theme to local storage:', e.message);
+    }
+    
+    // Try to update backend, but don't revert on failure
+    try {
+      await updateProfile({ theme_preference: newTheme });
+      console.log('Theme saved to backend:', newTheme);
+    } catch (e) {
+      console.log('Failed to save theme to backend:', e.message);
+      // Don't revert - keep the local change
     }
   };
 

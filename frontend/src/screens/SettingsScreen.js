@@ -190,11 +190,11 @@ export default function SettingsScreen({ navigation }) {
 
         <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: spacing(2) }}>
-            Appearance
+            Themes
           </Text>
           
           <Text style={{ color: colors.text, fontSize: 16, marginBottom: spacing(1) }}>
-            Theme: {themeName}
+            Current: {themeName}
           </Text>
           <Subtle style={{ marginBottom: spacing(2) }}>
             Choose your preferred theme
@@ -208,6 +208,8 @@ export default function SettingsScreen({ navigation }) {
                 onPress={() => changeTheme(themeOption.key)}
                 style={{
                   backgroundColor: theme === themeOption.key ? colors.primary : (colors.buttonSecondary || colors.surface),
+                  borderWidth: theme === themeOption.key ? 2 : 1,
+                  borderColor: theme === themeOption.key ? colors.primary : colors.border,
                   flex: 1,
                   minWidth: 100
                 }}
