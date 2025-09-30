@@ -203,51 +203,55 @@ export default function MoodTracker() {
         
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={{ flexDirection: 'row', gap: spacing(1) }}>
-            {MOODS.map((mood) => {
-              const count = counts[mood.name];
-              const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
-              
-              if (count === 0) return null;
-              
-              return (
-                <View
-                  key={mood.name}
-                  style={{
-                    backgroundColor: colors.card,
-                    padding: spacing(2),
-                    borderRadius: 12,
-                    alignItems: 'center',
-                    minWidth: 80,
-                    borderWidth: 1,
-                    borderColor: colors.border
-                  }}
-                >
-                  <Text style={{ fontSize: 20, marginBottom: spacing(1) }}>
-                    {mood.emoji}
-                  </Text>
-                  <Text style={{ 
-                    color: colors.text, 
-                    fontSize: 18, 
-                    fontWeight: '700' 
-                  }}>
-                    {count}
-                  </Text>
-                  <Text style={{ 
-                    color: colors.textSecondary, 
-                    fontSize: 12 
-                  }}>
-                    {percentage}%
-                  </Text>
-                  <Text style={{ 
-                    color: colors.textSecondary, 
-                    fontSize: 10,
-                    textAlign: 'center'
-                  }}>
-                    {mood.name}
-                  </Text>
-                </View>
-              );
-            })}
+            {MOODS
+              .map((mood) => ({
+                ...mood,
+                count: counts[mood.name]
+              }))
+              .filter(mood => mood.count > 0)
+              .sort((a, b) => b.count - a.count)
+              .map((mood) => {
+                const percentage = total > 0 ? Math.round((mood.count / total) * 100) : 0;
+                
+                return (
+                  <View
+                    key={mood.name}
+                    style={{
+                      backgroundColor: colors.card,
+                      padding: spacing(2),
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      minWidth: 80,
+                      borderWidth: 1,
+                      borderColor: colors.border
+                    }}
+                  >
+                    <Text style={{ fontSize: 20, marginBottom: spacing(1) }}>
+                      {mood.emoji}
+                    </Text>
+                    <Text style={{ 
+                      color: colors.text, 
+                      fontSize: 18, 
+                      fontWeight: '700' 
+                    }}>
+                      {mood.count}
+                    </Text>
+                    <Text style={{ 
+                      color: colors.textSecondary, 
+                      fontSize: 12 
+                    }}>
+                      {percentage}%
+                    </Text>
+                    <Text style={{ 
+                      color: colors.textSecondary, 
+                      fontSize: 10,
+                      textAlign: 'center'
+                    }}>
+                      {mood.name}
+                    </Text>
+                  </View>
+                );
+              })}
           </View>
         </ScrollView>
       </View>
