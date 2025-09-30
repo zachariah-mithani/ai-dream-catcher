@@ -189,18 +189,29 @@ export default function DreamLogScreen({ navigation }) {
         <Button 
           title="Analyze" 
           onPress={() => analyzeDreamAI(item)}
-          style={{ flex: 1, backgroundColor: colors.primary }}
+          style={{ 
+            flex: 1, 
+            backgroundColor: colors.primary,
+            minWidth: 80
+          }}
         />
         <Button 
           title="Chat" 
           onPress={() => navigation.navigate('Chat', { seed: item })}
-          style={{ flex: 1, backgroundColor: colors.accent }}
+          style={{ 
+            flex: 1, 
+            backgroundColor: colors.accent,
+            minWidth: 80
+          }}
         />
         <Button 
           title="Delete" 
           onPress={() => removeDream(item.id)}
           kind="danger"
-          style={{ flex: 1 }}
+          style={{ 
+            flex: 1,
+            minWidth: 80
+          }}
         />
       </View>
     </Card>
