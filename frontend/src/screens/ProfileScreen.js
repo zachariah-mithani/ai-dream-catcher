@@ -3,10 +3,11 @@ import { View, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logout, getProfile } from '../api';
 import { Screen, Card, Text, Button, Subtle } from '../ui/components';
-import { spacing } from '../ui/Theme';
+import { useTheme } from '../contexts/ThemeContext';
 import MoodTracker from '../components/MoodTracker';
 
 export default function ProfileScreen({ navigation }) {
+  const { colors, spacing } = useTheme();
   const [profile, setProfile] = useState({
     email: '',
     first_name: '',
