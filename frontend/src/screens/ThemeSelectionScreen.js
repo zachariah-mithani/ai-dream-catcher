@@ -5,12 +5,17 @@ import { useTheme } from '../contexts/ThemeContext';
 import DreamCatcherLogo from '../components/DreamCatcherLogo';
 
 export default function ThemeSelectionScreen({ onComplete }) {
-  const { colors, spacing, changeTheme, availableThemes } = useTheme();
-  const [selectedTheme, setSelectedTheme] = useState('dreamy');
+  const { colors, spacing, changeTheme, availableThemes, theme } = useTheme();
+  const [selectedTheme, setSelectedTheme] = useState(theme || 'dreamy');
   const [saving, setSaving] = useState(false);
 
-  const handleThemeSelect = (themeKey) => {
+  const handleThemeSelect = async (themeKey) => {
     setSelectedTheme(themeKey);
+    try {
+      await changeTheme(themeKey); // apply immediately so the user sees it
+    } catch (e) {
+      console.log('Theme apply failed:', e.message);
+    }
   };
 
   const handleContinue = async () => {
