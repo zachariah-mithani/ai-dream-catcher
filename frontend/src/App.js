@@ -131,9 +131,8 @@ function AppContent() {
       checkAuth();
     };
     
-    // Check auth state when app comes to foreground
-    const interval = setInterval(checkAuth, 1000); // Check every 1 second
-    return () => clearInterval(interval);
+    // Only check auth state when app comes to foreground, not continuously
+    // Remove the frequent interval that was causing theme resets
   }, []);
 
   if (authed === null) return null;
