@@ -70,6 +70,7 @@ export default function RegisterScreen({ navigation }) {
             value={email} 
             onChangeText={setEmail} 
             style={{ marginBottom: 12 }} 
+            placeholderTextColor="#ffffffAA"
           />
           
           <Input 
@@ -78,6 +79,7 @@ export default function RegisterScreen({ navigation }) {
             value={password} 
             onChangeText={setPassword} 
             style={{ marginBottom: 12 }} 
+            placeholderTextColor="#ffffffAA"
           />
           
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
@@ -99,7 +101,9 @@ export default function RegisterScreen({ navigation }) {
             placeholder="Username (optional)" 
             value={username} 
             onChangeText={setUsername} 
+            autoCapitalize='none'
             style={{ marginBottom: 12 }} 
+            placeholderTextColor="#ffffffAA"
           />
           
           <Button 
