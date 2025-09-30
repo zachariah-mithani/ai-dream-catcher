@@ -8,16 +8,20 @@ export default function DreamLogScreen({ navigation }) {
   const { colors, spacing } = useTheme();
   const [loading, setLoading] = useState(true);
   const [dreams, setDreams] = useState([]);
+  const [q, setQ] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
-  const loadDreams = async () => {
+  const loadDreams = async (reset = false) => {
     setLoading(true);
     try {
       console.log('Loading dreams...');
-      const dreamList = await listDreams();
-      setDreams(dreamList);
+      const res = await listDreams({ q, page, page_size: 20 });
+      setDreams(reset ? res.items : [...dreams, ...res.items]);
+      setTotal(res.total);
     } catch (e) {
       console.log('Dreams loading error:', e);
       Alert.alert('Error', 'Failed to load dreams');
@@ -42,7 +46,8 @@ export default function DreamLogScreen({ navigation }) {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await Promise.all([loadDreams(), loadStatistics()]);
+    setPage(1);
+    await Promise.all([loadDreams(true), loadStatistics()]);
     setRefreshing(false);
   };
 
@@ -205,6 +210,15 @@ export default function DreamLogScreen({ navigation }) {
           }}
         />
         <Button 
+          title="Edit" 
+          onPress={() => navigation.navigate('EditDream', { dream: item })}
+          style={{ 
+            flex: 1, 
+            backgroundColor: colors.surface,
+            minWidth: 80
+          }}
+        />
+        <Button 
           title="Delete" 
           onPress={() => removeDream(item.id)}
           kind="danger"
@@ -216,6 +230,12 @@ export default function DreamLogScreen({ navigation }) {
       </View>
     </Card>
   );
+
+  const loadMore = async () => {
+    if (dreams.length >= total || loading) return;
+    setPage(page + 1);
+    await loadDreams();
+  };
 
   return (
     <Screen>
@@ -229,6 +249,19 @@ export default function DreamLogScreen({ navigation }) {
           />
         </View>
         <Subtle style={{ marginBottom: spacing(2) }}>View and analyze your dreams</Subtle>
+
+        {/* Simple search input substitute */}
+        <Button
+          kind="secondary"
+          title={q ? `Clear search: ${q}` : 'Tap to search (find in title or content)'}
+          onPress={async () => {
+            const newQ = q ? '' : q; // placeholder - pressing clears current query
+            setQ(newQ);
+            setPage(1);
+            await loadDreams(true);
+          }}
+          style={{ marginBottom: spacing(2) }}
+        />
         
         {renderStatisticsCards()}
       </View>
@@ -240,6 +273,8 @@ export default function DreamLogScreen({ navigation }) {
         renderItem={renderDreamCard}
         refreshing={refreshing}
         onRefresh={onRefresh}
+        onEndReachedThreshold={0.5}
+        onEndReached={loadMore}
         ListEmptyComponent={
           <View style={{ padding: spacing(3), alignItems: 'center' }}>
             <Subtle style={{ textAlign: 'center', marginBottom: spacing(1) }}>
