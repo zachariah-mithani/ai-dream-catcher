@@ -207,7 +207,7 @@ export default function SettingsScreen({ navigation }) {
                 title={themeOption.name}
                 onPress={() => changeTheme(themeOption.key)}
                 style={{
-                  backgroundColor: theme === themeOption.key ? colors.primary : colors.surface,
+                  backgroundColor: theme === themeOption.key ? colors.primary : (colors.buttonSecondary || colors.surface),
                   flex: 1,
                   minWidth: 100
                 }}

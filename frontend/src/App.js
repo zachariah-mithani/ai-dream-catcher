@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import ThemeSelectionScreen from './screens/ThemeSelectionScreen';
 import OnboardingScreen from './screens/OnboardingScreen';
 import JournalScreen from './screens/JournalScreen';
 import EnhancedJournalScreen from './screens/EnhancedJournalScreen';
@@ -64,6 +65,7 @@ function Tabs() {
 
 function AppContent() {
   const [authed, setAuthed] = useState(null);
+  const [showThemeSelection, setShowThemeSelection] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { theme, colors } = useTheme();
   
@@ -72,6 +74,7 @@ function AppContent() {
     
     if (!token) {
       setAuthed(false);
+      setShowThemeSelection(false);
       setShowOnboarding(false);
       return;
     }
@@ -80,16 +83,38 @@ function AppContent() {
       // Validate token by calling profile endpoint
       const response = await api.get('/auth/profile');
       const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
+      const themeSelected = await AsyncStorage.getItem('theme_selected');
+      
       setAuthed(true);
-      setShowOnboarding(!onboardingCompleted);
+      
+      if (!themeSelected) {
+        // New user - show theme selection first
+        setShowThemeSelection(true);
+        setShowOnboarding(false);
+      } else if (!onboardingCompleted) {
+        // Theme selected but no onboarding - show onboarding
+        setShowThemeSelection(false);
+        setShowOnboarding(true);
+      } else {
+        // Everything completed - show main app
+        setShowThemeSelection(false);
+        setShowOnboarding(false);
+      }
     } catch (error) {
       console.log('Auth validation error:', error);
       // Token is invalid or network error, clear it
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
       setAuthed(false);
+      setShowThemeSelection(false);
       setShowOnboarding(false);
     }
+  };
+
+  const handleThemeSelectionComplete = async () => {
+    await AsyncStorage.setItem('theme_selected', 'true');
+    setShowThemeSelection(false);
+    setShowOnboarding(true);
   };
 
   const handleOnboardingComplete = () => {
@@ -116,7 +141,7 @@ function AppContent() {
   return (
     <SafeAreaProvider>
       <NavigationContainer>
-        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+        <StatusBar style={theme === 'minimalistBlack' ? 'light' : 'dark'} />
         <Stack.Navigator screenOptions={{ 
           headerStyle: { backgroundColor: colors.surface }, 
           headerTintColor: colors.text, 
@@ -127,6 +152,13 @@ function AppContent() {
               <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'AI Dream Catcher' }} />
               <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create Account' }} />
             </>
+          ) : showThemeSelection ? (
+            <Stack.Screen 
+              name="ThemeSelection" 
+              options={{ headerShown: false }}
+            >
+              {() => <ThemeSelectionScreen onComplete={handleThemeSelectionComplete} />}
+            </Stack.Screen>
           ) : showOnboarding ? (
             <Stack.Screen 
               name="Onboarding" 

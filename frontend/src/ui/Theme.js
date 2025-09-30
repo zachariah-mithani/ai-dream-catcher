@@ -18,7 +18,10 @@ export const themes = {
       warning: '#f59e0b', // Soft orange
       input: '#f1f5f9',
       switchTrack: { false: '#cbd5e1', true: '#8b5cf6' },
-      switchThumb: '#ffffff'
+      switchThumb: '#ffffff',
+      // Better contrast for buttons
+      buttonSecondary: '#e2e8f0', // Light gray for unselected buttons
+      buttonSecondaryText: '#475569' // Darker text for better contrast
     },
     gradients: {
       background: ['#fef3c7', '#fce7f3', '#e0e7ff'], // Light peach to pink to purple
