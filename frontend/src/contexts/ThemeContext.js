@@ -45,6 +45,7 @@ export const ThemeProvider = ({ children }) => {
       const userJson = await AsyncStorage.getItem('user');
       const user = userJson ? JSON.parse(userJson) : {};
       await AsyncStorage.setItem('user', JSON.stringify({ ...user, theme_preference: newTheme }));
+      await AsyncStorage.setItem('theme_selected', 'true');
       console.log('Theme saved to local storage:', newTheme);
     } catch (e) {
       console.log('Failed to save theme to local storage:', e.message);

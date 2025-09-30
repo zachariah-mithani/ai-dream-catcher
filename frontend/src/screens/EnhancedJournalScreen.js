@@ -1,9 +1,68 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, memo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { Screen, Card, Button } from '../ui/components';
 import { spacing } from '../ui/Theme';
 import { listDreams, createDream, deleteDream, getPatterns } from '../api';
 import DreamLogForm from '../components/DreamLogForm';
+
+const DreamItem = memo(function DreamItem({ item, onPress, onDelete }) {
+  return (
+    <View style={{ paddingHorizontal: spacing(2), marginTop: spacing(1) }}>
+      <Card>
+        <TouchableOpacity onPress={onPress}>
+          <Text style={{ color: 'white', fontWeight: '700' }}>{item.title || 'Untitled dream'}</Text>
+          <Text style={{ color: '#cbd5e1' }} numberOfLines={2}>{item.content}</Text>
+          {(item.moods || item.tags) && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 }}>
+              {item.moods && (() => {
+                try {
+                  const moods = typeof item.moods === 'string' ? JSON.parse(item.moods) : item.moods;
+                  return Array.isArray(moods) ? moods.map((mood, index) => (
+                    <View key={`mood-${item.id}-${index}-${mood}`} style={{ 
+                      backgroundColor: '#22c55e', 
+                      paddingHorizontal: 6, 
+                      paddingVertical: 2, 
+                      borderRadius: 8, 
+                      marginRight: 4, 
+                      marginBottom: 4 
+                    }}>
+                      <Text style={{ color: 'white', fontSize: 10 }}>{mood}</Text>
+                    </View>
+                  )) : null;
+                } catch (e) {
+                  return null;
+                }
+              })()}
+              {item.tags && (() => {
+                try {
+                  const tags = typeof item.tags === 'string' ? JSON.parse(item.tags) : item.tags;
+                  return Array.isArray(tags) ? tags.map((tag, index) => (
+                    <View key={`tag-${item.id}-${index}-${tag}`} style={{ 
+                      backgroundColor: '#3b82f6', 
+                      paddingHorizontal: 6, 
+                      paddingVertical: 2, 
+                      borderRadius: 8, 
+                      marginRight: 4, 
+                      marginBottom: 4 
+                    }}>
+                      <Text style={{ color: 'white', fontSize: 10 }}>{tag}</Text>
+                    </View>
+                  )) : null;
+                } catch (e) {
+                  return null;
+                }
+              })()}
+            </View>
+          )}
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            <Button title="Ask" onPress={onPress} />
+            <Button title="Delete" onPress={onDelete} kind="danger" />
+          </View>
+        </TouchableOpacity>
+      </Card>
+    </View>
+  );
+});
 
 export default function EnhancedJournalScreen({ navigation }) {
   const [items, setItems] = useState([]);
@@ -14,21 +73,25 @@ export default function EnhancedJournalScreen({ navigation }) {
   const [dreamDate, setDreamDate] = useState('');
   const [listRefreshing, setListRefreshing] = useState(false);
   const [listening, setListening] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 20;
 
-  const load = async () => {
-    setListRefreshing(true);
+  const load = async (reset = false, pageParam = page) => {
+    if (reset) setListRefreshing(true);
     try {
-      const data = await listDreams();
-      setItems(data);
+      const data = await listDreams({ page: pageParam, page_size: pageSize });
+      setItems(prev => reset ? data.items : [...prev, ...data.items]);
+      setTotal(data.total || 0);
     } catch (e) {
       Alert.alert('Error', 'Failed to load dreams');
     } finally {
-      setListRefreshing(false);
+      if (reset) setListRefreshing(false);
     }
   };
 
   useEffect(() => {
-    load();
+    load(true, 1);
   }, []);
 
   const startVoice = useCallback(async () => {
@@ -109,67 +172,26 @@ export default function EnhancedJournalScreen({ navigation }) {
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: spacing(3) }}
         refreshing={listRefreshing}
-        onRefresh={load}
+        onRefresh={() => { setPage(1); load(true, 1); }}
         data={items}
         keyExtractor={(item)=>String(item.id)}
         renderItem={({ item }) => (
-          <View style={{ paddingHorizontal: spacing(2), marginTop: spacing(1) }}>
-            <Card>
-              <TouchableOpacity onPress={() => navigation.navigate('DreamDetail', { item })}>
-                <Text style={{ color: 'white', fontWeight: '700' }}>{item.title || 'Untitled dream'}</Text>
-                <Text style={{ color: '#cbd5e1' }} numberOfLines={2}>{item.content}</Text>
-                
-                {(item.moods || item.tags) && (
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 }}>
-                    {item.moods && (() => {
-                      try {
-                        const moods = typeof item.moods === 'string' ? JSON.parse(item.moods) : item.moods;
-                        return Array.isArray(moods) ? moods.map((mood, index) => (
-                          <View key={index} style={{ 
-                            backgroundColor: '#22c55e', 
-                            paddingHorizontal: 6, 
-                            paddingVertical: 2, 
-                            borderRadius: 8, 
-                            marginRight: 4, 
-                            marginBottom: 4 
-                          }}>
-                            <Text style={{ color: 'white', fontSize: 10 }}>{mood}</Text>
-                          </View>
-                        )) : null;
-                      } catch (e) {
-                        return null;
-                      }
-                    })()}
-                    {item.tags && (() => {
-                      try {
-                        const tags = typeof item.tags === 'string' ? JSON.parse(item.tags) : item.tags;
-                        return Array.isArray(tags) ? tags.map((tag, index) => (
-                          <View key={index} style={{ 
-                            backgroundColor: '#3b82f6', 
-                            paddingHorizontal: 6, 
-                            paddingVertical: 2, 
-                            borderRadius: 8, 
-                            marginRight: 4, 
-                            marginBottom: 4 
-                          }}>
-                            <Text style={{ color: 'white', fontSize: 10 }}>{tag}</Text>
-                          </View>
-                        )) : null;
-                      } catch (e) {
-                        return null;
-                      }
-                    })()}
-                  </View>
-                )}
-                
-                <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-                  <Button title="Ask" onPress={() => navigation.navigate('Chat', { seed: item })} />
-                  <Button title="Delete" onPress={() => removeDream(item.id)} kind="danger" />
-                </View>
-              </TouchableOpacity>
-            </Card>
-          </View>
+          <DreamItem 
+            item={item}
+            onPress={() => navigation.navigate('DreamDetail', { item })}
+            onDelete={() => removeDream(item.id)}
+          />
         )}
+        initialNumToRender={10}
+        windowSize={10}
+        removeClippedSubviews
+        onEndReachedThreshold={0.5}
+        onEndReached={async () => {
+          if (items.length >= total) return;
+          const next = page + 1;
+          setPage(next);
+          await load(false, next);
+        }}
       />
     </Screen>
   );

@@ -52,6 +52,16 @@ export default function LoginScreen({ navigation }) {
         <Input placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} style={{ marginBottom: 12 }} />
         <Button title={busy ? 'Signing in...' : 'Sign In'} onPress={onLogin} />
         <View style={{ alignItems: 'center', marginTop: spacing(2) }}>
+          <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+            <Text style={{ 
+              color: colors.primary, 
+              fontSize: 14,
+              textDecorationLine: 'underline',
+              marginBottom: spacing(1)
+            }}>
+              Forgot password?
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity onPress={() => navigation.navigate('Register')}>
             <Text style={{ 
               color: colors.primary, 

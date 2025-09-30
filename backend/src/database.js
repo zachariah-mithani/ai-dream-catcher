@@ -218,6 +218,7 @@ export async function initSchema() {
       id SERIAL PRIMARY KEY,
       email TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
+      email_verified BOOLEAN DEFAULT FALSE,
       first_name TEXT,
       last_name TEXT,
       username TEXT UNIQUE,
@@ -235,6 +236,7 @@ export async function initSchema() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
+      email_verified BOOLEAN DEFAULT 0,
       first_name TEXT,
       last_name TEXT,
       username TEXT UNIQUE,
@@ -363,12 +365,81 @@ export async function initSchema() {
     );
   `;
 
+  const createPasswordResetsTable = dbWrapper.isPostgres ? `
+    CREATE TABLE IF NOT EXISTS password_resets (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      used BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+  ` : `
+    CREATE TABLE IF NOT EXISTS password_resets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TEXT NOT NULL,
+      used BOOLEAN DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+  `;
+
+  const createEmailVerificationsTable = dbWrapper.isPostgres ? `
+    CREATE TABLE IF NOT EXISTS email_verifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      used BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+  ` : `
+    CREATE TABLE IF NOT EXISTS email_verifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TEXT NOT NULL,
+      used BOOLEAN DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+  `;
+
+  const createRefreshTokensTable = dbWrapper.isPostgres ? `
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      revoked BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+  ` : `
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      expires_at TEXT NOT NULL,
+      revoked BOOLEAN DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+  `;
+
   await dbWrapper.exec(createUsersTable);
   await dbWrapper.exec(createDreamsTable);
   await dbWrapper.exec(createAnalysesTable);
   await dbWrapper.exec(createDreamTagsTable);
   await dbWrapper.exec(createUserMoodsTable);
   await dbWrapper.exec(createDreamPromptsTable);
+  await dbWrapper.exec(createEmailVerificationsTable);
+  await dbWrapper.exec(createRefreshTokensTable);
+  await dbWrapper.exec(createPasswordResetsTable);
 }
 
 // Create database instance but export immediately with rename to eliminate shadows

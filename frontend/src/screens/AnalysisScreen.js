@@ -16,12 +16,13 @@ export default function DreamLogScreen({ navigation }) {
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
 
-  const loadDreams = async (reset = false, pageParam = page) => {
+  const loadDreams = async (reset = false, pageParam = page, queryOverride) => {
     setLoading(true);
     try {
       console.log('Loading dreams...');
-      const res = await listDreams({ q, page: pageParam, page_size: 20 });
-      setDreams(reset ? res.items : [...dreams, ...res.items]);
+      const effectiveQuery = queryOverride !== undefined ? queryOverride : q;
+      const res = await listDreams({ q: effectiveQuery, page: pageParam, page_size: 20 });
+      setDreams((prev) => (reset ? res.items : [...prev, ...res.items]));
       setTotal(res.total);
     } catch (e) {
       console.log('Dreams loading error:', e);
@@ -149,7 +150,7 @@ export default function DreamLogScreen({ navigation }) {
               try {
                 const moods = typeof item.moods === 'string' ? JSON.parse(item.moods) : item.moods;
                 return Array.isArray(moods) ? moods.map((mood, index) => (
-                  <View key={index} style={{ 
+                  <View key={`mood-${item.id}-${index}-${mood}`} style={{ 
                     backgroundColor: colors.primary, 
                     paddingHorizontal: 8, 
                     paddingVertical: 4, 
@@ -168,7 +169,7 @@ export default function DreamLogScreen({ navigation }) {
               try {
                 const tags = typeof item.tags === 'string' ? JSON.parse(item.tags) : item.tags;
                 return Array.isArray(tags) ? tags.map((tag, index) => (
-                  <View key={index} style={{ 
+                  <View key={`tag-${item.id}-${index}-${tag}`} style={{ 
                     backgroundColor: colors.accent, 
                     paddingHorizontal: 8, 
                     paddingVertical: 4, 
@@ -265,9 +266,10 @@ export default function DreamLogScreen({ navigation }) {
             <Button
               title="Search"
               onPress={async () => {
-                setQ(searchText.trim());
+                const query = searchText.trim();
+                setQ(query);
                 setPage(1);
-                await loadDreams(true, 1);
+                await loadDreams(true, 1, query);
               }}
               style={{ flex: 1 }}
             />
@@ -278,7 +280,7 @@ export default function DreamLogScreen({ navigation }) {
                 setSearchText('');
                 setQ('');
                 setPage(1);
-                await loadDreams(true, 1);
+                await loadDreams(true, 1, '');
               }}
               style={{ flex: 1 }}
             />
