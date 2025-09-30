@@ -112,7 +112,7 @@ export default function MoodTrackingScreen({ navigation }) {
             marginTop: 16
           }}
         >
-          <Text style={{ color: '#ffffff', fontWeight: '600' }}>
+          <Text style={{ color: colors.primaryText, fontWeight: '600' }}>
             {loading ? 'Logging...' : `Log ${selectedMood} Mood`}
           </Text>
         </TouchableOpacity>
@@ -160,7 +160,7 @@ export default function MoodTrackingScreen({ navigation }) {
             marginTop: 16
           }}
         >
-          <Text style={{ color: '#ffffff', fontWeight: '600' }}>Refresh Data</Text>
+          <Text style={{ color: colors.primaryText, fontWeight: '600' }}>Refresh Data</Text>
         </TouchableOpacity>
       </ScrollView>
     </Screen>
