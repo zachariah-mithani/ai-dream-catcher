@@ -109,8 +109,8 @@ export default function CollapsibleTimePicker({
             <View style={{ alignItems: 'center' }}>
               <Text style={{ 
                 color: colors.textSecondary, 
-                fontSize: 12, 
-                marginBottom: spacing(1) 
+                fontSize: 11, 
+                marginBottom: spacing(0.75) 
               }}>
                 Hour
               </Text>
@@ -119,22 +119,22 @@ export default function CollapsibleTimePicker({
                   onPress={() => adjustHour(1)}
                   style={{
                     backgroundColor: colors.primary,
-                    borderRadius: 16,
-                    width: 32,
-                    height: 32,
+                    borderRadius: 14,
+                    width: 28,
+                    height: 28,
                     justifyContent: 'center',
                     alignItems: 'center',
-                    marginBottom: spacing(1)
+                    marginBottom: spacing(0.75)
                   }}
                 >
-                  <Ionicons name="chevron-up" size={16} color="white" />
+                  <Ionicons name="chevron-up" size={14} color="white" />
                 </TouchableOpacity>
                 
                 <Text style={{ 
                   color: colors.text, 
-                  fontSize: 18, 
+                  fontSize: 16, 
                   fontWeight: '600',
-                  marginVertical: spacing(1)
+                  marginVertical: spacing(0.75)
                 }}>
                   {hour.toString().padStart(2, '0')}
                 </Text>
@@ -143,24 +143,24 @@ export default function CollapsibleTimePicker({
                   onPress={() => adjustHour(-1)}
                   style={{
                     backgroundColor: colors.primary,
-                    borderRadius: 16,
-                    width: 32,
-                    height: 32,
+                    borderRadius: 14,
+                    width: 28,
+                    height: 28,
                     justifyContent: 'center',
                     alignItems: 'center',
-                    marginTop: spacing(1)
+                    marginTop: spacing(0.75)
                   }}
                 >
-                  <Ionicons name="chevron-down" size={16} color="white" />
+                  <Ionicons name="chevron-down" size={14} color="white" />
                 </TouchableOpacity>
               </View>
             </View>
 
             <Text style={{ 
               color: colors.text, 
-              fontSize: 24, 
+              fontSize: 20, 
               fontWeight: '600',
-              marginHorizontal: spacing(2)
+              marginHorizontal: spacing(1)
             }}>
               :
             </Text>
@@ -169,8 +169,8 @@ export default function CollapsibleTimePicker({
             <View style={{ alignItems: 'center' }}>
               <Text style={{ 
                 color: colors.textSecondary, 
-                fontSize: 12, 
-                marginBottom: spacing(1) 
+                fontSize: 11, 
+                marginBottom: spacing(0.75) 
               }}>
                 Minute
               </Text>
@@ -179,22 +179,22 @@ export default function CollapsibleTimePicker({
                   onPress={() => adjustMinute(1)}
                   style={{
                     backgroundColor: colors.primary,
-                    borderRadius: 16,
-                    width: 32,
-                    height: 32,
+                    borderRadius: 14,
+                    width: 28,
+                    height: 28,
                     justifyContent: 'center',
                     alignItems: 'center',
-                    marginBottom: spacing(1)
+                    marginBottom: spacing(0.75)
                   }}
                 >
-                  <Ionicons name="chevron-up" size={16} color="white" />
+                  <Ionicons name="chevron-up" size={14} color="white" />
                 </TouchableOpacity>
                 
                 <Text style={{ 
                   color: colors.text, 
-                  fontSize: 18, 
+                  fontSize: 16, 
                   fontWeight: '600',
-                  marginVertical: spacing(1)
+                  marginVertical: spacing(0.75)
                 }}>
                   {minute.toString().padStart(2, '0')}
                 </Text>
@@ -203,15 +203,15 @@ export default function CollapsibleTimePicker({
                   onPress={() => adjustMinute(-1)}
                   style={{
                     backgroundColor: colors.primary,
-                    borderRadius: 16,
-                    width: 32,
-                    height: 32,
+                    borderRadius: 14,
+                    width: 28,
+                    height: 28,
                     justifyContent: 'center',
                     alignItems: 'center',
-                    marginTop: spacing(1)
+                    marginTop: spacing(0.75)
                   }}
                 >
-                  <Ionicons name="chevron-down" size={16} color="white" />
+                  <Ionicons name="chevron-down" size={14} color="white" />
                 </TouchableOpacity>
               </View>
             </View>
