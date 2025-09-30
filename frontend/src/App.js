@@ -18,6 +18,10 @@ import DreamLogScreen from './screens/AnalysisScreen';
 import MoodTrackingScreen from './screens/MoodTrackingScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import EditDreamScreen from './screens/EditDreamScreen';
+import TermsScreen from './screens/legal/TermsScreen';
+import PrivacyScreen from './screens/legal/PrivacyScreen';
+import AboutScreen from './screens/legal/AboutScreen';
 import ChangePasswordScreen from './screens/ChangePasswordScreen';
 import TabsHomeScreen from './screens/TabsHomeScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -172,6 +176,10 @@ function AppContent() {
               <Stack.Screen name="DreamDetail" component={DreamDetailScreen} options={{ title: 'Dream' }} />
               <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Ask the Analyst' }} />
               <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+                  <Stack.Screen name="EditDream" component={EditDreamScreen} options={{ title: 'Edit Dream' }} />
+                  <Stack.Screen name="Terms" component={TermsScreen} options={{ title: 'Terms of Service' }} />
+                  <Stack.Screen name="Privacy" component={PrivacyScreen} options={{ title: 'Privacy Policy' }} />
+                  <Stack.Screen name="About" component={AboutScreen} options={{ title: 'About' }} />
               <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'Change Password' }} />
             </>
           )}

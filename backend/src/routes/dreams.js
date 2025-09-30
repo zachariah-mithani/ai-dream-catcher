@@ -18,8 +18,47 @@ const dreamSchema = z.object({
 });
 
 dreamsRouter.get('/', async (req, res) => {
-  const rows = await db.prepare('SELECT * FROM dreams WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
-  res.json({ items: rows });
+  // Filters: q (text), mood, tag, start_date, end_date, page, page_size
+  const { q, mood, tag, start_date, end_date } = req.query;
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const pageSize = Math.min(100, Math.max(5, Number(req.query.page_size) || 20));
+
+  let where = ['user_id = ?'];
+  const params = [req.user.id];
+
+  if (q) {
+    where.push('(title LIKE ? OR content LIKE ?)');
+    const like = `%${q}%`;
+    params.push(like, like);
+  }
+  if (mood) {
+    where.push('mood = ?');
+    params.push(mood);
+  }
+  if (tag) {
+    // tags stored as JSON string; simple LIKE match for MVP
+    where.push('tags LIKE ?');
+    params.push(`%${tag}%`);
+  }
+  if (start_date) {
+    where.push('created_at >= ?');
+    params.push(`${start_date} 00:00:00`);
+  }
+  if (end_date) {
+    where.push('created_at <= ?');
+    params.push(`${end_date} 23:59:59`);
+  }
+
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const offset = (page - 1) * pageSize;
+
+  const sql = `SELECT * FROM dreams ${whereSql} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+  const rows = await db.prepare(sql).all(...params, pageSize, offset);
+
+  // Total count for pagination
+  const countSql = `SELECT COUNT(*) as count FROM dreams ${whereSql}`;
+  const countRow = await db.prepare(countSql).get(...params);
+  res.json({ items: rows, page, page_size: pageSize, total: countRow?.count || 0 });
 });
 
 dreamsRouter.post('/', async (req, res) => {

@@ -4,6 +4,9 @@ import { Screen, Text, Card, Input, Button, Subtle } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { getProfile, updateProfile, deleteAccount } from '../api';
 import CollapsibleTimePicker from '../components/CollapsibleTimePicker';
+import TermsScreen from './legal/TermsScreen';
+import PrivacyScreen from './legal/PrivacyScreen';
+import AboutScreen from './legal/AboutScreen';
 
 export default function SettingsScreen({ navigation }) {
   const { theme, themeName, colors, spacing, changeTheme, availableThemes } = useTheme();
@@ -297,6 +300,15 @@ export default function SettingsScreen({ navigation }) {
             />
           </View>
         </Card>
+
+            <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
+              <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: spacing(2) }}>Legal & About</Text>
+              <View style={{ flexDirection: 'row', gap: spacing(1) }}>
+                <Button title="Terms" onPress={() => navigation.navigate('Terms')} style={{ flex: 1 }} />
+                <Button title="Privacy" onPress={() => navigation.navigate('Privacy')} style={{ flex: 1 }} />
+                <Button title="About" onPress={() => navigation.navigate('About')} style={{ flex: 1 }} />
+              </View>
+            </Card>
 
         <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
           <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: spacing(2) }}>

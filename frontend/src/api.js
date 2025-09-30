@@ -56,9 +56,18 @@ export async function changePassword(currentPassword, newPassword) {
   return data;
 }
 
-export async function listDreams() {
-  const { data } = await api.get('/dreams');
-  return data.items;
+export async function listDreams(params = {}) {
+  const search = new URLSearchParams();
+  if (params.q) search.append('q', params.q);
+  if (params.mood) search.append('mood', params.mood);
+  if (params.tag) search.append('tag', params.tag);
+  if (params.start_date) search.append('start_date', params.start_date);
+  if (params.end_date) search.append('end_date', params.end_date);
+  if (params.page) search.append('page', String(params.page));
+  if (params.page_size) search.append('page_size', String(params.page_size));
+  const url = `/dreams${search.toString() ? `?${search.toString()}` : ''}`;
+  const { data } = await api.get(url);
+  return data; // { items, page, page_size, total }
 }
 
 export async function createDream(payload) {
