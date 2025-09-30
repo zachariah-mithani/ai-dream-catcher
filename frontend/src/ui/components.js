@@ -94,20 +94,28 @@ export function Button({ title, onPress, style, kind = 'primary', disabled = fal
       style={[
         { 
           backgroundColor: disabled ? colors.border : palette.bg, 
-          paddingVertical: 16, 
-          paddingHorizontal: 24, 
+          paddingVertical: 12, 
+          paddingHorizontal: 16, 
           borderRadius: borderRadius.medium, 
           alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 44,
           ...shadow
         }, 
         style
       ]}
     >
-      <RNText style={{ 
-        color: disabled ? colors.subtext : palette.text, 
-        fontWeight: '800',
-        fontSize: 16
-      }}>
+      <RNText 
+        style={{ 
+          color: disabled ? colors.subtext : palette.text, 
+          fontWeight: '800',
+          fontSize: 14,
+          textAlign: 'center'
+        }}
+        numberOfLines={1}
+        adjustsFontSizeToFit={true}
+        minimumFontScale={0.8}
+      >
         {title}
       </RNText>
     </TouchableOpacity>

@@ -79,7 +79,7 @@ export default function ProfileScreen({ navigation }) {
           <Button 
             title="Settings" 
             onPress={() => navigation.navigate('Settings')}
-            style={{ flex: 1, backgroundColor: '#3b82f6' }}
+            style={{ flex: 1, backgroundColor: colors.accent }}
           />
           <Button 
             kind="danger" 
