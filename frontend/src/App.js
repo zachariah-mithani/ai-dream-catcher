@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import OnboardingScreen from './screens/OnboardingScreen';
 import JournalScreen from './screens/JournalScreen';
 import EnhancedJournalScreen from './screens/EnhancedJournalScreen';
 import DreamDetailScreen from './screens/DreamDetailScreen';
@@ -63,12 +64,16 @@ function Tabs() {
 
 function AppContent() {
   const [authed, setAuthed] = useState(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { theme, colors } = useTheme();
   
   const checkAuth = async () => {
     const token = await AsyncStorage.getItem('token');
+    const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
+    
     if (!token) {
       setAuthed(false);
+      setShowOnboarding(!onboardingCompleted);
       return;
     }
     
@@ -76,13 +81,19 @@ function AppContent() {
       // Validate token by calling profile endpoint
       const response = await api.get('/auth/profile');
       setAuthed(true);
+      setShowOnboarding(false);
     } catch (error) {
       console.log('Auth validation error:', error);
       // Token is invalid or network error, clear it
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
       setAuthed(false);
+      setShowOnboarding(!onboardingCompleted);
     }
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
   };
   
   useEffect(() => {
@@ -101,6 +112,16 @@ function AppContent() {
   }, []);
 
   if (authed === null) return null;
+  
+  // Show onboarding for new users
+  if (showOnboarding) {
+    return (
+      <SafeAreaProvider>
+        <OnboardingScreen onComplete={handleOnboardingComplete} />
+      </SafeAreaProvider>
+    );
+  }
+  
   return (
     <SafeAreaProvider>
       <NavigationContainer>
