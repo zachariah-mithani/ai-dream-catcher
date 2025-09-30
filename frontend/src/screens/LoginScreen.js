@@ -48,8 +48,8 @@ export default function LoginScreen({ navigation }) {
       
       <Card>
         <Text style={{ fontSize: 24, fontWeight: '800', marginBottom: 12, textAlign: 'center' }}>Welcome back</Text>
-        <Input placeholder="Email" autoCapitalize='none' keyboardType='email-address' value={email} onChangeText={setEmail} style={{ marginBottom: 12 }} placeholderTextColor="#ffffffAA" />
-        <Input placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} style={{ marginBottom: 12 }} placeholderTextColor="#ffffffAA" />
+        <Input placeholder="Email" autoCapitalize='none' keyboardType='email-address' value={email} onChangeText={setEmail} style={{ marginBottom: 12 }} />
+        <Input placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} style={{ marginBottom: 12 }} />
         <Button title={busy ? 'Signing in...' : 'Sign In'} onPress={onLogin} />
         <View style={{ alignItems: 'center', marginTop: spacing(2) }}>
           <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>

@@ -66,7 +66,7 @@ export function Input(props) {
   return (
     <RNInput 
       {...props} 
-      placeholderTextColor={props.placeholderTextColor || colors.subtext} 
+      placeholderTextColor={props.placeholderTextColor || colors.textSecondary} 
       style={[
         { 
           backgroundColor: colors.surface, 
