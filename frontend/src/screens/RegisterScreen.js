@@ -88,12 +88,14 @@ export default function RegisterScreen({ navigation }) {
               value={firstName} 
               onChangeText={setFirstName} 
               style={{ flex: 1 }} 
+              placeholderTextColor="#ffffffAA"
             />
             <Input 
               placeholder="Last Name" 
               value={lastName} 
               onChangeText={setLastName} 
               style={{ flex: 1 }} 
+              placeholderTextColor="#ffffffAA"
             />
           </View>
           
