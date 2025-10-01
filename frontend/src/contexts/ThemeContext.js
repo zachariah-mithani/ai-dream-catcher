@@ -23,8 +23,17 @@ export const ThemeProvider = ({ children }) => {
 
   const loadTheme = async () => {
     try {
-      const profile = await getProfile();
-      setTheme(profile.theme_preference || 'dreamy');
+      // Check if user is authenticated first
+      const token = await AsyncStorage.getItem('token');
+      if (token) {
+        const profile = await getProfile();
+        setTheme(profile.theme_preference || 'dreamy');
+      } else {
+        // No token, use stored theme or default
+        const userJson = await AsyncStorage.getItem('user');
+        const user = userJson ? JSON.parse(userJson) : null;
+        setTheme(user?.theme_preference || 'dreamy');
+      }
     } catch (e) {
       console.log('Failed to load theme:', e.message);
       // Fallback to stored user data
