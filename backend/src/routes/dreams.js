@@ -105,13 +105,27 @@ dreamsRouter.post('/', async (req, res) => {
     console.log('AI tag generation failed:', e.message);
   }
   
-  // Use custom date if provided, otherwise use current timestamp
-  const createdAt = dream_date ? `${dream_date} 00:00:00` : undefined;
-  
-  const info = await db.prepare('INSERT INTO dreams (user_id, title, content, voice_uri, mood, moods, tags, ai_tags, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    .run(req.user.id, title || null, content, voice_uri || null, mood || null, JSON.stringify(moods || []), JSON.stringify(tags || []), JSON.stringify(aiTags), createdAt);
-  const row = await db.prepare('SELECT * FROM dreams WHERE id = ?').get(info.lastInsertRowid);
-  res.status(201).json(row);
+  try {
+    let query, params;
+    
+    if (dream_date) {
+      // Use custom date if provided
+      const createdAt = `${dream_date} 00:00:00`;
+      query = 'INSERT INTO dreams (user_id, title, content, voice_uri, mood, moods, tags, ai_tags, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      params = [req.user.id, title || null, content, voice_uri || null, mood || null, JSON.stringify(moods || []), JSON.stringify(tags || []), JSON.stringify(aiTags), createdAt];
+    } else {
+      // Use default timestamp
+      query = 'INSERT INTO dreams (user_id, title, content, voice_uri, mood, moods, tags, ai_tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+      params = [req.user.id, title || null, content, voice_uri || null, mood || null, JSON.stringify(moods || []), JSON.stringify(tags || []), JSON.stringify(aiTags)];
+    }
+    
+    const info = await db.prepare(query).run(...params);
+    const row = await db.prepare('SELECT * FROM dreams WHERE id = ?').get(info.lastInsertRowid);
+    res.status(201).json(row);
+  } catch (error) {
+    console.error('Database error creating dream:', error);
+    res.status(500).json({ error: 'Failed to save dream' });
+  }
 });
 
 dreamsRouter.put('/:id', async (req, res) => {
