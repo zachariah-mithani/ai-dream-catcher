@@ -10,7 +10,7 @@ const registerSchema = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   username: z.string().min(3).max(20).optional(),
-  theme_preference: z.enum(['dreamy', 'light', 'dark']).optional()
+  theme_preference: z.enum(['dreamy', 'minimalistLight', 'minimalistBlack']).optional()
 });
 
 const loginSchema = z.object({
@@ -22,7 +22,7 @@ const profileUpdateSchema = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   username: z.string().min(3).max(20).optional(),
-  theme_preference: z.enum(['dreamy', 'light', 'dark']).optional(),
+  theme_preference: z.enum(['dreamy', 'minimalistLight', 'minimalistBlack']).optional(),
   bedtime_hour: z.number().min(0).max(23).optional(),
   bedtime_minute: z.number().min(0).max(59).optional(),
   wakeup_hour: z.number().min(0).max(23).optional(),
