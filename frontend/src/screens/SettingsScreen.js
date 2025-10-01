@@ -15,7 +15,7 @@ export default function SettingsScreen({ navigation }) {
     first_name: '',
     last_name: '',
     username: '',
-    theme_preference: 'dark',
+    theme_preference: 'minimalistBlack',
     bedtime_hour: 22,
     bedtime_minute: 0,
     wakeup_hour: 7,
