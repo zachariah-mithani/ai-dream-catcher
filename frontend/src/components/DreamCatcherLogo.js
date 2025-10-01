@@ -7,6 +7,7 @@ export default function DreamCatcherLogo({ size = 80, style }) {
   
   // Choose icon based on theme
   const getIconSource = () => {
+    console.log('DreamCatcherLogo theme:', theme); // Debug log
     switch (theme) {
       case 'light':
         return require('../../assets/light-in-app-icon.png');
