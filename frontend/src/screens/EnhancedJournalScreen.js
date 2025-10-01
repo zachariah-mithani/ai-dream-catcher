@@ -124,7 +124,9 @@ export default function EnhancedJournalScreen({ navigation }) {
       setSelectedTags([]);
       setDreamDate('');
     } catch (e) {
-      Alert.alert('Error', 'Failed to save dream');
+      console.error('Dream creation error:', e);
+      const errorMessage = e.response?.data?.error || e.message || 'Failed to save dream';
+      Alert.alert('Error', errorMessage);
     }
   }, [content, title, selectedMoods, selectedTags, dreamDate, items]);
 
