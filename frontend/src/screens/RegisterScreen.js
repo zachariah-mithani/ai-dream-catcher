@@ -22,7 +22,7 @@ export default function RegisterScreen({ navigation }) {
         first_name: firstName.trim() || undefined,
         last_name: lastName.trim() || undefined,
         username: username.trim() || undefined,
-        theme_preference: 'dark'
+        theme_preference: 'minimalistBlack'
       };
       await register(email.trim(), password, profile);
       // Clear flags so new users see theme selection and onboarding
