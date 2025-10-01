@@ -110,7 +110,11 @@ export default function SettingsScreen({ navigation }) {
     setDeletingAccount(true);
     try {
       await deleteAccount();
-      // The App component will automatically detect the missing token and switch to login
+      Alert.alert('Success', 'Your account has been deleted successfully.', [
+        { text: 'OK', onPress: () => {
+          // The App component will automatically detect the missing token and switch to login
+        }}
+      ]);
     } catch (error) {
       console.error('Delete account error:', error);
       Alert.alert('Error', 'Failed to delete account. Please try again.');
