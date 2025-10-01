@@ -96,7 +96,8 @@ authRouter.delete('/account', requireAuth, async (req, res) => {
     await deleteUserAccount(req.user.id);
     res.json({ message: 'Account and all data deleted successfully' });
   } catch (e) {
-    res.status(500).json({ error: 'Failed to delete account' });
+    console.error('Account deletion error:', e);
+    res.status(500).json({ error: e.message || 'Failed to delete account' });
   }
 });
 

@@ -24,7 +24,7 @@ export const themes = {
       buttonSecondaryText: '#475569' // Darker text for better contrast
     },
     gradients: {
-      background: ['#fef3c7', '#fce7f3', '#e0e7ff'], // Light peach to pink to purple
+      background: ['#ffd1a1', '#f8b5d1', '#c4b5fd', '#a5f3fc'], // Peach to pink to lavender to cyan (matching logo gradient)
       primary: ['#8b5cf6', '#06b6d4'],
       card: ['#ffffff', '#f8fafc']
     }

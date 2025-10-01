@@ -190,12 +190,54 @@ export async function updateUserProfile(userId, updates) {
 }
 
 export async function deleteUserAccount(userId) {
-  // Delete all user data
-  await db.prepare('DELETE FROM analyses WHERE user_id = ?').run(userId);
-  await db.prepare('DELETE FROM user_moods WHERE user_id = ?').run(userId);
-  await db.prepare('DELETE FROM dreams WHERE user_id = ?').run(userId);
-  await db.prepare('DELETE FROM users WHERE id = ?').run(userId);
-  return true;
+  try {
+    // Delete all user data in the correct order to handle foreign key constraints
+    // Use individual try-catch blocks to handle missing tables gracefully
+    
+    // First delete dependent records
+    try {
+      await db.prepare('DELETE FROM analyses WHERE user_id = ?').run(userId);
+    } catch (e) {
+      console.log('Analyses table not found or error:', e.message);
+    }
+    
+    try {
+      await db.prepare('DELETE FROM user_moods WHERE user_id = ?').run(userId);
+    } catch (e) {
+      console.log('User moods table not found or error:', e.message);
+    }
+    
+    try {
+      await db.prepare('DELETE FROM password_resets WHERE user_id = ?').run(userId);
+    } catch (e) {
+      console.log('Password resets table not found or error:', e.message);
+    }
+    
+    try {
+      await db.prepare('DELETE FROM refresh_tokens WHERE user_id = ?').run(userId);
+    } catch (e) {
+      console.log('Refresh tokens table not found or error:', e.message);
+    }
+    
+    // Then delete dreams (which might be referenced by analyses)
+    try {
+      await db.prepare('DELETE FROM dreams WHERE user_id = ?').run(userId);
+    } catch (e) {
+      console.log('Dreams table not found or error:', e.message);
+    }
+    
+    // Finally delete the user
+    const result = await db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+    
+    if (result.changes === 0) {
+      throw new Error('User not found');
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error deleting user account:', error);
+    throw new Error(`Failed to delete account: ${error.message}`);
+  }
 }
 
 
