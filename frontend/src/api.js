@@ -72,6 +72,10 @@ export async function deleteAccount() {
   await api.delete('/auth/account');
   await AsyncStorage.removeItem('token');
   await AsyncStorage.removeItem('user');
+  await AsyncStorage.removeItem('onboarding_completed');
+  await AsyncStorage.removeItem('theme_selected');
+  // Emit auth change to trigger UI update
+  emitAuthChanged();
 }
 
 export async function changePassword(currentPassword, newPassword) {

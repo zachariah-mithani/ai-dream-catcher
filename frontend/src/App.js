@@ -109,9 +109,11 @@ function AppContent() {
       }
     } catch (error) {
       console.log('Auth validation error:', error);
-      // Token is invalid or network error, clear it
+      // Token is invalid, user deleted, or network error - clear everything
       await AsyncStorage.removeItem('token');
       await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('onboarding_completed');
+      await AsyncStorage.removeItem('theme_selected');
       setAuthed(false);
       setShowThemeSelection(false);
       setShowOnboarding(false);
