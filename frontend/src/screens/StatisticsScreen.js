@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { Screen, Card } from '../ui/components';
+import { Screen, Card, Button } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
+import { useBilling } from '../contexts/BillingContext';
 import { api } from '../api';
 
 export default function StatisticsScreen({ navigation }) {
   const { colors, spacing } = useTheme();
+  const billing = useBilling();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -223,6 +225,64 @@ export default function StatisticsScreen({ navigation }) {
               </View>
             ))}
           </Card>
+        )}
+
+        {/* Premium-only features */}
+        {!billing?.isPremium && (
+          <Card style={{ marginBottom: 12, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+              <Text style={{ color: colors.text, fontWeight: '600', fontSize: 16, flex: 1 }}>Advanced Analytics</Text>
+              <View style={{ backgroundColor: colors.accent, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12 }}>
+                <Text style={{ color: colors.primaryText, fontSize: 10, fontWeight: '600' }}>PREMIUM</Text>
+              </View>
+            </View>
+            <Text style={{ color: colors.textSecondary, fontSize: 14, marginBottom: 12 }}>
+              Unlock detailed insights, mood correlations, and export features
+            </Text>
+            <Button 
+              title="Upgrade to Dream Explorer+"
+              onPress={() => navigation.navigate('Paywall')}
+              style={{ backgroundColor: colors.primary }}
+            />
+          </Card>
+        )}
+
+        {billing?.isPremium && (
+          <>
+            {/* Advanced Mood Correlations - Premium Only */}
+            <Card style={{ marginBottom: 12 }}>
+              <Text style={{ color: 'white', fontWeight: '600', fontSize: 16, marginBottom: 8 }}>Mood Correlations</Text>
+              <Text style={{ color: '#9ca3af', fontSize: 14, marginBottom: 8 }}>
+                How your moods relate to dream themes
+              </Text>
+              <View style={{ backgroundColor: '#1f2937', padding: 12, borderRadius: 8 }}>
+                <Text style={{ color: '#22c55e', fontSize: 12, fontWeight: '600', marginBottom: 4 }}>Premium Feature</Text>
+                <Text style={{ color: 'white', fontSize: 14 }}>
+                  Detailed mood-to-dream pattern analysis coming soon!
+                </Text>
+              </View>
+            </Card>
+
+            {/* Export Options - Premium Only */}
+            <Card style={{ marginBottom: 12 }}>
+              <Text style={{ color: 'white', fontWeight: '600', fontSize: 16, marginBottom: 8 }}>Export Your Data</Text>
+              <Text style={{ color: '#9ca3af', fontSize: 14, marginBottom: 12 }}>
+                Download your dream journal and analytics
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <Button 
+                  title="Export PDF"
+                  onPress={() => Alert.alert('Coming Soon', 'PDF export will be available soon!')}
+                  style={{ flex: 1, backgroundColor: colors.accent }}
+                />
+                <Button 
+                  title="Export CSV"
+                  onPress={() => Alert.alert('Coming Soon', 'CSV export will be available soon!')}
+                  style={{ flex: 1, backgroundColor: colors.accent }}
+                />
+              </View>
+            </Card>
+          </>
         )}
 
         <TouchableOpacity 
