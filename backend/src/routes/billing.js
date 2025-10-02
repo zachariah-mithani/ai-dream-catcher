@@ -12,15 +12,42 @@ function monthPeriod(date = new Date()) {
   return `${y}-${m}`; // e.g., 2025-10
 }
 
+function dayPeriod(date = new Date()) {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`; // e.g., 2025-10-15
+}
+
 // Get plan and usage snapshot
 billingRouter.get('/status', async (req, res) => {
   try {
     const user = await db.prepare('SELECT plan, trial_end, created_at FROM users WHERE id = ?').get(req.user.id);
-    const period = monthPeriod();
-    const rows = await db.prepare('SELECT metric, period, count FROM usage_counters WHERE user_id = ? AND period = ?').all(req.user.id, period);
-    const usage = {};
-    for (const r of rows) usage[r.metric] = r.count;
-    res.json({ plan: user?.plan || 'free', trial_end: user?.trial_end || null, period, usage });
+    const monthPeriodStr = monthPeriod();
+    const dayPeriodStr = dayPeriod();
+    
+    // Get monthly usage (dreams, AI analysis)
+    const monthlyRows = await db.prepare('SELECT metric, count FROM usage_counters WHERE user_id = ? AND period = ?').all(req.user.id, monthPeriodStr);
+    const monthlyUsage = {};
+    for (const r of monthlyRows) monthlyUsage[r.metric] = r.count;
+    
+    // Get daily usage (chat messages)
+    const dailyRows = await db.prepare('SELECT metric, count FROM usage_counters WHERE user_id = ? AND period = ?').all(req.user.id, dayPeriodStr);
+    const dailyUsage = {};
+    for (const r of dailyRows) dailyUsage[r.metric] = r.count;
+    
+    // Combine usage, prioritizing daily for chat messages
+    const usage = {
+      ...monthlyUsage,
+      ...dailyUsage // Daily usage overrides monthly for chat messages
+    };
+    
+    res.json({ 
+      plan: user?.plan || 'free', 
+      trial_end: user?.trial_end || null, 
+      period: monthPeriodStr,
+      usage 
+    });
   } catch (e) {
     res.status(500).json({ error: 'Failed to load billing status' });
   }
@@ -32,7 +59,10 @@ billingRouter.post('/usage/increment', async (req, res) => {
   const parse = incSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
   const metric = parse.data.metric;
-  const period = monthPeriod();
+  
+  // Use daily period for chat messages, monthly for others
+  const period = metric === 'chat_message' ? dayPeriod() : monthPeriod();
+  
   // SQLite/PG compatible upsert via wrapper
   const existing = await db.prepare('SELECT id, count FROM usage_counters WHERE user_id = ? AND metric = ? AND period = ?').get(req.user.id, metric, period);
   if (existing) {

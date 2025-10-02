@@ -53,7 +53,7 @@ export function BillingProvider({ children }) {
       case 'ai_analyze':
         return (usage.ai_analyze || 0) < FREE_LIMITS.ai_analyze_month;
       case 'chat_message':
-        return (usage.chat_message || 0) < 90; // approximate month bucket
+        return (usage.chat_message || 0) < FREE_LIMITS.chat_message_day;
       case 'dream_create':
         return (usage.dream_create || 0) < FREE_LIMITS.dream_create_month;
       default:
