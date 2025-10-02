@@ -40,15 +40,17 @@ export async function checkUsageLimit(userId, metric, limit, period) {
  * Increment usage counter for a user
  */
 export async function incrementUsage(userId, metric, period) {
+  // If metric is part of AI pool, increment the pool instead
+  const poolMetric = (metric === 'ai_analyze' || metric === 'chat_message') ? 'ai_pool' : metric;
   const existing = await db.prepare('SELECT id, count FROM usage_counters WHERE user_id = ? AND metric = ? AND period = ?')
-    .get(userId, metric, period);
+    .get(userId, poolMetric, period);
   
   if (existing) {
     await db.prepare('UPDATE usage_counters SET count = count + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
       .run(existing.id);
   } else {
     await db.prepare('INSERT INTO usage_counters (user_id, metric, period, count) VALUES (?, ?, ?, ?)')
-      .run(userId, metric, period, 1);
+      .run(userId, poolMetric, period, 1);
   }
 }
 
@@ -69,11 +71,13 @@ export function getPeriods(date = new Date()) {
 /**
  * Plan limits configuration
  */
+// Shared pool: ai_analyze + chat_message combined for free users
 export const PLAN_LIMITS = {
   free: {
     dream_create: { limit: 10, period: 'month' },
-    ai_analyze: { limit: 5, period: 'month' },
-    chat_message: { limit: 3, period: 'day' }
+    ai_pool: { limit: 10, period: 'month' }, // combined pool
+    ai_analyze: { limit: 10, period: 'month' }, // alias for UI; enforced via ai_pool
+    chat_message: { limit: 10, period: 'month' } // alias for UI; enforced via ai_pool
   },
   premium: {
     dream_create: { limit: Infinity, period: 'month' },
@@ -98,7 +102,9 @@ export function createBillingMiddleware(metric) {
       }
       
       // Check limits for free users
-      const limits = PLAN_LIMITS.free[metric];
+      // If this metric is part of the AI pool, evaluate against ai_pool
+      const poolMetric = (metric === 'ai_analyze' || metric === 'chat_message') ? 'ai_pool' : metric;
+      const limits = PLAN_LIMITS.free[poolMetric];
       if (!limits) {
         return next(); // No limits defined for this metric
       }
@@ -107,7 +113,7 @@ export function createBillingMiddleware(metric) {
       const periodKey = limits.period === 'day' ? 'day' : 'month';
       const period = periods[periodKey];
       
-      const usageCheck = await checkUsageLimit(req.user.id, metric, limits.limit, period);
+      const usageCheck = await checkUsageLimit(req.user.id, poolMetric, limits.limit, period);
       
       if (!usageCheck.allowed) {
         return res.status(403).json({
