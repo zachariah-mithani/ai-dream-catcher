@@ -218,6 +218,18 @@ export async function deleteUserAccount(userId) {
     } catch (e) {
       console.log('Refresh tokens table not found or error:', e.message);
     }
+
+    // Billing/subscription artifacts
+    try {
+      await db.prepare('DELETE FROM user_subscriptions WHERE user_id = ?').run(userId);
+    } catch (e) {
+      console.log('User subscriptions table not found or error:', e.message);
+    }
+    try {
+      await db.prepare('DELETE FROM usage_counters WHERE user_id = ?').run(userId);
+    } catch (e) {
+      console.log('Usage counters table not found or error:', e.message);
+    }
     
     // Then delete dreams (which might be referenced by analyses)
     try {
