@@ -3,9 +3,11 @@ import { View, ActivityIndicator, FlatList, Alert, TouchableOpacity } from 'reac
 import { Screen, Text, Card, Subtle, Button, Input } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { listDreams, deleteDream, getStatistics } from '../api';
+import { useBilling } from '../contexts/BillingContext';
 
 export default function DreamLogScreen({ navigation }) {
   const { colors, spacing } = useTheme();
+  const billing = useBilling();
   const [loading, setLoading] = useState(true);
   const [dreams, setDreams] = useState([]);
   const [q, setQ] = useState('');
@@ -55,6 +57,10 @@ export default function DreamLogScreen({ navigation }) {
 
   const analyzeDreamAI = async (dream) => {
     try {
+      if (!billing?.canUse('ai_analyze')) {
+        navigation.navigate('Paywall');
+        return;
+      }
       console.log('Analyzing dream:', dream.id);
       
       // Navigate to chat with the dream context and auto-send analysis request
@@ -64,6 +70,7 @@ export default function DreamLogScreen({ navigation }) {
           autoAnalyze: true // Flag to trigger automatic analysis
         }
       });
+      billing?.recordUsage('ai_analyze');
     } catch (e) {
       console.log('Analysis error:', e);
       Alert.alert('Error', 'Failed to analyze dream. Please try again.');

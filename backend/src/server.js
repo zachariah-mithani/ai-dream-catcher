@@ -13,6 +13,7 @@ import { chatRouter } from './routes/chat.js';
 import { statisticsRouter } from './routes/statistics.js';
 import { moodsRouter } from './routes/moods.js';
 import { promptsRouter } from './routes/prompts.js';
+import { billingRouter } from './routes/billing.js';
 
 const app = express();
 
@@ -66,6 +67,7 @@ app.use('/chat', chatRouter);
 app.use('/statistics', statisticsRouter);
 app.use('/moods', moodsRouter);
 app.use('/prompts', promptsRouter);
+app.use('/billing', billingRouter);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

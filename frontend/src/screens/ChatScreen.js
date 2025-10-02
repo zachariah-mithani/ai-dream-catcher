@@ -3,10 +3,12 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView
 import { Screen, Card, Button, Text as CustomText } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { chat, listDreams, analyzeDream } from '../api';
+import { useBilling } from '../contexts/BillingContext';
 import MarkdownText from '../components/MarkdownText';
 
 export default function ChatScreen({ route }) {
   const { colors, spacing } = useTheme();
+  const billing = useBilling();
   const seed = route.params?.seed;
   const [history, setHistory] = useState(seed ? [
     { role: 'user', content: `I want to discuss this dream:\n\nTitle: ${seed.title || 'Untitled'}\nContent: ${seed.content}` },
@@ -69,6 +71,13 @@ export default function ChatScreen({ route }) {
 
   const send = async () => {
     if (!message.trim()) return;
+    if (!billing?.canUse('chat_message')) {
+      Alert.alert('Limit reached', 'Upgrade to continue chatting.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'See Options', onPress: () => route.params?.navigation?.navigate?.('Paywall') }
+      ]);
+      return;
+    }
     const nextHistory = [...history, { role: 'user', content: message.trim() }];
     setHistory(nextHistory);
     setMessage('');
@@ -76,6 +85,7 @@ export default function ChatScreen({ route }) {
     try {
       const res = await chat(nextHistory, message.trim());
       setHistory(h => [...h, { role: 'assistant', content: res.response }]);
+      billing?.recordUsage('chat_message');
     } catch (e) {
       Alert.alert('Error', 'Chat failed. Please try again.');
     } finally {
