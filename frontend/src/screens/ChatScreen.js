@@ -188,13 +188,13 @@ export default function ChatScreen({ route, navigation }) {
             }
           />
 
-          {/* Unified AI actions remaining message */}
+          {/* Unified AI actions remaining message (monthly pool) */}
           {!billing?.isPremium && (
             <InlineUpgradePrompt
               limitType="ai_actions"
               currentUsage={billing?.getAiActionsUsed?.() || 0}
               limit={billing?.AI_ACTIONS_LIMIT || 10}
-              period="day"
+              period="month"
             />
           )}
 
