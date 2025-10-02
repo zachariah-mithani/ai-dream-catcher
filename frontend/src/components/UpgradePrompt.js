@@ -124,9 +124,15 @@ export default function UpgradePrompt({
 
 export function InlineUpgradePrompt({ limitType, currentUsage, limit, period = 'month' }) {
   const { colors, spacing } = useTheme();
+  const billing = useBilling();
 
   const getMessage = () => {
     const periodText = period === 'day' ? 'today' : 'this month';
+    // If unified AI actions display requested, use combined counter
+    if (limitType === 'ai_actions') {
+      const remainingAi = billing?.getAiActionsRemaining?.() ?? 0;
+      return `${remainingAi} AI actions remaining ${periodText}`;
+    }
     const remaining = Math.max(0, limit - currentUsage);
     
     if (remaining === 0) {

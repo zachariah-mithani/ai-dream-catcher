@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Keys to store scheduled notification identifiers
 const BEDTIME_KEY = 'notif_bedtime_id';
 const WAKEUP_KEY = 'notif_wakeup_id';
+// Throttle keys so we don't spam immediate test notifications
+const LAST_IMMEDIATE_WAKE_KEY = 'notif_last_immediate_wake';
 
 export async function ensureNotificationPermissions() {
   const settings = await Notifications.getPermissionsAsync();
@@ -13,6 +15,15 @@ export async function ensureNotificationPermissions() {
   const request = await Notifications.requestPermissionsAsync();
   return request.granted || request.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
 }
+
+// Ensure notifications display even when app is in the foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false
+  })
+});
 
 async function scheduleDaily(identifierKey, title, body, hour, minute) {
   // Cancel existing if present
@@ -81,6 +92,30 @@ export async function rescheduleAllReminders({
     scheduleBedtimeReminder(bedtime_hour ?? 22, bedtime_minute ?? 0),
     scheduleWakeupReminder(wakeup_hour ?? 7, wakeup_minute ?? 0),
   ]);
+
+  // If the wake time is very soon (or just saved for the current minute),
+  // schedule at most ONE one-off notification (~10s) so the user sees it today.
+  try {
+    const now = new Date();
+    const target = new Date();
+    target.setHours((wakeup_hour ?? 7), (wakeup_minute ?? 0), 0, 0);
+    const diffMs = target.getTime() - now.getTime();
+    // within [-30s, +120s] window
+    if (diffMs > -30000 && diffMs < 120000) {
+      const last = Number(await AsyncStorage.getItem(LAST_IMMEDIATE_WAKE_KEY) || '0');
+      if (now.getTime() - last > 60000) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: 'Log your dream',
+            body: "Capture your dream details while they're fresh.",
+          },
+          trigger: { seconds: 10 },
+        });
+        await AsyncStorage.setItem(LAST_IMMEDIATE_WAKE_KEY, String(now.getTime()));
+      }
+    }
+  } catch {}
+
   return { bedtimeId, wakeupId };
 }
 

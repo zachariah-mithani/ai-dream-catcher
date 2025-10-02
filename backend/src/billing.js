@@ -74,7 +74,7 @@ export function getPeriods(date = new Date()) {
 // Shared pool: ai_analyze + chat_message combined for free users
 export const PLAN_LIMITS = {
   free: {
-    dream_create: { limit: 10, period: 'month' },
+    dream_create: { limit: 5, period: 'month' },
     ai_pool: { limit: 10, period: 'month' }, // combined pool
     ai_analyze: { limit: 10, period: 'month' }, // alias for UI; enforced via ai_pool
     chat_message: { limit: 10, period: 'month' } // alias for UI; enforced via ai_pool

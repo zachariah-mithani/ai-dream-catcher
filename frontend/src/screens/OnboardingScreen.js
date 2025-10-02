@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { Screen, Card, Button, Text as Txt } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
-import { api } from '../api';
+import { api, createCheckoutSession, upgradePlan } from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DreamCatcherLogo from '../components/DreamCatcherLogo';
 
@@ -78,9 +78,20 @@ export default function OnboardingScreen({ onComplete }) {
   const handleComplete = async () => {
     try {
       if (selectedPlan === 'premium') {
-        await api.post('/billing/upgrade', { plan: 'premium', trial_days: 7 });
+        try {
+          // Prefer sending the user to Stripe Checkout from onboarding
+          const { sessionUrl } = await createCheckoutSession('monthly', 7);
+          // If running on device, open external URL
+          const { Linking } = require('react-native');
+          await Linking.openURL(sessionUrl);
+        } catch {
+          // Fallback: mark plan upgrade via API if checkout creation fails
+          await upgradePlan('premium', 7);
+        }
       } else {
-        await api.post('/billing/upgrade', { plan: 'free' });
+        try {
+          await upgradePlan('free');
+        } catch {}
       }
     } catch {}
     await AsyncStorage.setItem('onboarding_completed', 'true');

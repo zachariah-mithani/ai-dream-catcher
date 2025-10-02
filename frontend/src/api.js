@@ -221,4 +221,9 @@ export async function createBillingPortalSession() {
   return data;
 }
 
+export async function cancelSubscription(immediately = false) {
+  const { data } = await api.post('/billing/cancel', { immediately });
+  return data;
+}
+
 

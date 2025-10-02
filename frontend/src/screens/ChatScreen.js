@@ -188,12 +188,12 @@ export default function ChatScreen({ route, navigation }) {
             }
           />
 
-          {/* Show upgrade prompt if chat limit is reached or close */}
+          {/* Unified AI actions remaining message */}
           {!billing?.isPremium && (
             <InlineUpgradePrompt
-              limitType="chat_message"
-              currentUsage={billing?.usage?.chat_message || 0}
-              limit={3}
+              limitType="ai_actions"
+              currentUsage={billing?.getAiActionsUsed?.() || 0}
+              limit={billing?.AI_ACTIONS_LIMIT || 10}
               period="day"
             />
           )}

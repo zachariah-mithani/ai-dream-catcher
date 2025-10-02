@@ -49,21 +49,21 @@ function Tabs() {
     <Tab.Navigator screenOptions={({ route }) => ({
       headerShown: false,
       tabBarStyle: {
-        backgroundColor: colors.surface,
-        borderTopColor: colors.border,
+        backgroundColor: theme === 'dreamy' ? colors.primary : colors.surface,
+        borderTopColor: theme === 'dreamy' ? colors.primary : colors.border,
         paddingTop: 8,
         paddingBottom: Math.max(insets.bottom, 8),
         height: 80 + insets.bottom
       },
-      tabBarActiveTintColor: colors.primary,
-      tabBarInactiveTintColor: colors.textSecondary,
+      tabBarActiveTintColor: theme === 'dreamy' ? colors.primaryText : colors.primary,
+      tabBarInactiveTintColor: theme === 'dreamy' ? 'rgba(255,255,255,0.7)' : colors.textSecondary,
       tabBarLabelStyle: { fontSize: 12, marginTop: 4 },
       tabBarIcon: ({ color, size }) => {
         if (route.name === 'Home') {
           return (
             <Image
               source={getHomeIconSource()}
-              style={{ width: 24, height: 24, tintColor: theme === 'dreamy' ? undefined : color }}
+              style={{ width: 24, height: 24, tintColor: theme === 'dreamy' ? color : color }}
               resizeMode="contain"
             />
           );
@@ -163,8 +163,8 @@ function AppContent() {
       <NavigationContainer>
         <StatusBar style={theme === 'minimalistBlack' ? 'light' : 'dark'} />
         <Stack.Navigator screenOptions={{ 
-          headerStyle: { backgroundColor: colors.surface }, 
-          headerTintColor: colors.text, 
+          headerStyle: { backgroundColor: theme === 'dreamy' ? colors.primary : colors.surface }, 
+          headerTintColor: theme === 'dreamy' ? colors.primaryText : colors.text, 
           contentStyle: { backgroundColor: colors.background } 
         }}>
           {!authed ? (
