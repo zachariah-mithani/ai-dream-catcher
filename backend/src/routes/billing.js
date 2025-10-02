@@ -82,6 +82,49 @@ billingRouter.get('/cancel', (req, res) => {
 </html>`);
 });
 
+// Public: Stripe webhook handler (must NOT require auth)
+billingRouter.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  try {
+    const signature = req.headers['stripe-signature'];
+    const event = require('stripe').webhooks.constructEvent(
+      req.body,
+      signature,
+      STRIPE_CONFIG.WEBHOOK_SECRET
+    );
+    console.log('Received Stripe webhook:', event.type);
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        console.log('Checkout session completed:', session.id);
+        break;
+      }
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object;
+        await handleSubscriptionEvent(subscription);
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const deletedSubscription = event.data.object;
+        await handleSubscriptionEvent(deletedSubscription);
+        break;
+      }
+      case 'invoice.payment_succeeded':
+        console.log('Invoice payment succeeded:', event.data.object.id);
+        break;
+      case 'invoice.payment_failed':
+        console.log('Invoice payment failed:', event.data.object.id);
+        break;
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(400).json({ error: 'Webhook signature verification failed' });
+  }
+});
+
 // Protected routes (auth required)
 billingRouter.use(requireAuth);
 
@@ -243,54 +286,7 @@ billingRouter.post('/portal', async (req, res) => {
   }
 });
 
-// Stripe webhook handler
-billingRouter.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  try {
-    const signature = req.headers['stripe-signature'];
-    const event = require('stripe').webhooks.constructEvent(
-      req.body,
-      signature,
-      STRIPE_CONFIG.WEBHOOK_SECRET
-    );
-    
-    console.log('Received Stripe webhook:', event.type);
-    
-    switch (event.type) {
-      case 'checkout.session.completed':
-        const session = event.data.object;
-        console.log('Checkout session completed:', session.id);
-        break;
-        
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-        const subscription = event.data.object;
-        await handleSubscriptionEvent(subscription);
-        break;
-        
-      case 'customer.subscription.deleted':
-        const deletedSubscription = event.data.object;
-        await handleSubscriptionEvent(deletedSubscription);
-        break;
-        
-      case 'invoice.payment_succeeded':
-        console.log('Invoice payment succeeded:', event.data.object.id);
-        break;
-        
-      case 'invoice.payment_failed':
-        console.log('Invoice payment failed:', event.data.object.id);
-        // Handle failed payment - could downgrade user or send notification
-        break;
-        
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
-    }
-    
-    res.json({ received: true });
-  } catch (error) {
-    console.error('Webhook error:', error);
-    res.status(400).json({ error: 'Webhook signature verification failed' });
-  }
-});
+// (moved public webhook handler above)
 
 // Mock upgrade endpoint (for testing without Stripe)
 const upgradeSchema = z.object({ plan: z.enum(['free','premium']) , trial_days: z.number().min(0).max(14).optional() });
