@@ -71,6 +71,10 @@ app.get('/health', healthCheck);
 app.get('/metrics', metrics);
 app.get('/system', systemInfo);
 
+// Minimal root and favicon to avoid noisy 404s
+app.get('/', (req, res) => res.status(200).send('AI Dream Catcher API'));
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 
 app.use('/auth', authRouter);
 app.use('/dreams', dreamsRouter);

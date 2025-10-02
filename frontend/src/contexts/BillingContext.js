@@ -4,10 +4,13 @@ import { api } from '../api';
 const BillingCtx = createContext(null);
 
 const FREE_LIMITS = {
-  dream_create_month: 10,
+  dream_create_month: 5,
   ai_analyze_month: 5,
   chat_message_day: 3
 };
+
+// Unified cap for combined AI actions (chat + analysis) for messaging
+const AI_ACTIONS_LIMIT = 10;
 
 export function BillingProvider({ children }) {
   const [plan, setPlan] = useState('free');
@@ -113,7 +116,11 @@ export function BillingProvider({ children }) {
     canUse, 
     recordUsage, 
     getUsageInfo, 
-    isLimitReached 
+    isLimitReached,
+    // Combined AI actions helpers (for display/messaging only)
+    getAiActionsUsed: () => (usage.ai_analyze || 0) + (usage.chat_message || 0),
+    getAiActionsRemaining: () => Math.max(0, AI_ACTIONS_LIMIT - ((usage.ai_analyze || 0) + (usage.chat_message || 0))),
+    AI_ACTIONS_LIMIT
   }), [plan, isPremium, usage, period, loading]);
   return <BillingCtx.Provider value={value}>{children}</BillingCtx.Provider>;
 }

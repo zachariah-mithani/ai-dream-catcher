@@ -297,12 +297,12 @@ export default function DreamLogScreen({ navigation }) {
         
         {renderStatisticsCards()}
         
-        {/* Show upgrade prompt if AI analysis limit is reached or close */}
+        {/* Unified AI actions remaining message */}
         {!billing?.isPremium && (
           <InlineUpgradePrompt
-            limitType="ai_analyze"
-            currentUsage={billing?.usage?.ai_analyze || 0}
-            limit={5}
+            limitType="ai_actions"
+            currentUsage={billing?.getAiActionsUsed?.() || 0}
+            limit={billing?.AI_ACTIONS_LIMIT || 10}
             period="month"
           />
         )}

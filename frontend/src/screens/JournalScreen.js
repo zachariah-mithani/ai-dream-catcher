@@ -93,7 +93,7 @@ export default function JournalScreen({ navigation }) {
           <InlineUpgradePrompt
             limitType="dream_create"
             currentUsage={billing?.usage?.dream_create || 0}
-            limit={10}
+            limit={5}
             period="month"
           />
         )}

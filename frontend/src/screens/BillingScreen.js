@@ -3,7 +3,7 @@ import { Alert, Linking, ScrollView } from 'react-native';
 import { Screen, Text, Button, Card } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { useBilling } from '../contexts/BillingContext';
-import { getPricing, createCheckoutSession, createBillingPortalSession } from '../api';
+import { getPricing, createCheckoutSession, createBillingPortalSession, cancelSubscription } from '../api';
 
 export default function BillingScreen({ navigation }) {
   const { colors, spacing } = useTheme();
@@ -41,13 +41,46 @@ export default function BillingScreen({ navigation }) {
     try {
       setLoading(true);
       const { sessionUrl } = await createBillingPortalSession();
+      if (!sessionUrl) {
+        throw new Error('Missing session URL');
+      }
       await Linking.openURL(sessionUrl);
     } catch (error) {
       console.error('Billing portal failed:', error);
-      Alert.alert('Error', 'Failed to open billing portal. Please try again.');
+      if (error?.response?.status === 404) {
+        Alert.alert(
+          'No subscription found',
+          'It looks like there is no active subscription associated with your account yet.'
+        );
+      } else {
+        Alert.alert('Error', 'Failed to open billing portal. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancel = async () => {
+    Alert.alert(
+      'Cancel subscription',
+      'Are you sure you want to cancel at the end of the current period?',
+      [
+        { text: 'No' },
+        { text: 'Yes, cancel', style: 'destructive', onPress: async () => {
+          try {
+            setLoading(true);
+            await cancelSubscription(false);
+            Alert.alert('Canceled', 'Your subscription will end at period end.');
+            billing?.refresh?.();
+          } catch (e) {
+            console.error('Cancel failed:', e);
+            Alert.alert('Error', 'Failed to cancel subscription.');
+          } finally {
+            setLoading(false);
+          }
+        }}
+      ]
+    );
   };
 
   const formatUsage = (usage) => {
@@ -60,6 +93,8 @@ export default function BillingScreen({ navigation }) {
   };
 
   const usage = formatUsage(billing?.usage);
+  const aiActionsUsed = billing?.getAiActionsUsed?.() || 0;
+  const aiActionsLimit = billing?.AI_ACTIONS_LIMIT || 10;
 
   return (
     <Screen style={{ padding: spacing(3) }}>
@@ -85,12 +120,19 @@ export default function BillingScreen({ navigation }) {
           )}
 
           {billing?.isPremium ? (
-            <Button
-              title="Manage Subscription"
-              onPress={handleManageSubscription}
-              loading={loading}
-              style={{ marginTop: spacing(2) }}
-            />
+            <>
+              <Button
+                title="Manage Subscription"
+                onPress={handleManageSubscription}
+                loading={loading}
+                style={{ marginTop: spacing(2), marginBottom: spacing(1) }}
+              />
+              <Button
+                title="Cancel Subscription"
+                onPress={handleCancel}
+                kind="secondary"
+              />
+            </>
           ) : (
             <Text style={{ color: colors.textSecondary, marginBottom: spacing(2) }}>
               Upgrade to unlock unlimited features
@@ -107,20 +149,11 @@ export default function BillingScreen({ navigation }) {
           {!billing?.isPremium && (
             <>
               <Text style={{ color: colors.text, marginBottom: spacing(1) }}>
-                Dreams: {usage.dream_create}/10 this month
-              </Text>
-              <Text style={{ color: colors.text, marginBottom: spacing(1) }}>
-                AI Analysis: {usage.ai_analyze}/5 this month
+                Dreams: {usage.dream_create}/5 this month
               </Text>
               <Text style={{ color: colors.text, marginBottom: spacing(2) }}>
-                Chat Messages: {usage.chat_message}/3 today
+                AI Actions: {aiActionsUsed}/{aiActionsLimit} this month
               </Text>
-              
-              {billing?.isPremium && (
-                <Text style={{ color: colors.primary, fontWeight: '600' }}>
-                  ✓ Unlimited usage
-                </Text>
-              )}
             </>
           )}
           

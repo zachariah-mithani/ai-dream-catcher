@@ -10,7 +10,8 @@ import {
   cancelSubscription,
   handleSubscriptionEvent,
   getPricingInfo,
-  STRIPE_CONFIG
+  STRIPE_CONFIG,
+  verifyWebhookSignature
 } from '../stripe.js';
 
 export const billingRouter = express.Router();
@@ -86,11 +87,7 @@ billingRouter.get('/cancel', (req, res) => {
 billingRouter.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   try {
     const signature = req.headers['stripe-signature'];
-    const event = require('stripe').webhooks.constructEvent(
-      req.body,
-      signature,
-      STRIPE_CONFIG.WEBHOOK_SECRET
-    );
+    const event = verifyWebhookSignature(req.body, signature);
     console.log('Received Stripe webhook:', event.type);
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -273,7 +270,7 @@ billingRouter.post('/portal', async (req, res) => {
     const subscription = await db.prepare('SELECT stripe_customer_id FROM user_subscriptions WHERE user_id = ?').get(req.user.id);
     
     if (!subscription?.stripe_customer_id) {
-      return res.status(404).json({ error: 'No subscription found' });
+      return res.status(404).json({ error: 'No Stripe customer found for this user' });
     }
     
     const returnUrl = `${process.env.APP_PUBLIC_URL || 'http://localhost:4000'}/billing`;
@@ -287,6 +284,27 @@ billingRouter.post('/portal', async (req, res) => {
 });
 
 // (moved public webhook handler above)
+
+// Cancel the active subscription (at period end by default)
+const cancelSchema = z.object({ immediately: z.boolean().optional().default(false) });
+billingRouter.post('/cancel', async (req, res) => {
+  try {
+    const parse = cancelSchema.safeParse(req.body || {});
+    if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
+    const { immediately } = parse.data;
+
+    const sub = await db.prepare('SELECT stripe_subscription_id FROM user_subscriptions WHERE user_id = ?').get(req.user.id);
+    if (!sub?.stripe_subscription_id) {
+      return res.status(404).json({ error: 'No active Stripe subscription found' });
+    }
+
+    const result = await cancelSubscription(sub.stripe_subscription_id, immediately);
+    res.json({ ok: true, status: result.status, cancel_at_period_end: result.cancel_at_period_end || false });
+  } catch (error) {
+    console.error('Subscription cancel failed:', error);
+    res.status(500).json({ error: 'Failed to cancel subscription' });
+  }
+});
 
 // Mock upgrade endpoint (for testing without Stripe)
 const upgradeSchema = z.object({ plan: z.enum(['free','premium']) , trial_days: z.number().min(0).max(14).optional() });
