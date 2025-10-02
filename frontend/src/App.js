@@ -63,7 +63,7 @@ function Tabs() {
           return (
             <Image
               source={getHomeIconSource()}
-              style={{ width: 24, height: 24, tintColor: undefined }}
+              style={{ width: 24, height: 24, tintColor: theme === 'dreamy' ? undefined : color }}
               resizeMode="contain"
             />
           );

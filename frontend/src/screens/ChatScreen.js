@@ -7,7 +7,7 @@ import { useBilling } from '../contexts/BillingContext';
 import MarkdownText from '../components/MarkdownText';
 import { InlineUpgradePrompt } from '../components/UpgradePrompt';
 
-export default function ChatScreen({ route }) {
+export default function ChatScreen({ route, navigation }) {
   const { colors, spacing } = useTheme();
   const billing = useBilling();
   const seed = route.params?.seed;
@@ -75,7 +75,7 @@ export default function ChatScreen({ route }) {
     if (!billing?.canUse('chat_message')) {
       Alert.alert('Limit reached', 'Upgrade to continue chatting.', [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'See Options', onPress: () => route.params?.navigation?.navigate?.('Paywall') }
+        { text: 'See Options', onPress: () => navigation.navigate('Billing') }
       ]);
       return;
     }
