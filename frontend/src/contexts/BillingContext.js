@@ -18,18 +18,24 @@ export function BillingProvider({ children }) {
   const refresh = async () => {
     try {
       setLoading(true);
+      console.log('BillingContext: Refreshing billing status...');
       const res = await api.get('/billing/status');
       const data = res?.data || res; // support api helper or raw
+      console.log('BillingContext: Got billing data:', data);
       setPlan(data.plan || 'free');
       setUsage(data.usage || {});
       setPeriod(data.period || null);
     } catch (e) {
+      console.log('BillingContext: Billing endpoint failed, trying profile fallback:', e.message);
       // Fallback: try profile if billing endpoint unavailable
       try {
         const profRes = await api.get('/auth/profile');
         const profile = profRes?.data || profRes;
+        console.log('BillingContext: Got profile data:', profile);
         if (profile?.plan) setPlan(profile.plan);
-      } catch {}
+      } catch (profileError) {
+        console.log('BillingContext: Profile fallback also failed:', profileError.message);
+      }
     } finally {
       setLoading(false);
     }

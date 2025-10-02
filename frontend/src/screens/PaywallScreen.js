@@ -1,7 +1,7 @@
 import React from 'react';
 import { Screen, Text, Button, Card } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
-import { api } from '../api';
+import { upgradePlan } from '../api';
 import { useBilling } from '../contexts/BillingContext';
 
 export default function PaywallScreen({ navigation }) {
@@ -22,9 +22,15 @@ export default function PaywallScreen({ navigation }) {
           title="Start 7-day free trial" 
           onPress={async () => {
             try {
-              const res = await api.post('/billing/upgrade', { plan: 'premium', trial_days: 7 });
-            } catch (e) {}
+              console.log('PaywallScreen: Starting upgrade to premium with 7-day trial...');
+              const result = await upgradePlan('premium', 7);
+              console.log('PaywallScreen: Upgrade result:', result);
+            } catch (e) {
+              console.error('PaywallScreen: Upgrade failed:', e);
+            }
+            console.log('PaywallScreen: Refreshing billing context...');
             await billing?.refresh?.();
+            console.log('PaywallScreen: Navigating back to settings...');
             navigation.goBack();
           }} 
           style={{ marginBottom: spacing(1) }} 
@@ -32,7 +38,11 @@ export default function PaywallScreen({ navigation }) {
         <Button 
           title="Continue Free (limited)" 
           onPress={async () => { 
-            try { await api.post('/billing/upgrade', { plan: 'free' }); } catch {}
+            try { 
+              await upgradePlan('free'); 
+            } catch (e) {
+              console.error('Downgrade failed:', e);
+            }
             await billing?.refresh?.();
             navigation.goBack();
           }} 
