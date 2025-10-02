@@ -26,6 +26,62 @@ billingRouter.get('/pricing', async (req, res) => {
   }
 });
 
+// Public success/cancel endpoints for Stripe Checkout redirects
+billingRouter.get('/success', (req, res) => {
+  const sessionId = req.query.session_id || '';
+  res.status(200).send(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Payment successful</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; padding: 24px; line-height: 1.5; }
+      .wrap { max-width: 560px; margin: 0 auto; text-align: center; }
+      .btn { display: inline-block; margin-top: 16px; padding: 10px 14px; background: #4CAF50; color: #fff; text-decoration: none; border-radius: 6px; }
+      code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h2>🎉 Payment successful</h2>
+      <p>Your subscription is now active. You can close this tab and return to the app.</p>
+      ${sessionId ? `<p>Session ID: <code>${sessionId}</code></p>` : ''}
+      <a href="#" class="btn" onclick="window.close(); return false;">Close</a>
+    </div>
+    <script>
+      try { window.opener && window.opener.postMessage({ type: 'stripe_checkout_success', sessionId: '${sessionId}' }, '*'); } catch (e) {}
+    </script>
+  </body>
+</html>`);
+});
+
+billingRouter.get('/cancel', (req, res) => {
+  res.status(200).send(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Checkout canceled</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif; padding: 24px; line-height: 1.5; }
+      .wrap { max-width: 560px; margin: 0 auto; text-align: center; }
+      .btn { display: inline-block; margin-top: 16px; padding: 10px 14px; background: #333; color: #fff; text-decoration: none; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h2>Checkout canceled</h2>
+      <p>No charges were made. You can close this tab and return to the app.</p>
+      <a href="#" class="btn" onclick="window.close(); return false;">Close</a>
+    </div>
+    <script>
+      try { window.opener && window.opener.postMessage({ type: 'stripe_checkout_canceled' }, '*'); } catch (e) {}
+    </script>
+  </body>
+</html>`);
+});
+
 // Protected routes (auth required)
 billingRouter.use(requireAuth);
 
