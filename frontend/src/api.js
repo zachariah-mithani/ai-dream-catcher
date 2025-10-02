@@ -201,4 +201,9 @@ export async function getPromptCategories() {
   return data;
 }
 
+export async function upgradePlan(plan, trialDays = 0) {
+  const { data } = await api.post('/billing/upgrade', { plan, trial_days: trialDays });
+  return data;
+}
+
 
