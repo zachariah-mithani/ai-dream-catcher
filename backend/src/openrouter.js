@@ -82,13 +82,45 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
   }
 }
 
-export async function analyzeDreamText(dreamText) {
-  const system = {
-    role: 'system',
-    content: 'You are a careful dream analyst. Provide psychological, symbolic, and cultural interpretations. Include multiple possibilities and highlight uncertainties. Be concise and structured.'
-  };
-  const user = { role: 'user', content: `Analyze this dream entry and suggest interpretations:\n\n${dreamText}` };
-  return await callOpenRouter({ messages: [system, user] });
+export async function analyzeDreamText(dreamText, isPremium = false) {
+  let system, user;
+  
+  if (isPremium) {
+    // Premium: Advanced multi-lens analysis
+    system = {
+      role: 'system',
+      content: `You are an expert dream analyst with deep knowledge of psychology, symbolism, and cultural dream interpretation. Provide a comprehensive analysis including:
+
+1. **Symbolic Interpretation**: Key symbols and their meanings
+2. **Psychological Analysis**: Emotional patterns and subconscious themes
+3. **Personal Context**: How this relates to the dreamer's life
+4. **Recurring Patterns**: Connections to common dream themes
+5. **Actionable Insights**: Practical takeaways for personal growth
+6. **Multiple Perspectives**: Different possible interpretations
+
+Be detailed, insightful, and provide specific examples from the dream content.`
+    };
+    user = { 
+      role: 'user', 
+      content: `Please provide a comprehensive analysis of this dream:\n\n${dreamText}` 
+    };
+  } else {
+    // Free: Basic analysis
+    system = {
+      role: 'system',
+      content: 'You are a dream analyst. Provide a brief, helpful interpretation focusing on the most obvious symbols and themes. Keep it concise and practical.'
+    };
+    user = { 
+      role: 'user', 
+      content: `Analyze this dream briefly:\n\n${dreamText}` 
+    };
+  }
+  
+  return await callOpenRouter({ 
+    messages: [system, user],
+    max_tokens: isPremium ? 1200 : 400,
+    temperature: isPremium ? 0.8 : 0.7
+  });
 }
 
 export async function chatWithAnalyst(history, userMessage) {
