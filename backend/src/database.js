@@ -148,6 +148,7 @@ export async function initSchema() {
   try {
     const hasFirstName = await dbWrapper.checkColumnExists('users', 'first_name');
     const hasBedtimeHour = await dbWrapper.checkColumnExists('users', 'bedtime_hour');
+    const hasPlan = await dbWrapper.checkColumnExists('users', 'plan');
     
     if (!hasFirstName) {
       console.log('Migrating users table to add profile fields...');
@@ -192,6 +193,21 @@ export async function initSchema() {
         `);
       }
     }
+
+    if (!hasPlan) {
+      console.log('Migrating users table to add billing fields...');
+      if (dbWrapper.isPostgres) {
+        await dbWrapper.exec(`
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS plan TEXT DEFAULT 'free';
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS trial_end TIMESTAMP NULL;
+        `);
+      } else {
+        await dbWrapper.exec(`
+          ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'free';
+          ALTER TABLE users ADD COLUMN trial_end TEXT;
+        `);
+      }
+    }
   } catch (e) {
     console.log('Users table does not exist yet, will be created with new schema');
   }
@@ -227,6 +243,8 @@ export async function initSchema() {
       wakeup_hour INTEGER DEFAULT 7,
       wakeup_minute INTEGER DEFAULT 0,
       notifications_enabled BOOLEAN DEFAULT TRUE,
+      plan TEXT DEFAULT 'free',
+      trial_end TIMESTAMP NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -244,6 +262,8 @@ export async function initSchema() {
       wakeup_hour INTEGER DEFAULT 7,
       wakeup_minute INTEGER DEFAULT 0,
       notifications_enabled BOOLEAN DEFAULT 1,
+      plan TEXT DEFAULT 'free',
+      trial_end TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
@@ -429,6 +449,28 @@ export async function initSchema() {
     );
   `;
 
+  const createUsageCountersTable = dbWrapper.isPostgres ? `
+    CREATE TABLE IF NOT EXISTS usage_counters (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      metric TEXT NOT NULL,
+      period TEXT NOT NULL,
+      count INTEGER DEFAULT 0,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, metric, period)
+    );
+  ` : `
+    CREATE TABLE IF NOT EXISTS usage_counters (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      metric TEXT NOT NULL,
+      period TEXT NOT NULL,
+      count INTEGER DEFAULT 0,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, metric, period)
+    );
+  `;
+
   await dbWrapper.exec(createUsersTable);
   await dbWrapper.exec(createDreamsTable);
   await dbWrapper.exec(createAnalysesTable);
@@ -438,6 +480,7 @@ export async function initSchema() {
   await dbWrapper.exec(createEmailVerificationsTable);
   await dbWrapper.exec(createRefreshTokensTable);
   await dbWrapper.exec(createPasswordResetsTable);
+  await dbWrapper.exec(createUsageCountersTable);
 }
 
 // Create database instance but export immediately with rename to eliminate shadows

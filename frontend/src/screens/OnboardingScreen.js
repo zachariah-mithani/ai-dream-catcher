@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { Screen, Card, Button } from '../ui/components';
+import { Screen, Card, Button, Text as Txt } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
+import { api } from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DreamCatcherLogo from '../components/DreamCatcherLogo';
 
@@ -42,10 +43,10 @@ const SLIDES = [
   },
   {
     id: 5,
-    title: "Ready to Explore Your Dreams?",
-    subtitle: "Start your journey of self-discovery",
-    description: "Begin logging your dreams today and unlock the mysteries of your subconscious mind.",
-    emoji: "✨",
+    title: "Choose your plan",
+    subtitle: "Start free or unlock everything",
+    description: "Free: limited monthly usage. Dream Explorer+: unlimited entries, edits, chat, trends.",
+    emoji: "⭐",
     color: "#ef4444"
   }
 ];
@@ -54,6 +55,8 @@ export default function OnboardingScreen({ onComplete }) {
   const { colors, spacing } = useTheme();
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollViewRef = useRef(null);
+  const [selectedPlan, setSelectedPlan] = useState('free');
+  const [billingPeriod, setBillingPeriod] = useState('monthly'); // 'monthly' | 'yearly'
 
   const handleNext = () => {
     if (currentSlide < SLIDES.length - 1) {
@@ -73,6 +76,13 @@ export default function OnboardingScreen({ onComplete }) {
   };
 
   const handleComplete = async () => {
+    try {
+      if (selectedPlan === 'premium') {
+        await api.post('/billing/upgrade', { plan: 'premium', trial_days: 7 });
+      } else {
+        await api.post('/billing/upgrade', { plan: 'free' });
+      }
+    } catch {}
     await AsyncStorage.setItem('onboarding_completed', 'true');
     onComplete();
   };
@@ -119,14 +129,79 @@ export default function OnboardingScreen({ onComplete }) {
           {slide.subtitle}
         </Text>
         
-        <Text style={{ 
-          color: colors.textSecondary, 
-          fontSize: 16, 
-          textAlign: 'center',
-          lineHeight: 24
-        }}>
-          {slide.description}
-        </Text>
+        {slide.id !== 5 ? (
+          <Text style={{ 
+            color: colors.textSecondary, 
+            fontSize: 16, 
+            textAlign: 'center',
+            lineHeight: 24
+          }}>
+            {slide.description}
+          </Text>
+        ) : (
+          <ScrollView style={{ width: '100%', maxHeight: 440 }} contentContainerStyle={{ paddingBottom: spacing(2) }} nestedScrollEnabled>
+            {/* Plan comparison */}
+            <Text style={{ color: colors.textSecondary, fontSize: 16, textAlign: 'center', lineHeight: 24, marginBottom: spacing(2) }}>
+              Compare Free vs Dream Explorer+
+            </Text>
+            {/* Compact table that fits smaller screens */}
+            <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, overflow: 'hidden', marginBottom: spacing(2) }}>
+              <View style={{ flexDirection: 'row', backgroundColor: colors.surface }}>
+                <Text style={{ flex: 1, color: colors.textSecondary, padding: 10, fontWeight: '700' }}>Feature</Text>
+                <Text style={{ width: 70, color: colors.textSecondary, padding: 10, textAlign: 'center' }}>Basic</Text>
+                <Text style={{ width: 70, color: colors.textSecondary, padding: 10, textAlign: 'center' }}>Pro</Text>
+              </View>
+              <View style={{ maxHeight: 260 }}>
+                {/* Scroll features vertically if needed */}
+                <View>
+                  {[
+                    'Unlimited entries & edits',
+                    'Advanced AI interpretations',
+                    'Dream Analyst chat (memory)',
+                    'History & global search',
+                    'Trends: 7/30/90/All‑time',
+                    'Reports & export (PDF/CSV)'
+                  ].map((label, idx) => (
+                    <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border }}>
+                      <Text style={{ flex: 1, color: colors.text, paddingVertical: 10, paddingHorizontal: 10, fontSize: 14 }}>{label}</Text>
+                      <Text style={{ width: 70, textAlign: 'center', color: '#ef4444', fontSize: 16 }}>✕</Text>
+                      <Text style={{ width: 70, textAlign: 'center', color: '#22c55e', fontSize: 16 }}>✓</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            {/* Billing period toggle */}
+            <View style={{ flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 999, padding: 4, alignSelf: 'center', marginBottom: spacing(2) }}>
+              {['monthly','yearly'].map(p => (
+                <TouchableOpacity key={p} onPress={() => setBillingPeriod(p)} style={{ backgroundColor: billingPeriod===p?colors.primary: 'transparent', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999 }}>
+                  <Text style={{ color: billingPeriod===p? colors.primaryText : colors.text }}>{p==='monthly'?'Monthly':'Yearly'}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Price and CTAs */}
+            <View style={{ alignItems: 'center', marginBottom: spacing(1) }}>
+              {billingPeriod === 'yearly' ? (
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>$49.99/yr <Text style={{ color: '#22c55e', fontSize: 14 }}>(7‑day trial)</Text></Text>
+              ) : (
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>$6.99/mo <Text style={{ color: '#22c55e', fontSize: 14 }}>(7‑day trial)</Text></Text>
+              )}
+            </View>
+
+            <Button 
+              title={selectedPlan === 'premium' ? '✓ Continue – Dream Explorer+' : 'Continue – Dream Explorer+'}
+              onPress={() => { setSelectedPlan('premium'); }}
+              style={{ marginBottom: spacing(1), backgroundColor: colors.primary }}
+            />
+            <Button 
+              title={selectedPlan === 'free' ? '✓ Continue – Free (limited)' : 'Continue – Free (limited)'}
+              onPress={() => { setSelectedPlan('free'); }}
+              kind="secondary"
+            />
+          </ScrollView>
+        )}
       </Card>
     </View>
   );

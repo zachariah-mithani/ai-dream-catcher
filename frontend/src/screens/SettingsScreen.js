@@ -8,9 +8,11 @@ import TermsScreen from './legal/TermsScreen';
 import PrivacyScreen from './legal/PrivacyScreen';
 import AboutScreen from './legal/AboutScreen';
 import { rescheduleAllReminders } from '../utils/notifications';
+import { useBilling } from '../contexts/BillingContext';
 
 export default function SettingsScreen({ navigation }) {
   const { theme, themeName, colors, spacing, changeTheme, availableThemes } = useTheme();
+  const billing = useBilling();
   const [profile, setProfile] = useState({
     first_name: '',
     last_name: '',
@@ -271,6 +273,24 @@ export default function SettingsScreen({ navigation }) {
                 }}
               />
             ))}
+          </View>
+        </Card>
+
+        {/* Subscription */}
+        <Card style={{ marginBottom: spacing(2), backgroundColor: colors.card }}>
+          <Text style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: spacing(2) }}>
+            Subscription
+          </Text>
+          <Text style={{ color: colors.textSecondary, marginBottom: spacing(1) }}>
+            Current plan: {billing?.isPremium ? 'Dream Explorer+' : 'Free'}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: spacing(1) }}>
+            <Button title="Manage Plan" onPress={async () => { await billing?.refresh?.(); navigation.navigate('Paywall'); }} style={{ flex: 1 }} />
+            {billing?.isPremium ? (
+              <Button title="Switch to Free" kind="secondary" onPress={async () => { try { await api.post('/billing/upgrade', { plan: 'free' }); } catch {} await billing?.refresh?.(); }} style={{ flex: 1 }} />
+            ) : (
+              <Button title="Upgrade" onPress={() => navigation.navigate('Paywall')} style={{ flex: 1 }} />
+            )}
           </View>
         </Card>
 

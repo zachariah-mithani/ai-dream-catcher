@@ -4,8 +4,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'react-native';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { BillingProvider } from './contexts/BillingContext';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import ThemeSelectionScreen from './screens/ThemeSelectionScreen';
@@ -26,6 +28,7 @@ import ChangePasswordScreen from './screens/ChangePasswordScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import ResetPasswordScreen from './screens/ResetPasswordScreen';
 import TabsHomeScreen from './screens/TabsHomeScreen';
+import PaywallScreen from './screens/PaywallScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { api } from './api';
@@ -36,7 +39,11 @@ const Tab = createBottomTabNavigator();
 
 function Tabs() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, theme } = useTheme();
+  const getHomeIconSource = () => {
+    if (theme === 'minimalistLight') return require('../assets/light-in-app-icon.png');
+    return require('../assets/in-app-icon.png');
+  };
   return (
     <Tab.Navigator screenOptions={({ route }) => ({
       headerShown: false,
@@ -51,14 +58,22 @@ function Tabs() {
       tabBarInactiveTintColor: colors.textSecondary,
       tabBarLabelStyle: { fontSize: 12, marginTop: 4 },
       tabBarIcon: ({ color, size }) => {
-        const map = { 
-          Dreams: 'book-outline',
-          Mood: 'happy-outline',
-          Home: 'home-outline', 
-          Chat: 'chatbubble-outline',
-          Profile: 'person-outline' 
+        if (route.name === 'Home') {
+          return (
+            <Image
+              source={getHomeIconSource()}
+              style={{ width: 24, height: 24, tintColor: undefined }}
+              resizeMode="contain"
+            />
+          );
+        }
+        const mcMap = {
+          Dreams: 'notebook-outline',
+          Mood: 'emoticon-outline',
+          Chat: 'chat-outline',
+          Profile: 'account-circle-outline'
         };
-        return <Ionicons name={map[route.name]} size={24} color={color} />;
+        return <MaterialCommunityIcons name={mcMap[route.name]} size={26} color={color} />;
       }
     })}>
       <Tab.Screen name="Dreams" component={DreamLogScreen} options={{ title: 'Dream Log' }} />
@@ -175,6 +190,7 @@ function AppContent() {
           ) : (
             <>
               <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
+            <Stack.Screen name="Paywall" component={PaywallScreen} options={{ title: 'Dream Explorer+' }} />
               <Stack.Screen name="Journal" component={EnhancedJournalScreen} options={{ title: 'Your Journal' }} />
               <Stack.Screen name="DreamDetail" component={DreamDetailScreen} options={{ title: 'Dream' }} />
               <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Ask the Analyst' }} />
@@ -195,7 +211,9 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <BillingProvider>
+        <AppContent />
+      </BillingProvider>
     </ThemeProvider>
   );
 }

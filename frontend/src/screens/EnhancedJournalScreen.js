@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView } from 'react
 import { Screen, Card, Button } from '../ui/components';
 import { spacing } from '../ui/Theme';
 import { listDreams, createDream, deleteDream, getPatterns } from '../api';
+import { useBilling } from '../contexts/BillingContext';
 import DreamLogForm from '../components/DreamLogForm';
 
 const DreamItem = memo(function DreamItem({ item, onPress, onDelete }) {
@@ -66,6 +67,7 @@ const DreamItem = memo(function DreamItem({ item, onPress, onDelete }) {
 
 export default function EnhancedJournalScreen({ navigation }) {
   const [items, setItems] = useState([]);
+  const billing = useBilling();
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [selectedMoods, setSelectedMoods] = useState([]);
@@ -103,7 +105,11 @@ export default function EnhancedJournalScreen({ navigation }) {
   }, []);
 
   const addDream = useCallback(async () => {
-    if (!content.trim()) return;
+    if (!billing?.canUse('dream_create')) {
+      navigation.navigate('Paywall');
+      return;
+    }
+    if (!content.trim() && !title.trim()) return;
     
     // Use custom date if provided, otherwise use current date
     const dreamDateToUse = dreamDate.trim() || new Date().toISOString().split('T')[0];
@@ -123,12 +129,13 @@ export default function EnhancedJournalScreen({ navigation }) {
       setSelectedMoods([]);
       setSelectedTags([]);
       setDreamDate('');
+      billing?.recordUsage('dream_create');
     } catch (e) {
       console.error('Dream creation error:', e);
       const errorMessage = e.response?.data?.error || e.message || 'Failed to save dream';
       Alert.alert('Error', errorMessage);
     }
-  }, [content, title, selectedMoods, selectedTags, dreamDate, items]);
+  }, [content, title, selectedMoods, selectedTags, dreamDate, items, billing]);
 
   const removeDream = async (id) => {
     try {
