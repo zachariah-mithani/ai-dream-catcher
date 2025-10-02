@@ -206,4 +206,19 @@ export async function upgradePlan(plan, trialDays = 0) {
   return data;
 }
 
+export async function getPricing() {
+  const { data } = await api.get('/billing/pricing');
+  return data;
+}
+
+export async function createCheckoutSession(priceId, trialDays = 7) {
+  const { data } = await api.post('/billing/checkout', { priceId, trialDays });
+  return data;
+}
+
+export async function createBillingPortalSession() {
+  const { data } = await api.post('/billing/portal');
+  return data;
+}
+
 

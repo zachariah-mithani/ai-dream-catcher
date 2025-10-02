@@ -3,26 +3,29 @@ import { z } from 'zod';
 import { db } from '../database.js';
 import { requireAuth } from '../auth.js';
 import { analyzeDreamText } from '../openrouter.js';
+import { createBillingMiddleware, incrementUsage } from '../billing.js';
 
 export const analysisRouter = express.Router();
 analysisRouter.use(requireAuth);
 
 const analyzeSchema = z.object({ dreamId: z.number().optional(), content: z.string().min(1) });
 
-analysisRouter.post('/', async (req, res) => {
+analysisRouter.post('/', createBillingMiddleware('ai_analyze'), async (req, res) => {
   const parse = analyzeSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
   const { dreamId, content } = parse.data;
   
-  // Get user's plan to determine analysis quality
-  const user = await db.prepare('SELECT plan FROM users WHERE id = ?').get(req.user.id);
-  const isPremium = user?.plan === 'premium';
-  
   try {
-    const { text, model } = await analyzeDreamText(content, isPremium);
+    const { text, model } = await analyzeDreamText(content, req.billing.isPremium);
     const info = await db.prepare('INSERT INTO analyses (user_id, dream_id, type, prompt, response, model) VALUES (?, ?, ?, ?, ?, ?)')
       .run(req.user.id, dreamId || null, 'immediate', content, text, model || null);
     const row = await db.prepare('SELECT * FROM analyses WHERE id = ?').get(info.lastInsertRowid);
+    
+    // Track usage for billing
+    if (!req.billing.unlimited) {
+      await incrementUsage(req.user.id, 'ai_analyze', req.billing.period);
+    }
+    
     res.json(row);
   } catch (e) {
     const status = e?.response?.status || 500;

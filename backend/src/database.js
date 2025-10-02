@@ -471,6 +471,34 @@ export async function initSchema() {
     );
   `;
 
+  const createUserSubscriptionsTable = dbWrapper.isPostgres ? `
+    CREATE TABLE IF NOT EXISTS user_subscriptions (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      stripe_customer_id TEXT,
+      stripe_subscription_id TEXT,
+      status TEXT NOT NULL,
+      current_period_end TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id),
+      UNIQUE(user_id)
+    );
+  ` : `
+    CREATE TABLE IF NOT EXISTS user_subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      stripe_customer_id TEXT,
+      stripe_subscription_id TEXT,
+      status TEXT NOT NULL,
+      current_period_end TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id),
+      UNIQUE(user_id)
+    );
+  `;
+
   await dbWrapper.exec(createUsersTable);
   await dbWrapper.exec(createDreamsTable);
   await dbWrapper.exec(createAnalysesTable);
@@ -481,6 +509,7 @@ export async function initSchema() {
   await dbWrapper.exec(createRefreshTokensTable);
   await dbWrapper.exec(createPasswordResetsTable);
   await dbWrapper.exec(createUsageCountersTable);
+  await dbWrapper.exec(createUserSubscriptionsTable);
 }
 
 // Create database instance but export immediately with rename to eliminate shadows

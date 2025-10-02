@@ -29,6 +29,7 @@ import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import ResetPasswordScreen from './screens/ResetPasswordScreen';
 import TabsHomeScreen from './screens/TabsHomeScreen';
 import PaywallScreen from './screens/PaywallScreen';
+import BillingScreen from './screens/BillingScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { api } from './api';
@@ -191,6 +192,7 @@ function AppContent() {
             <>
               <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
             <Stack.Screen name="Paywall" component={PaywallScreen} options={{ title: 'Dream Explorer+' }} />
+            <Stack.Screen name="Billing" component={BillingScreen} options={{ title: 'Billing & Subscription' }} />
               <Stack.Screen name="Journal" component={EnhancedJournalScreen} options={{ title: 'Your Journal' }} />
               <Stack.Screen name="DreamDetail" component={DreamDetailScreen} options={{ title: 'Dream' }} />
               <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Ask the Analyst' }} />

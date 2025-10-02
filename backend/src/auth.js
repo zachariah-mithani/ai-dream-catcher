@@ -79,7 +79,7 @@ export async function createUser(email, password, profile = {}) {
     profile.bedtime_minute || 0,
     profile.wakeup_hour || 7,
     profile.wakeup_minute || 0,
-    profile.notifications_enabled !== false
+    profile.notifications_enabled !== false ? 1 : 0
   );
   return { 
     id: info.lastInsertRowid, 

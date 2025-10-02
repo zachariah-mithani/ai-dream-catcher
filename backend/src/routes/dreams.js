@@ -2,6 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import { db } from '../database.js';
 import { requireAuth } from '../auth.js';
+import { createBillingMiddleware, incrementUsage } from '../billing.js';
 
 export const dreamsRouter = express.Router();
 
@@ -61,7 +62,7 @@ dreamsRouter.get('/', async (req, res) => {
   res.json({ items: rows, page, page_size: pageSize, total: countRow?.count || 0 });
 });
 
-dreamsRouter.post('/', async (req, res) => {
+dreamsRouter.post('/', createBillingMiddleware('dream_create'), async (req, res) => {
   const parse = dreamSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
   const { title, content, voice_uri, mood, moods, tags, dream_date } = parse.data;
@@ -121,6 +122,12 @@ dreamsRouter.post('/', async (req, res) => {
     
     const info = await db.prepare(query).run(...params);
     const row = await db.prepare('SELECT * FROM dreams WHERE id = ?').get(info.lastInsertRowid);
+    
+    // Track usage for billing
+    if (!req.billing.unlimited) {
+      await incrementUsage(req.user.id, 'dream_create', req.billing.period);
+    }
+    
     res.status(201).json(row);
   } catch (error) {
     console.error('Database error creating dream:', error);

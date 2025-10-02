@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { db } from '../database.js';
 import { requireAuth } from '../auth.js';
 import { chatWithAnalyst } from '../openrouter.js';
+import { createBillingMiddleware, incrementUsage } from '../billing.js';
 
 export const chatRouter = express.Router();
 chatRouter.use(requireAuth);
@@ -12,10 +13,11 @@ const chatSchema = z.object({
   message: z.string().min(1)
 });
 
-chatRouter.post('/', async (req, res) => {
+chatRouter.post('/', createBillingMiddleware('chat_message'), async (req, res) => {
   const parse = chatSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
   const { history = [], message } = parse.data;
+  
   try {
     console.log('Chat request:', { history, message });
     const { text, model } = await chatWithAnalyst(history, message);
@@ -23,6 +25,12 @@ chatRouter.post('/', async (req, res) => {
     const info = db.prepare('INSERT INTO analyses (user_id, type, prompt, response, model) VALUES (?, ?, ?, ?, ?)')
       .run(req.user.id, 'chat', message, text, model || null);
     const row = db.prepare('SELECT * FROM analyses WHERE id = ?').get(info.lastInsertRowid);
+    
+    // Track usage for billing
+    if (!req.billing.unlimited) {
+      await incrementUsage(req.user.id, 'chat_message', req.billing.period);
+    }
+    
     res.json({ response: text, model });
   } catch (e) {
     console.error('Chat error:', e.message, e.response?.data);
