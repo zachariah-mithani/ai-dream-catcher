@@ -154,7 +154,17 @@ billingRouter.post('/checkout', async (req, res) => {
     res.json({ sessionId: session.id, sessionUrl: session.url });
   } catch (error) {
     console.error('Checkout session creation failed:', error);
-    res.status(500).json({ error: 'Failed to create checkout session' });
+    console.error('Error details:', {
+      message: error.message,
+      type: error.type,
+      code: error.code,
+      priceId: priceIdMap[priceId],
+      customerId
+    });
+    res.status(500).json({ 
+      error: 'Failed to create checkout session',
+      details: error.message 
+    });
   }
 });
 
