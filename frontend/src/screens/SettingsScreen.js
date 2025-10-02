@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Alert, Switch, Modal } from 'react-native';
 import { Screen, Text, Card, Input, Button, Subtle } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
-import { getProfile, updateProfile, deleteAccount } from '../api';
+import { getProfile, updateProfile, deleteAccount, upgradePlan } from '../api';
 import CollapsibleTimePicker from '../components/CollapsibleTimePicker';
 import TermsScreen from './legal/TermsScreen';
 import PrivacyScreen from './legal/PrivacyScreen';
@@ -287,7 +287,21 @@ export default function SettingsScreen({ navigation }) {
           <View style={{ flexDirection: 'row', gap: spacing(1) }}>
             <Button title="Manage Plan" onPress={async () => { await billing?.refresh?.(); navigation.navigate('Paywall'); }} style={{ flex: 1 }} />
             {billing?.isPremium ? (
-              <Button title="Switch to Free" kind="secondary" onPress={async () => { try { await api.post('/billing/upgrade', { plan: 'free' }); } catch {} await billing?.refresh?.(); }} style={{ flex: 1 }} />
+              <Button 
+                title="Switch to Free" 
+                kind="secondary" 
+                onPress={async () => { 
+                  try { 
+                    await upgradePlan('free'); 
+                    await billing?.refresh?.(); 
+                    Alert.alert('Success', 'Switched to Free plan.');
+                  } catch (e) {
+                    console.error('Switch to free failed:', e);
+                    Alert.alert('Error', 'Failed to switch plan. Please try again.');
+                  }
+                }} 
+                style={{ flex: 1 }} 
+              />
             ) : (
               <Button title="Upgrade" onPress={() => navigation.navigate('Paywall')} style={{ flex: 1 }} />
             )}
