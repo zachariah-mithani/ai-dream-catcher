@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { chat, listDreams, analyzeDream } from '../api';
 import { useBilling } from '../contexts/BillingContext';
 import MarkdownText from '../components/MarkdownText';
+import { InlineUpgradePrompt } from '../components/UpgradePrompt';
 
 export default function ChatScreen({ route }) {
   const { colors, spacing } = useTheme();
@@ -186,6 +187,16 @@ export default function ChatScreen({ route }) {
               </View>
             }
           />
+
+          {/* Show upgrade prompt if chat limit is reached or close */}
+          {!billing?.isPremium && (
+            <InlineUpgradePrompt
+              limitType="chat_message"
+              currentUsage={billing?.usage?.chat_message || 0}
+              limit={3}
+              period="day"
+            />
+          )}
 
           <View style={{ 
             flexDirection: 'row', 

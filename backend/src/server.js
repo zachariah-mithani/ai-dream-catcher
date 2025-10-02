@@ -14,6 +14,18 @@ import { statisticsRouter } from './routes/statistics.js';
 import { moodsRouter } from './routes/moods.js';
 import { promptsRouter } from './routes/prompts.js';
 import { billingRouter } from './routes/billing.js';
+import { 
+  errorHandler, 
+  notFoundHandler, 
+  setupGracefulShutdown 
+} from './middleware/errorHandler.js';
+import { 
+  requestMetricsMiddleware,
+  performanceMiddleware,
+  healthCheck,
+  metrics,
+  systemInfo
+} from './middleware/monitoring.js';
 
 const app = express();
 
@@ -47,17 +59,17 @@ app.use(morgan('dev'));
 const limiter = rateLimit({ windowMs: 60 * 1000, max: 120 });
 app.use(limiter);
 
+// Add monitoring middleware
+app.use(requestMetricsMiddleware);
+app.use(performanceMiddleware);
+
 // Initialize database schema on startup
 initSchema(); // Force redeploy
 
-app.get('/health', async (_req, res) => {
-  try {
-    const result = await db.prepare('SELECT 1 as test').get();
-    res.json({ ok: true });
-  } catch (err) {
-    res.status(500).json({ ok: false, error: 'db' });
-  }
-});
+// Health and monitoring endpoints
+app.get('/health', healthCheck);
+app.get('/metrics', metrics);
+app.get('/system', systemInfo);
 
 
 app.use('/auth', authRouter);
@@ -69,13 +81,18 @@ app.use('/moods', moodsRouter);
 app.use('/prompts', promptsRouter);
 app.use('/billing', billingRouter);
 
-app.use((err, _req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ error: 'Internal Server Error' });
+// 404 handler for undefined routes
+app.use(notFoundHandler);
+
+// Global error handler (must be last)
+app.use(errorHandler);
+
+const server = app.listen(APP_PORT, () => {
+  console.log(`AI Dream Catcher backend listening on :${APP_PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
-app.listen(APP_PORT, () => {
-  console.log(`AI Dream Catcher backend listening on :${APP_PORT}`);
-});
+// Setup graceful shutdown
+setupGracefulShutdown(server);
 
 

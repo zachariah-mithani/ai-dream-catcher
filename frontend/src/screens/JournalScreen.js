@@ -3,8 +3,11 @@ import { View, Text, FlatList, TextInput, TouchableOpacity, Alert } from 'react-
 import { Screen, Card, Button } from '../ui/components';
 import { spacing } from '../ui/Theme';
 import { listDreams, createDream, deleteDream, getPatterns } from '../api';
+import { useBilling } from '../contexts/BillingContext';
+import { InlineUpgradePrompt } from '../components/UpgradePrompt';
 
 export default function JournalScreen({ navigation }) {
+  const billing = useBilling();
   const [items, setItems] = useState([]);
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
@@ -84,6 +87,16 @@ export default function JournalScreen({ navigation }) {
             <Text style={{ color: '#93c5fd' }}>View patterns</Text>
           </TouchableOpacity>
         </Card>
+        
+        {/* Show upgrade prompt if dream creation limit is reached or close */}
+        {!billing?.isPremium && (
+          <InlineUpgradePrompt
+            limitType="dream_create"
+            currentUsage={billing?.usage?.dream_create || 0}
+            limit={10}
+            period="month"
+          />
+        )}
       </View>
 
       <FlatList

@@ -4,6 +4,7 @@ import { Screen, Text, Card, Subtle, Button, Input } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { listDreams, deleteDream, getStatistics } from '../api';
 import { useBilling } from '../contexts/BillingContext';
+import { InlineUpgradePrompt } from '../components/UpgradePrompt';
 
 export default function DreamLogScreen({ navigation }) {
   const { colors, spacing } = useTheme();
@@ -295,6 +296,16 @@ export default function DreamLogScreen({ navigation }) {
         </Card>
         
         {renderStatisticsCards()}
+        
+        {/* Show upgrade prompt if AI analysis limit is reached or close */}
+        {!billing?.isPremium && (
+          <InlineUpgradePrompt
+            limitType="ai_analyze"
+            currentUsage={billing?.usage?.ai_analyze || 0}
+            limit={5}
+            period="month"
+          />
+        )}
       </View>
       
       <FlatList

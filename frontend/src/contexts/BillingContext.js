@@ -61,6 +61,41 @@ export function BillingProvider({ children }) {
     }
   };
 
+  const getUsageInfo = (action) => {
+    if (isPremium) return { used: 0, limit: Infinity, remaining: Infinity, period: 'month' };
+    
+    let used, limit, period;
+    switch (action) {
+      case 'ai_analyze':
+        used = usage.ai_analyze || 0;
+        limit = FREE_LIMITS.ai_analyze_month;
+        period = 'month';
+        break;
+      case 'chat_message':
+        used = usage.chat_message || 0;
+        limit = FREE_LIMITS.chat_message_day;
+        period = 'day';
+        break;
+      case 'dream_create':
+        used = usage.dream_create || 0;
+        limit = FREE_LIMITS.dream_create_month;
+        period = 'month';
+        break;
+      default:
+        used = 0;
+        limit = Infinity;
+        period = 'month';
+    }
+    
+    return { used, limit, remaining: Math.max(0, limit - used), period };
+  };
+
+  const isLimitReached = (action) => {
+    if (isPremium) return false;
+    const info = getUsageInfo(action);
+    return info.remaining === 0;
+  };
+
   const recordUsage = async (metric) => {
     try {
       await api.post('/billing/usage/increment', { metric });
@@ -68,7 +103,18 @@ export function BillingProvider({ children }) {
     } catch {}
   };
 
-  const value = useMemo(() => ({ plan, isPremium, usage, period, loading, refresh, canUse, recordUsage }), [plan, isPremium, usage, period, loading]);
+  const value = useMemo(() => ({ 
+    plan, 
+    isPremium, 
+    usage, 
+    period, 
+    loading, 
+    refresh, 
+    canUse, 
+    recordUsage, 
+    getUsageInfo, 
+    isLimitReached 
+  }), [plan, isPremium, usage, period, loading]);
   return <BillingCtx.Provider value={value}>{children}</BillingCtx.Provider>;
 }
 

@@ -285,7 +285,7 @@ export default function SettingsScreen({ navigation }) {
             Current plan: {billing?.isPremium ? 'Dream Explorer+' : 'Free'}
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing(1) }}>
-            <Button title="Manage Plan" onPress={async () => { await billing?.refresh?.(); navigation.navigate('Paywall'); }} style={{ flex: 1 }} />
+            <Button title="Manage Plan" onPress={async () => { await billing?.refresh?.(); navigation.navigate('Billing'); }} style={{ flex: 1 }} />
             {billing?.isPremium ? (
               <Button 
                 title="Switch to Free" 
@@ -303,7 +303,7 @@ export default function SettingsScreen({ navigation }) {
                 style={{ flex: 1 }} 
               />
             ) : (
-              <Button title="Upgrade" onPress={() => navigation.navigate('Paywall')} style={{ flex: 1 }} />
+              <Button title="Upgrade" onPress={() => navigation.navigate('Billing')} style={{ flex: 1 }} />
             )}
           </View>
         </Card>

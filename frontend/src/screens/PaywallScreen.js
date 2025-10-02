@@ -1,13 +1,14 @@
-import React from 'react';
-import { Alert } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Linking } from 'react-native';
 import { Screen, Text, Button, Card } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
-import { upgradePlan } from '../api';
+import { upgradePlan, createCheckoutSession, createBillingPortalSession } from '../api';
 import { useBilling } from '../contexts/BillingContext';
 
 export default function PaywallScreen({ navigation }) {
   const { colors, spacing } = useTheme();
   const billing = useBilling();
+  const [loading, setLoading] = useState(false);
   
   // If user is already premium, show different content
   if (billing?.isPremium) {
@@ -28,21 +29,22 @@ export default function PaywallScreen({ navigation }) {
           </Text>
           
           <Button 
-            title="Switch to Free Plan" 
+            title="Manage Subscription" 
             onPress={async () => {
               try {
-                console.log('PaywallScreen: Switching to free plan...');
-                await upgradePlan('free');
-                await billing?.refresh?.();
-                Alert.alert('Success', 'Switched to Free plan.');
-                navigation.goBack();
+                setLoading(true);
+                const { sessionUrl } = await createBillingPortalSession();
+                await Linking.openURL(sessionUrl);
               } catch (e) {
-                console.error('PaywallScreen: Switch to free failed:', e);
-                Alert.alert('Error', 'Failed to switch plan. Please try again.');
+                console.error('PaywallScreen: Billing portal failed:', e);
+                Alert.alert('Error', 'Failed to open billing portal. Please try again.');
+              } finally {
+                setLoading(false);
               }
             }} 
             kind="secondary"
             style={{ marginBottom: spacing(1) }} 
+            loading={loading}
           />
           <Button 
             title="Keep Dream Explorer+" 
@@ -67,34 +69,46 @@ export default function PaywallScreen({ navigation }) {
         <Text style={{ color: colors.text, marginBottom: spacing(1) }}>• Unlimited Dream Analyst chat</Text>
         <Text style={{ color: colors.text, marginBottom: spacing(3) }}>• Full history & trends</Text>
         <Button 
-          title="Start 7-day free trial" 
+          title="Start 7-day free trial - $9.99/month" 
           onPress={async () => {
             try {
-              console.log('PaywallScreen: Starting upgrade to premium with 7-day trial...');
-              const result = await upgradePlan('premium', 7);
-              console.log('PaywallScreen: Upgrade result:', result);
+              setLoading(true);
+              console.log('PaywallScreen: Creating Stripe checkout session...');
+              const { sessionUrl } = await createCheckoutSession('monthly', 7);
+              await Linking.openURL(sessionUrl);
             } catch (e) {
-              console.error('PaywallScreen: Upgrade failed:', e);
+              console.error('PaywallScreen: Checkout failed:', e);
+              Alert.alert('Error', 'Failed to start checkout. Please try again.');
+            } finally {
+              setLoading(false);
             }
-            console.log('PaywallScreen: Refreshing billing context...');
-            await billing?.refresh?.();
-            console.log('PaywallScreen: Navigating back to settings...');
-            navigation.goBack();
           }} 
           style={{ marginBottom: spacing(1) }} 
+          loading={loading}
+        />
+        <Button 
+          title="Save 17% - $99.99/year" 
+          onPress={async () => {
+            try {
+              setLoading(true);
+              console.log('PaywallScreen: Creating yearly Stripe checkout session...');
+              const { sessionUrl } = await createCheckoutSession('yearly', 7);
+              await Linking.openURL(sessionUrl);
+            } catch (e) {
+              console.error('PaywallScreen: Yearly checkout failed:', e);
+              Alert.alert('Error', 'Failed to start checkout. Please try again.');
+            } finally {
+              setLoading(false);
+            }
+          }} 
+          kind="secondary"
+          style={{ marginBottom: spacing(1) }}
+          loading={loading}
         />
         <Button 
           title="Continue Free (limited)" 
-          onPress={async () => { 
-            try { 
-              await upgradePlan('free'); 
-            } catch (e) {
-              console.error('Downgrade failed:', e);
-            }
-            await billing?.refresh?.();
-            navigation.goBack();
-          }} 
-          kind="secondary" 
+          onPress={() => navigation.goBack()} 
+          kind="tertiary"
         />
       </Card>
     </Screen>
