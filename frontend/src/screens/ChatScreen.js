@@ -108,8 +108,10 @@ export default function ChatScreen({ route }) {
       maxWidth: '85%'
     }}>
       <Card style={{
-        backgroundColor: item.role === 'user' ? colors.primary : colors.card,
-        padding: spacing(2)
+        backgroundColor: item.role === 'user' ? colors.primary : colors.surface,
+        padding: spacing(2),
+        borderWidth: 1,
+        borderColor: colors.border
       }}>
         {item.role === 'assistant' ? (
           <MarkdownText style={{ 
@@ -120,7 +122,7 @@ export default function ChatScreen({ route }) {
           </MarkdownText>
         ) : (
           <CustomText style={{ 
-            color: '#ffffff',
+            color: colors.primaryText,
             fontSize: 16
           }}>
             {item.content}
@@ -149,7 +151,12 @@ export default function ChatScreen({ route }) {
                     Recent Dreams:
                   </CustomText>
                   {dreams.slice(0, 3).map((dream, index) => (
-                    <Card key={index} style={{ marginBottom: spacing(1), backgroundColor: colors.card }}>
+                    <Card key={index} style={{ 
+                      marginBottom: spacing(1), 
+                      backgroundColor: colors.surface,
+                      borderWidth: 1,
+                      borderColor: colors.border
+                    }}>
                       <TouchableOpacity onPress={() => startDreamChat(dream)}>
                         <CustomText style={{ color: colors.text, fontWeight: '600', marginBottom: 4 }}>
                           {dream.title || 'Untitled Dream'}
