@@ -130,8 +130,8 @@ billingRouter.post('/checkout', async (req, res) => {
       customerId = customer.id;
       
       // Store customer ID
-      await db.prepare('INSERT OR REPLACE INTO user_subscriptions (user_id, stripe_customer_id, status) VALUES (?, ?, ?)')
-        .run(req.user.id, customerId, 'pending');
+      await db.prepare('INSERT INTO user_subscriptions (user_id, stripe_customer_id, status) VALUES (?, ?, ?) ON CONFLICT (user_id) DO UPDATE SET stripe_customer_id = ?, status = ?')
+        .run(req.user.id, customerId, 'pending', customerId, 'pending');
     }
     
     // Create checkout session
@@ -158,8 +158,8 @@ billingRouter.post('/checkout', async (req, res) => {
       message: error.message,
       type: error.type,
       code: error.code,
-      priceId: priceIdMap[priceId],
-      customerId
+      priceId: priceId,
+      customerId: customerId || 'unknown'
     });
     res.status(500).json({ 
       error: 'Failed to create checkout session',
