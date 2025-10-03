@@ -88,10 +88,21 @@ export async function rescheduleAllReminders({
     await cancelAllReminders();
     return { bedtimeId: null, wakeupId: null };
   }
-  const [bedtimeId, wakeupId] = await Promise.all([
-    scheduleBedtimeReminder(bedtime_hour ?? 22, bedtime_minute ?? 0),
-    scheduleWakeupReminder(wakeup_hour ?? 7, wakeup_minute ?? 0),
-  ]);
+  // Only schedule the reminders the user explicitly set; otherwise cancel them
+  let bedtimeId = null;
+  let wakeupId = null;
+
+  if (typeof bedtime_hour === 'number' && typeof bedtime_minute === 'number') {
+    bedtimeId = await scheduleBedtimeReminder(bedtime_hour, bedtime_minute);
+  } else {
+    await cancelByKey(BEDTIME_KEY);
+  }
+
+  if (typeof wakeup_hour === 'number' && typeof wakeup_minute === 'number') {
+    wakeupId = await scheduleWakeupReminder(wakeup_hour, wakeup_minute);
+  } else {
+    await cancelByKey(WAKEUP_KEY);
+  }
 
   // Removed immediate one-off wake notification to avoid alerts firing
   // right after saving profile changes. Daily schedules above are sufficient.
