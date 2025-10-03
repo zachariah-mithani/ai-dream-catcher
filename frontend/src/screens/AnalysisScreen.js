@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, FlatList, Alert, TouchableOpacity } from 'react-native';
+import { View, ActivityIndicator, FlatList, Alert, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
 import { Screen, Text, Card, Subtle, Button, Input } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { listDreams, deleteDream, getStatistics } from '../api';
@@ -250,84 +250,103 @@ export default function DreamLogScreen({ navigation }) {
 
   return (
     <Screen>
-      <View style={{ paddingHorizontal: spacing(2), paddingTop: spacing(2) }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing(2) }}>
-          <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800' }}>Dream Log</Text>
-          <Button 
-            title="Refresh" 
-            onPress={onRefresh}
-            style={{ paddingHorizontal: spacing(2), paddingVertical: spacing(1) }}
+      <ScrollView 
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: spacing(3) }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
           />
-        </View>
-        <Subtle style={{ marginBottom: spacing(2) }}>View and analyze your dreams</Subtle>
-
-        {/* Search */}
-        <Card style={{ marginBottom: spacing(2) }}>
-          <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 8 }}>Search Dreams</Text>
-          <Input
-            placeholder="Search in title or content..."
-            value={searchText}
-            onChangeText={setSearchText}
-            style={{ marginBottom: 8 }}
-          />
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Button
-              title="Search"
-              onPress={async () => {
-                const query = searchText.trim();
-                setQ(query);
-                setPage(1);
-                await loadDreams(true, 1, query);
-              }}
-              style={{ flex: 1 }}
-            />
-            <Button
-              kind="secondary"
-              title="Clear"
-              onPress={async () => {
-                setSearchText('');
-                setQ('');
-                setPage(1);
-                await loadDreams(true, 1, '');
-              }}
-              style={{ flex: 1 }}
-            />
-          </View>
-        </Card>
-        
-        {renderStatisticsCards()}
-        
-        {/* Unified AI actions remaining message */}
-        {!billing?.isPremium && (
-          <InlineUpgradePrompt
-            limitType="ai_actions"
-            currentUsage={billing?.getAiActionsUsed?.() || 0}
-            limit={billing?.AI_ACTIONS_LIMIT || 10}
-            period="month"
-          />
-        )}
-      </View>
-      
-      <FlatList
-        data={dreams}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingHorizontal: spacing(2), paddingBottom: spacing(3) }}
-        renderItem={renderDreamCard}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-        onEndReachedThreshold={0.5}
-        onEndReached={loadMore}
-        ListEmptyComponent={
-          <View style={{ padding: spacing(3), alignItems: 'center' }}>
-            <Subtle style={{ textAlign: 'center', marginBottom: spacing(1) }}>
-              No dreams logged yet.
-            </Subtle>
-            <Subtle style={{ textAlign: 'center' }}>
-              Start logging your dreams to see them here.
-            </Subtle>
-          </View>
         }
-      />
+        onScroll={({ nativeEvent }) => {
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          const paddingToBottom = 20;
+          if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
+            // Load more when near bottom
+            loadMore();
+          }
+        }}
+        scrollEventThrottle={400}
+      >
+        <View style={{ paddingHorizontal: spacing(2), paddingTop: spacing(2) }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing(2) }}>
+            <Text style={{ color: colors.text, fontSize: 24, fontWeight: '800' }}>Dream Log</Text>
+            <Button 
+              title="Refresh" 
+              onPress={onRefresh}
+              style={{ paddingHorizontal: spacing(2), paddingVertical: spacing(1) }}
+            />
+          </View>
+          <Subtle style={{ marginBottom: spacing(2) }}>View and analyze your dreams</Subtle>
+
+          {/* Search */}
+          <Card style={{ marginBottom: spacing(2) }}>
+            <Text style={{ color: colors.text, fontWeight: '700', marginBottom: 8 }}>Search Dreams</Text>
+            <Input
+              placeholder="Search in title or content..."
+              value={searchText}
+              onChangeText={setSearchText}
+              style={{ marginBottom: 8 }}
+            />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button
+                title="Search"
+                onPress={async () => {
+                  const query = searchText.trim();
+                  setQ(query);
+                  setPage(1);
+                  await loadDreams(true, 1, query);
+                }}
+                style={{ flex: 1 }}
+              />
+              <Button
+                kind="secondary"
+                title="Clear"
+                onPress={async () => {
+                  setSearchText('');
+                  setQ('');
+                  setPage(1);
+                  await loadDreams(true, 1, '');
+                }}
+                style={{ flex: 1 }}
+              />
+            </View>
+          </Card>
+          
+          {renderStatisticsCards()}
+          
+          {/* Unified AI actions remaining message */}
+          {!billing?.isPremium && (
+            <InlineUpgradePrompt
+              limitType="ai_actions"
+              currentUsage={billing?.getAiActionsUsed?.() || 0}
+              limit={billing?.AI_ACTIONS_LIMIT || 10}
+              period="month"
+            />
+          )}
+        </View>
+        
+        {/* Dreams List */}
+        <View style={{ paddingHorizontal: spacing(2) }}>
+          {dreams.length === 0 ? (
+            <View style={{ padding: spacing(3), alignItems: 'center' }}>
+              <Subtle style={{ textAlign: 'center', marginBottom: spacing(1) }}>
+                No dreams logged yet.
+              </Subtle>
+              <Subtle style={{ textAlign: 'center' }}>
+                Start logging your dreams to see them here.
+              </Subtle>
+            </View>
+          ) : (
+            dreams.map((item) => (
+              <View key={item.id.toString()}>
+                {renderDreamCard({ item })}
+              </View>
+            ))
+          )}
+        </View>
+      </ScrollView>
     </Screen>
   );
 }
