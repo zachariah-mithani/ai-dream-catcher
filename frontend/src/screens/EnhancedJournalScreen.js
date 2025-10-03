@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, memo } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView, RefreshControl } from 'react-native';
 import { Screen, Card, Button } from '../ui/components';
 import { spacing } from '../ui/Theme';
 import { listDreams, createDream, deleteDream, getPatterns } from '../api';
@@ -160,48 +160,58 @@ export default function EnhancedJournalScreen({ navigation }) {
 
   return (
     <Screen>
-      <DreamLogForm
-        title={title}
-        setTitle={setTitle}
-        content={content}
-        setContent={setContent}
-        selectedMoods={selectedMoods}
-        setSelectedMoods={setSelectedMoods}
-        selectedTags={selectedTags}
-        setSelectedTags={setSelectedTags}
-        dreamDate={dreamDate}
-        setDreamDate={setDreamDate}
-        addDream={addDream}
-        listening={listening}
-        startVoice={startVoice}
-        stopVoice={stopVoice}
-        navigation={navigation}
-      />
-      <FlatList
+      <ScrollView 
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: spacing(3) }}
-        refreshing={listRefreshing}
-        onRefresh={() => { setPage(1); load(true, 1); }}
-        data={items}
-        keyExtractor={(item)=>String(item.id)}
-        renderItem={({ item }) => (
+        refreshControl={
+          <RefreshControl
+            refreshing={listRefreshing}
+            onRefresh={() => { setPage(1); load(true, 1); }}
+          />
+        }
+        onScroll={({ nativeEvent }) => {
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          const paddingToBottom = 20;
+          if (layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom) {
+            // Load more when near bottom
+            if (items.length < total) {
+              const next = page + 1;
+              setPage(next);
+              load(false, next);
+            }
+          }
+        }}
+        scrollEventThrottle={400}
+      >
+        <DreamLogForm
+          title={title}
+          setTitle={setTitle}
+          content={content}
+          setContent={setContent}
+          selectedMoods={selectedMoods}
+          setSelectedMoods={setSelectedMoods}
+          selectedTags={selectedTags}
+          setSelectedTags={setSelectedTags}
+          dreamDate={dreamDate}
+          setDreamDate={setDreamDate}
+          addDream={addDream}
+          listening={listening}
+          startVoice={startVoice}
+          stopVoice={stopVoice}
+          navigation={navigation}
+        />
+        
+        <Text style={{ color: 'white', fontSize: 20, fontWeight: '800', marginTop: spacing(4), marginBottom: spacing(2), paddingHorizontal: spacing(2) }}>Your Dreams</Text>
+        
+        {items.map((item) => (
           <DreamItem 
+            key={String(item.id)}
             item={item}
             onPress={() => navigation.navigate('DreamDetail', { item })}
             onDelete={() => removeDream(item.id)}
           />
-        )}
-        initialNumToRender={10}
-        windowSize={10}
-        removeClippedSubviews
-        onEndReachedThreshold={0.5}
-        onEndReached={async () => {
-          if (items.length >= total) return;
-          const next = page + 1;
-          setPage(next);
-          await load(false, next);
-        }}
-      />
+        ))}
+      </ScrollView>
     </Screen>
   );
 }

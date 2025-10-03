@@ -214,8 +214,6 @@ const DreamLogForm = ({
           ))}
         </View>
       )}
-      
-      <Text style={{ color: 'white', fontSize: 20, fontWeight: '800', marginTop: spacing(4), marginBottom: spacing(2) }}>Your Dreams</Text>
     </View>
   );
 };
