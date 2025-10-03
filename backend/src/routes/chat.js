@@ -13,6 +13,40 @@ const chatSchema = z.object({
   message: z.string().min(1)
 });
 
+// Get chat history
+chatRouter.get('/', async (req, res) => {
+  try {
+    const { limit = 50, offset = 0 } = req.query;
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const offsetNum = Math.max(0, parseInt(offset));
+    
+    const rows = await db.prepare(`
+      SELECT id, prompt, response, created_at 
+      FROM analyses 
+      WHERE user_id = ? AND type = 'chat' 
+      ORDER BY created_at DESC 
+      LIMIT ? OFFSET ?
+    `).all(req.user.id, limitNum, offsetNum);
+    
+    // Convert to chat history format
+    const history = [];
+    for (let i = rows.length - 1; i >= 0; i--) {
+      const row = rows[i];
+      if (row.prompt) {
+        history.push({ role: 'user', content: row.prompt, timestamp: row.created_at });
+      }
+      if (row.response) {
+        history.push({ role: 'assistant', content: row.response, timestamp: row.created_at });
+      }
+    }
+    
+    res.json({ history, total: rows.length });
+  } catch (e) {
+    console.error('Chat history error:', e);
+    res.status(500).json({ error: 'Failed to load chat history' });
+  }
+});
+
 chatRouter.post('/', createBillingMiddleware('chat_message'), async (req, res) => {
   const parse = chatSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
