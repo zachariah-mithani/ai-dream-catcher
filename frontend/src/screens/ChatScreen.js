@@ -21,11 +21,19 @@ export default function ChatScreen({ route, navigation }) {
   const [showHistory, setShowHistory] = useState(false);
   const [chatSessions, setChatSessions] = useState([]);
   const [historyRetention, setHistoryRetention] = useState('7 days');
+  const [billingLoaded, setBillingLoaded] = useState(false);
 
   useEffect(() => {
     loadDreams();
     loadChatHistory();
   }, []);
+
+  // Track when billing is loaded
+  useEffect(() => {
+    if (billing) {
+      setBillingLoaded(true);
+    }
+  }, [billing]);
 
   const loadChatHistory = async () => {
     try {
@@ -137,23 +145,36 @@ export default function ChatScreen({ route, navigation }) {
 
   const send = async () => {
     if (!message.trim()) return;
-    if (!billing?.canUse('chat_message')) {
+    
+    // Check billing status
+    if (!billing) {
+      Alert.alert('Error', 'Billing information not loaded. Please try again.');
+      return;
+    }
+    
+    if (!billing.canUse('chat_message')) {
       Alert.alert('Limit reached', 'Upgrade to continue chatting.', [
         { text: 'Cancel', style: 'cancel' },
         { text: 'See Options', onPress: () => navigation.navigate('Billing') }
       ]);
       return;
     }
+    
     const nextHistory = [...history, { role: 'user', content: message.trim() }];
     setHistory(nextHistory);
     setMessage('');
     setBusy(true);
+    
     try {
+      console.log('Sending chat message:', { history: nextHistory, message: message.trim() });
       const res = await chat(nextHistory, message.trim());
+      console.log('Chat response received:', res);
       setHistory(h => [...h, { role: 'assistant', content: res.response }]);
       billing?.recordUsage('chat_message');
     } catch (e) {
-      Alert.alert('Error', 'Chat failed. Please try again.');
+      console.error('Chat error:', e);
+      const errorMessage = e.response?.data?.error || e.message || 'Chat failed. Please try again.';
+      Alert.alert('Error', errorMessage);
     } finally {
       setBusy(false);
     }
@@ -322,15 +343,15 @@ export default function ChatScreen({ route, navigation }) {
             />
             <Button
               onPress={send}
-              disabled={busy || !message.trim()}
+              disabled={busy || !message.trim() || !billingLoaded}
               style={{
-                backgroundColor: busy ? colors.buttonDisabled : colors.primary,
+                backgroundColor: (busy || !billingLoaded) ? colors.buttonDisabled : colors.primary,
                 paddingHorizontal: spacing(3),
                 paddingVertical: spacing(2)
               }}
             >
               <CustomText style={{ color: 'white', fontWeight: '600' }}>
-                {busy ? '...' : 'Send'}
+                {busy ? '...' : (!billingLoaded ? 'Loading...' : 'Send')}
               </CustomText>
             </Button>
           </View>
