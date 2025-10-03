@@ -93,28 +93,8 @@ export async function rescheduleAllReminders({
     scheduleWakeupReminder(wakeup_hour ?? 7, wakeup_minute ?? 0),
   ]);
 
-  // If the wake time is very soon (or just saved for the current minute),
-  // schedule at most ONE one-off notification (~10s) so the user sees it today.
-  try {
-    const now = new Date();
-    const target = new Date();
-    target.setHours((wakeup_hour ?? 7), (wakeup_minute ?? 0), 0, 0);
-    const diffMs = target.getTime() - now.getTime();
-    // within [-30s, +120s] window
-    if (diffMs > -30000 && diffMs < 120000) {
-      const last = Number(await AsyncStorage.getItem(LAST_IMMEDIATE_WAKE_KEY) || '0');
-      if (now.getTime() - last > 60000) {
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title: 'Log your dream',
-            body: "Capture your dream details while they're fresh.",
-          },
-          trigger: { seconds: 10 },
-        });
-        await AsyncStorage.setItem(LAST_IMMEDIATE_WAKE_KEY, String(now.getTime()));
-      }
-    }
-  } catch {}
+  // Removed immediate one-off wake notification to avoid alerts firing
+  // right after saving profile changes. Daily schedules above are sufficient.
 
   return { bedtimeId, wakeupId };
 }
