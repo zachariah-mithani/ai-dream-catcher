@@ -339,8 +339,8 @@ export default function DreamLogScreen({ navigation }) {
               </Subtle>
             </View>
           ) : (
-            dreams.map((item) => (
-              <View key={item.id.toString()}>
+            dreams.map((item, index) => (
+              <View key={`dream-${item.id}-${index}`}>
                 {renderDreamCard({ item })}
               </View>
             ))
