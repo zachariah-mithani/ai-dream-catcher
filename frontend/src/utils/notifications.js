@@ -88,6 +88,10 @@ export async function rescheduleAllReminders({
     await cancelAllReminders();
     return { bedtimeId: null, wakeupId: null };
   }
+  // Hard reset all previously scheduled notifications to prevent duplicates
+  try {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  } catch {}
   // Only schedule the reminders the user explicitly set; otherwise cancel them
   let bedtimeId = null;
   let wakeupId = null;
