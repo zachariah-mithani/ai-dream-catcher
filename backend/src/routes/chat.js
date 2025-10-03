@@ -13,20 +13,33 @@ const chatSchema = z.object({
   message: z.string().min(1)
 });
 
-// Get chat history
+// Get chat history with subscription-based limits
 chatRouter.get('/', async (req, res) => {
   try {
     const { limit = 50, offset = 0 } = req.query;
     const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
     const offsetNum = Math.max(0, parseInt(offset));
     
+    // Apply subscription-based history retention
+    let whereClause = 'WHERE user_id = ? AND type = ?';
+    let params = [req.user.id, 'chat'];
+    
+    // Free users: only last 7 days of history
+    // Premium users: unlimited history
+    if (!req.billing?.isPremium) {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      whereClause += ' AND created_at >= ?';
+      params.push(sevenDaysAgo.toISOString());
+    }
+    
     const rows = await db.prepare(`
       SELECT id, prompt, response, created_at 
       FROM analyses 
-      WHERE user_id = ? AND type = 'chat' 
+      ${whereClause}
       ORDER BY created_at DESC 
       LIMIT ? OFFSET ?
-    `).all(req.user.id, limitNum, offsetNum);
+    `).all(...params, limitNum, offsetNum);
     
     // Convert to chat history format
     const history = [];
@@ -40,7 +53,18 @@ chatRouter.get('/', async (req, res) => {
       }
     }
     
-    res.json({ history, total: rows.length });
+    // Get total count for pagination info
+    const countRows = await db.prepare(`
+      SELECT COUNT(*) as total 
+      FROM analyses 
+      ${whereClause}
+    `).all(...params);
+    
+    res.json({ 
+      history, 
+      total: countRows[0]?.total || 0,
+      retention: req.billing?.isPremium ? 'unlimited' : '7 days'
+    });
   } catch (e) {
     console.error('Chat history error:', e);
     res.status(500).json({ error: 'Failed to load chat history' });

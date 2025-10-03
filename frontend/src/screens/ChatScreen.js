@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Alert, ScrollView, Modal } from 'react-native';
 import { Screen, Card, Button, Text as CustomText } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { chat, listDreams, analyzeDream, getChatHistory } from '../api';
@@ -18,6 +18,9 @@ export default function ChatScreen({ route, navigation }) {
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [dreams, setDreams] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [chatSessions, setChatSessions] = useState([]);
+  const [historyRetention, setHistoryRetention] = useState('7 days');
 
   useEffect(() => {
     loadDreams();
@@ -38,10 +41,51 @@ export default function ChatScreen({ route, navigation }) {
         } else {
           setHistory(data.history);
         }
+        
+        // Set retention info
+        if (data.retention) {
+          setHistoryRetention(data.retention);
+        }
+        
+        // Group history into sessions for the history modal
+        groupHistoryIntoSessions(data.history);
       }
     } catch (e) {
       console.log('Failed to load chat history:', e.message);
     }
+  };
+
+  const groupHistoryIntoSessions = (historyData) => {
+    const sessions = [];
+    let currentSession = [];
+    
+    for (let i = 0; i < historyData.length; i++) {
+      const message = historyData[i];
+      currentSession.push(message);
+      
+      // If this is the last message or the next message is from a different day
+      if (i === historyData.length - 1 || 
+          (historyData[i + 1] && 
+           new Date(message.timestamp).toDateString() !== new Date(historyData[i + 1].timestamp).toDateString())) {
+        
+        if (currentSession.length > 0) {
+          sessions.push({
+            id: `session-${i}`,
+            messages: [...currentSession],
+            date: new Date(message.timestamp).toDateString(),
+            preview: currentSession[0]?.content?.substring(0, 50) + '...' || 'Chat session'
+          });
+          currentSession = [];
+        }
+      }
+    }
+    
+    setChatSessions(sessions);
+  };
+
+  const loadChatSession = (session) => {
+    setHistory(session.messages);
+    setShowHistory(false);
   };
 
   // Auto-analyze dream if requested
@@ -156,6 +200,40 @@ export default function ChatScreen({ route, navigation }) {
 
   return (
     <Screen>
+      {/* Header with History Button */}
+      <View style={{ 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        paddingHorizontal: spacing(2), 
+        paddingVertical: spacing(1),
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border
+      }}>
+        <TouchableOpacity 
+          onPress={() => setShowHistory(true)}
+          style={{
+            padding: spacing(1),
+            borderRadius: 8,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border
+          }}
+        >
+          <CustomText style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
+            📚 History
+          </CustomText>
+        </TouchableOpacity>
+        
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <CustomText style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>
+            Dream Analyst
+          </CustomText>
+        </View>
+        
+        <View style={{ width: 60 }} />
+      </View>
+
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={{ flex: 1 }}>
           {history.length === 0 && (
@@ -258,6 +336,99 @@ export default function ChatScreen({ route, navigation }) {
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      {/* History Modal */}
+      <Modal
+        visible={showHistory}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowHistory(false)}
+      >
+        <Screen>
+          <View style={{ 
+            flexDirection: 'row', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            paddingHorizontal: spacing(2), 
+            paddingVertical: spacing(2),
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border
+          }}>
+            <CustomText style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>
+              Chat History
+            </CustomText>
+            <TouchableOpacity onPress={() => setShowHistory(false)}>
+              <CustomText style={{ color: colors.primary, fontSize: 16, fontWeight: '600' }}>
+                Done
+              </CustomText>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ padding: spacing(2) }}>
+            <CustomText style={{ 
+              color: colors.textSecondary, 
+              fontSize: 14, 
+              marginBottom: spacing(2),
+              textAlign: 'center'
+            }}>
+              {billing?.isPremium ? 'Unlimited history' : `History retained for ${historyRetention}`}
+            </CustomText>
+
+            {chatSessions.length === 0 ? (
+              <View style={{ 
+                flex: 1, 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                paddingVertical: spacing(4)
+              }}>
+                <CustomText style={{ color: colors.textSecondary, textAlign: 'center' }}>
+                  No chat history found
+                </CustomText>
+                <CustomText style={{ color: colors.textSecondary, textAlign: 'center', marginTop: spacing(1) }}>
+                  Start a conversation to see your history here
+                </CustomText>
+              </View>
+            ) : (
+              <ScrollView style={{ flex: 1 }}>
+                {chatSessions.map((session, index) => (
+                  <Card key={session.id} style={{ 
+                    marginBottom: spacing(2),
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border
+                  }}>
+                    <TouchableOpacity onPress={() => loadChatSession(session)}>
+                      <View style={{ padding: spacing(2) }}>
+                        <CustomText style={{ 
+                          color: colors.text, 
+                          fontSize: 16, 
+                          fontWeight: '600',
+                          marginBottom: spacing(1)
+                        }}>
+                          {session.date}
+                        </CustomText>
+                        <CustomText style={{ 
+                          color: colors.textSecondary, 
+                          fontSize: 14,
+                          marginBottom: spacing(1)
+                        }}>
+                          {session.preview}
+                        </CustomText>
+                        <CustomText style={{ 
+                          color: colors.textSecondary, 
+                          fontSize: 12
+                        }}>
+                          {session.messages.length} messages
+                        </CustomText>
+                      </View>
+                    </TouchableOpacity>
+                  </Card>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        </Screen>
+      </Modal>
     </Screen>
   );
 }
