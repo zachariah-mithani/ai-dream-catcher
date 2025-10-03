@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
 import { Screen, Card, Button, Text as CustomText } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
-import { chat, listDreams, analyzeDream } from '../api';
+import { chat, listDreams, analyzeDream, getChatHistory } from '../api';
 import { useBilling } from '../contexts/BillingContext';
 import MarkdownText from '../components/MarkdownText';
 import { InlineUpgradePrompt } from '../components/UpgradePrompt';
@@ -21,7 +21,28 @@ export default function ChatScreen({ route, navigation }) {
 
   useEffect(() => {
     loadDreams();
+    loadChatHistory();
   }, []);
+
+  const loadChatHistory = async () => {
+    try {
+      const data = await getChatHistory();
+      if (data.history && data.history.length > 0) {
+        // If there's a seed, prepend it to the loaded history
+        if (seed) {
+          const seedHistory = [
+            { role: 'user', content: `I want to discuss this dream:\n\nTitle: ${seed.title || 'Untitled'}\nContent: ${seed.content}` },
+            ...(seed.analysis ? [{ role: 'assistant', content: `Here's my analysis of your dream:\n\n${seed.analysis}\n\nWhat would you like to know more about?` }] : [])
+          ];
+          setHistory([...seedHistory, ...data.history]);
+        } else {
+          setHistory(data.history);
+        }
+      }
+    } catch (e) {
+      console.log('Failed to load chat history:', e.message);
+    }
+  };
 
   // Auto-analyze dream if requested
   useEffect(() => {

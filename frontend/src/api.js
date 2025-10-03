@@ -140,6 +140,11 @@ export async function chat(history, message) {
   return data;
 }
 
+export async function getChatHistory(limit = 50, offset = 0) {
+  const { data } = await api.get(`/chat?limit=${limit}&offset=${offset}`);
+  return data;
+}
+
 // New API endpoints for enhanced features
 export async function getStatistics() {
   const { data } = await api.get('/statistics');
