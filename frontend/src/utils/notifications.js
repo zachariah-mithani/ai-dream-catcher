@@ -19,15 +19,21 @@ export async function ensureNotificationPermissions() {
 // Ensure notifications display even when app is in the foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    // Suppress alerts while app is in foreground to avoid
-    // banners appearing immediately after scheduling on save
-    shouldShowAlert: false,
+    // Allow alerts even in foreground so scheduled reminders are visible
+    shouldShowAlert: true,
     shouldPlaySound: false,
     shouldSetBadge: false
   })
 });
 
 async function scheduleDaily(identifierKey, title, body, hour, minute) {
+  // Compute next trigger date to avoid immediate fire when time has passed
+  const now = new Date();
+  const next = new Date();
+  next.setHours(hour, minute, 0, 0);
+  if (next <= now) {
+    next.setDate(next.getDate() + 1);
+  }
   // Cancel existing if present
   const existingId = await AsyncStorage.getItem(identifierKey);
   if (existingId) {
@@ -35,7 +41,8 @@ async function scheduleDaily(identifierKey, title, body, hour, minute) {
   }
   const id = await Notifications.scheduleNotificationAsync({
     content: { title, body },
-    trigger: { hour, minute, second: 0, repeats: true },
+    // Use calendar trigger to ensure first fire is in the future
+    trigger: { date: next, repeats: true },
   });
   await AsyncStorage.setItem(identifierKey, id);
   return id;
