@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, ScrollView, Image } from 'react-native';
 import { Screen, Card, Text, Button, Subtle } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import DreamCatcherLogo from '../components/DreamCatcherLogo';
@@ -39,7 +39,16 @@ export default function ThemeSelectionScreen({ onComplete }) {
     <Screen style={{ justifyContent: 'center', padding: 24 }}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
         <View style={{ alignItems: 'center', marginBottom: spacing(4) }}>
-          <DreamCatcherLogo size={120} />
+          <View style={{ width: 120, height: 120 }}>
+            <Image
+              source={require('../../assets/light-icon.png')}
+              style={{
+                width: '100%',
+                height: '100%',
+              }}
+              resizeMode="contain"
+            />
+          </View>
           <Text style={{ 
             fontSize: 28, 
             fontWeight: '800', 
