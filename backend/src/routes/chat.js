@@ -9,7 +9,11 @@ export const chatRouter = express.Router();
 chatRouter.use(requireAuth);
 
 const chatSchema = z.object({
-  history: z.array(z.object({ role: z.enum(['user','assistant','system']).default('user'), content: z.string() })).optional(),
+  history: z.array(z.object({ 
+    role: z.enum(['user','assistant','system']).default('user'), 
+    content: z.string(),
+    timestamp: z.string().optional()
+  })).optional(),
   message: z.string().min(1)
 });
 
