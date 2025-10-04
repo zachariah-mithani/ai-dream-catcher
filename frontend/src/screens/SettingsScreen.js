@@ -74,13 +74,14 @@ export default function SettingsScreen({ navigation }) {
       setProfile(prev => ({ ...prev, ...updated }));
       // Reschedule notifications after successful save
       try {
-        await rescheduleAllReminders({
-          notifications_enabled: updated.notifications_enabled ?? profile.notifications_enabled,
-          bedtime_hour: updated.bedtime_hour ?? profile.bedtime_hour,
-          bedtime_minute: updated.bedtime_minute ?? profile.bedtime_minute,
-          wakeup_hour: updated.wakeup_hour ?? profile.wakeup_hour,
-          wakeup_minute: updated.wakeup_minute ?? profile.wakeup_minute,
-        });
+                    console.log('Rescheduling notifications after profile save');
+                    await rescheduleAllReminders({
+                      notifications_enabled: updated.notifications_enabled ?? profile.notifications_enabled,
+                      bedtime_hour: updated.bedtime_hour ?? profile.bedtime_hour,
+                      bedtime_minute: updated.bedtime_minute ?? profile.bedtime_minute,
+                      wakeup_hour: updated.wakeup_hour ?? profile.wakeup_hour,
+                      wakeup_minute: updated.wakeup_minute ?? profile.wakeup_minute,
+                    });
       } catch (e) {
         console.log('Failed to reschedule notifications on save:', e.message);
       }
@@ -346,6 +347,7 @@ export default function SettingsScreen({ navigation }) {
                   try {
                     const updated = await updateProfile({ bedtime_hour: hour });
                     setProfile(prev => ({ ...prev, ...updated }));
+                    console.log(`Rescheduling notifications after bedtime hour change to ${hour}`);
                     await rescheduleAllReminders({
                       notifications_enabled: updated.notifications_enabled ?? profile.notifications_enabled,
                       bedtime_hour: updated.bedtime_hour ?? hour,
@@ -362,6 +364,7 @@ export default function SettingsScreen({ navigation }) {
                   try {
                     const updated = await updateProfile({ bedtime_minute: minute });
                     setProfile(prev => ({ ...prev, ...updated }));
+                    console.log(`Rescheduling notifications after bedtime minute change to ${minute}`);
                     await rescheduleAllReminders({
                       notifications_enabled: updated.notifications_enabled ?? profile.notifications_enabled,
                       bedtime_hour: updated.bedtime_hour ?? profile.bedtime_hour,
@@ -383,6 +386,7 @@ export default function SettingsScreen({ navigation }) {
                   try {
                     const updated = await updateProfile({ wakeup_hour: hour });
                     setProfile(prev => ({ ...prev, ...updated }));
+                    console.log(`Rescheduling notifications after wakeup hour change to ${hour}`);
                     await rescheduleAllReminders({
                       notifications_enabled: updated.notifications_enabled ?? profile.notifications_enabled,
                       bedtime_hour: updated.bedtime_hour ?? profile.bedtime_hour,
@@ -399,6 +403,7 @@ export default function SettingsScreen({ navigation }) {
                   try {
                     const updated = await updateProfile({ wakeup_minute: minute });
                     setProfile(prev => ({ ...prev, ...updated }));
+                    console.log(`Rescheduling notifications after wakeup minute change to ${minute}`);
                     await rescheduleAllReminders({
                       notifications_enabled: updated.notifications_enabled ?? profile.notifications_enabled,
                       bedtime_hour: updated.bedtime_hour ?? profile.bedtime_hour,
