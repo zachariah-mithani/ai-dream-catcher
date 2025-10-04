@@ -2,11 +2,11 @@ import axios from 'axios';
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = process.env.OPENROUTER_MODEL || 'x-ai/grok-4-fast:free';
+const DEFAULT_MODEL = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.2-3b-instruct:free';
 const FALLBACK_MODELS = [
-  'meta-llama/llama-3.1-8b-instruct:free',
   'microsoft/phi-3-mini-128k-instruct:free',
-  'deepseek/deepseek-chat:free'
+  'meta-llama/llama-3.2-1b-instruct:free',
+  'mistralai/mistral-7b-instruct:free'
 ];
 
 async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0.7, max_tokens = 800 }) {
@@ -77,6 +77,12 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
       // Enhanced error message
       const errorMessage = err?.response?.data?.error?.message || err?.message || 'Unknown error';
       const errorCode = err?.response?.data?.error?.code || err?.response?.status || 'UNKNOWN';
+      
+      // If all models failed, provide a helpful message
+      if (attempt === 3) {
+        throw new Error(`All AI models are currently unavailable. Please try again later. Last error: ${errorMessage}`);
+      }
+      
       throw new Error(`OpenRouter API Error (${errorCode}): ${errorMessage}`);
     }
   }
