@@ -41,7 +41,13 @@ export default function ThemeSelectionScreen({ onComplete }) {
         <View style={{ alignItems: 'center', marginBottom: spacing(4) }}>
           <View style={{ width: 120, height: 120 }}>
             <Image
-              source={require('../../assets/light-icon.png')}
+              source={
+                selectedTheme === 'dreamy' 
+                  ? require('../../assets/in-app-icon.png')
+                  : selectedTheme === 'minimalistLight'
+                  ? require('../../assets/light-icon.png')
+                  : require('../../assets/in-app-icon.png') // dark theme
+              }
               style={{
                 width: '100%',
                 height: '100%',
