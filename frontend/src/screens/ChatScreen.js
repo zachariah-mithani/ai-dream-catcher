@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, FlatList, KeyboardAvoidingView, Platform, Alert, ScrollView, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, Alert, ScrollView, Modal } from 'react-native';
 import { Screen, Card, Button, Text as CustomText } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { chat, listDreams, analyzeDream, getChatHistory } from '../api';
@@ -22,8 +22,6 @@ export default function ChatScreen({ route, navigation }) {
   const [chatSessions, setChatSessions] = useState([]);
   const [historyRetention, setHistoryRetention] = useState('7 days');
   const [billingLoaded, setBillingLoaded] = useState(false);
-  const [selectModalVisible, setSelectModalVisible] = useState(false);
-  const [selectModalText, setSelectModalText] = useState('');
 
   useEffect(() => {
     loadDreams();
@@ -190,25 +188,18 @@ export default function ChatScreen({ route, navigation }) {
     setHistory([contextMessage]);
   };
 
-  const openSelectModal = (text) => {
-    setSelectModalText(text);
-    setSelectModalVisible(true);
-  };
-
   const renderMessage = ({ item, index }) => (
     <View style={{ 
       marginBottom: spacing(2),
       alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
       maxWidth: '85%'
     }}>
-      <TouchableWithoutFeedback onLongPress={item.role === 'assistant' ? () => openSelectModal(item.content) : undefined} delayLongPress={250}>
-        <View>
-          <Card style={{
-            backgroundColor: item.role === 'user' ? colors.primary : colors.surface,
-            padding: spacing(2),
-            borderWidth: 1,
-            borderColor: colors.border
-          }}>
+      <Card style={{
+        backgroundColor: item.role === 'user' ? colors.primary : colors.surface,
+        padding: spacing(2),
+        borderWidth: 1,
+        borderColor: colors.border
+      }}>
         {item.role === 'assistant' ? (
           <MarkdownText style={{ 
             color: colors.text,
@@ -224,9 +215,7 @@ export default function ChatScreen({ route, navigation }) {
             {item.content}
           </CustomText>
         )}
-          </Card>
-        </View>
-      </TouchableWithoutFeedback>
+      </Card>
     </View>
   );
 
@@ -460,19 +449,6 @@ export default function ChatScreen({ route, navigation }) {
             )}
           </View>
         </Screen>
-      </Modal>
-      {/* Selection modal for precise text selection */}
-      <Modal visible={selectModalVisible} transparent animationType="fade" onRequestClose={() => setSelectModalVisible(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', padding: 20 }}>
-          <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 16, maxHeight: '75%' }}>
-            <Text selectable style={{ color: colors.text, fontSize: 16, lineHeight: 22 }}>
-              {selectModalText}
-            </Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 12 }}>
-              <Button title="Close" onPress={() => setSelectModalVisible(false)} />
-            </View>
-          </View>
-        </View>
       </Modal>
     </Screen>
   );
