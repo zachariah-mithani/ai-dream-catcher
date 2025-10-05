@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api';
 import { onAuthChanged } from '../utils/events';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BillingCtx = createContext(null);
 
@@ -18,9 +19,25 @@ export function BillingProvider({ children }) {
   const [usage, setUsage] = useState({});
   const [period, setPeriod] = useState(null);
   const [loading, setLoading] = useState(false);
+  const lastRefreshAtRef = useRef(0);
 
   const refresh = async () => {
     try {
+      // Skip if we don't have a token
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        console.log('BillingContext: Skip refresh (no token)');
+        return;
+      }
+
+      // Throttle to once every 4s
+      const now = Date.now();
+      if (now - lastRefreshAtRef.current < 4000) {
+        return;
+      }
+      lastRefreshAtRef.current = now;
+
+      if (loading) return; // prevent concurrent calls
       setLoading(true);
       console.log('BillingContext: Refreshing billing status...');
       const res = await api.get('/billing/status');
@@ -51,7 +68,9 @@ export function BillingProvider({ children }) {
 
   // Auto-refresh billing whenever auth state changes (login/logout/token refresh)
   useEffect(() => {
-    const unsubscribe = onAuthChanged(() => {
+    const unsubscribe = onAuthChanged(async () => {
+      const token = await AsyncStorage.getItem('token');
+      if (!token) return;
       // Debounce lightly in case multiple auth events fire back-to-back
       setTimeout(() => refresh().catch(() => {}), 50);
     });
