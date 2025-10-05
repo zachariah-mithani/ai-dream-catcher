@@ -157,19 +157,31 @@ moodsRouter.get('/insights', async (req, res) => {
   
   const aiPrompt = `Analyze this mood and dream data to provide insights about patterns and correlations. Be concise and helpful:
 
-          Mood Entries: ${JSON.stringify(recentData, null, 2)}
-          
-          Recent Dreams: ${JSON.stringify(recentDreams, null, 2)}
-          
-          Look for patterns like:
-          - Mood patterns and trends over time
-          - Which moods correlate with certain dream themes
-          - Recurring patterns in mood-dream relationships
-          - Suggestions for better sleep or mood management
-          
-          IMPORTANT: Even if the mood entries don't have linked dream content, you can still analyze the recent dreams separately and provide insights about dream themes and patterns. Don't say "dream content is missing" if there are recent dreams available.
-          
-          Provide 2-3 key insights in a friendly, supportive tone. Focus on both mood patterns and dream themes when available.`;
+Mood Entries: ${JSON.stringify(recentData, null, 2)}
+
+Recent Dreams: ${JSON.stringify(recentDreams, null, 2)}
+
+Look for patterns like:
+- Mood patterns and trends over time
+- Which moods correlate with certain dream themes
+- Recurring patterns in mood-dream relationships
+- Suggestions for better sleep or mood management
+
+IMPORTANT: 
+1. Even if the mood entries don't have linked dream content, you can still analyze the recent dreams separately and provide insights about dream themes and patterns.
+2. Don't say "dream content is missing" if there are recent dreams available.
+3. Use clear formatting with bullet points and headings for better readability.
+4. Avoid special characters that might cause rendering issues.
+
+Provide 2-3 key insights in a friendly, supportive tone. Use this format:
+
+**Mood Variability**: [Analysis of mood patterns]
+
+**Recent Dreams**: [Analysis of dream themes and patterns]
+
+**Suggestion for Better Mood Management**: [Practical advice]
+
+Keep responses under 500 words and use simple formatting.`;
 
   console.log('=== AI PROMPT DEBUG ===');
   console.log('AI Prompt length:', aiPrompt.length);
@@ -195,7 +207,15 @@ moodsRouter.get('/insights', async (req, res) => {
         model: aiResult.model
       });
       
-      const insights = aiResult.text || "Unable to generate insights at this time.";
+      let insights = aiResult.text || "Unable to generate insights at this time.";
+      
+      // Clean up the response to avoid rendering issues
+      insights = insights
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .trim();
+      
+      console.log('Cleaned insights length:', insights.length);
       res.json({ insights });
     } catch (e) {
       console.error('=== MOOD INSIGHTS ERROR ===');
