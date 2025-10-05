@@ -34,6 +34,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import { api } from './api';
 import { onAuthChanged } from './utils/events';
+import { ensureNotificationPermissions, rescheduleAllReminders } from './utils/notifications';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -42,14 +43,21 @@ function Tabs() {
   const insets = useSafeAreaInsets();
   const { colors, theme } = useTheme();
   const getHomeIconSource = () => {
-    if (theme === 'minimalistLight') return require('../assets/light-in-app-icon.png');
-    return require('../assets/in-app-icon.png');
+    switch (theme) {
+      case 'minimalistLight':
+        return require('../assets/light-icon.png');
+      case 'minimalistBlack':
+        return require('../assets/in-app-icon.png');
+      case 'dreamy':
+      default:
+        return require('../assets/light-icon.png'); // Use colorful icon for dreamy nav bar
+    }
   };
   return (
     <Tab.Navigator screenOptions={({ route }) => ({
       headerShown: false,
       tabBarStyle: {
-        backgroundColor: theme === 'dreamy' ? colors.primary : colors.surface,
+        backgroundColor: theme === 'dreamy' ? colors.primary : (theme === 'minimalistLight' ? '#f8fafc' : colors.surface),
         borderTopColor: theme === 'dreamy' ? colors.primary : colors.border,
         paddingTop: 8,
         paddingBottom: Math.max(insets.bottom, 8),
@@ -63,7 +71,11 @@ function Tabs() {
           return (
             <Image
               source={getHomeIconSource()}
-              style={{ width: 24, height: 24, tintColor: theme === 'dreamy' ? color : color }}
+              style={{ 
+                width: theme === 'dreamy' ? 32 : 24, 
+                height: theme === 'dreamy' ? 32 : 24, 
+                tintColor: (theme === 'minimalistLight' || theme === 'dreamy') ? undefined : color 
+              }}
               resizeMode="contain"
             />
           );
@@ -107,7 +119,9 @@ function AppContent() {
       const response = await api.get('/auth/profile');
       const onboardingCompleted = await AsyncStorage.getItem('onboarding_completed');
       const themeSelected = await AsyncStorage.getItem('theme_selected');
-      
+
+      // Do not reschedule on login; settings screen changes will handle scheduling
+
       setAuthed(true);
       
       if (!themeSelected) {
@@ -148,6 +162,8 @@ function AppContent() {
   
   useEffect(() => {
     checkAuth();
+    // Initialize notifications on app start
+    ensureNotificationPermissions().catch(console.log);
   }, []);
 
   // Listen for authentication state changes
