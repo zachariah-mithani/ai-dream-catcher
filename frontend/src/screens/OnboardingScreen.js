@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Dimensions, Image } from 'react-native';
 import { Screen, Card, Button, Text as Txt } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { api, createCheckoutSession, upgradePlan } from '../api';
@@ -52,7 +52,7 @@ const SLIDES = [
 ];
 
 export default function OnboardingScreen({ onComplete }) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, theme } = useTheme();
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollViewRef = useRef(null);
   const [selectedPlan, setSelectedPlan] = useState('free');
@@ -104,16 +104,27 @@ export default function OnboardingScreen({ onComplete }) {
   };
 
   const renderSlide = (slide) => (
-    <View key={slide.id} style={{ width, padding: spacing(3), justifyContent: 'center', alignItems: 'center' }}>
+    <View key={slide.id} style={{ width, padding: spacing(1), justifyContent: 'center', alignItems: 'center' }}>
       <Card style={{ 
         backgroundColor: colors.card, 
-        padding: spacing(4), 
+        padding: spacing(3), 
         alignItems: 'center',
         minHeight: 400,
-        justifyContent: 'center'
+        justifyContent: 'center',
+        width: '95%'
       }}>
         {slide.id === 1 ? (
-          <DreamCatcherLogo size={120} style={{ marginBottom: spacing(3) }} />
+          <View style={{ marginBottom: spacing(3) }}>
+            {theme === 'dreamy' ? (
+              <Image
+                source={require('../../assets/light-icon.png')}
+                style={{ width: 120, height: 120 }}
+                resizeMode="contain"
+              />
+            ) : (
+              <DreamCatcherLogo size={120} />
+            )}
+          </View>
         ) : (
           <Text style={{ fontSize: 80, marginBottom: spacing(3) }}>
             {slide.emoji}
@@ -157,10 +168,10 @@ export default function OnboardingScreen({ onComplete }) {
             </Text>
             {/* Compact table that fits smaller screens */}
             <View style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 12, overflow: 'hidden', marginBottom: spacing(2) }}>
-              <View style={{ flexDirection: 'row', backgroundColor: colors.surface }}>
-                <Text style={{ flex: 1, color: colors.textSecondary, padding: 10, fontWeight: '700' }}>Feature</Text>
-                <Text style={{ width: 70, color: colors.textSecondary, padding: 10, textAlign: 'center' }}>Basic</Text>
-                <Text style={{ width: 70, color: colors.textSecondary, padding: 10, textAlign: 'center' }}>Pro</Text>
+              <View style={{ flexDirection: 'row', backgroundColor: colors.surface, borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
+                <Text style={{ flex: 2, color: colors.textSecondary, padding: 10, fontWeight: '700' }}>Feature</Text>
+                <Text style={{ width: 100, color: colors.textSecondary, padding: 10, textAlign: 'center', borderTopRightRadius: 12 }}>Free</Text>
+                <Text style={{ width: 100, color: colors.textSecondary, padding: 10, textAlign: 'center', borderTopRightRadius: 12 }}>Plus</Text>
               </View>
               <View style={{ maxHeight: 260 }}>
                 {/* Scroll features vertically if needed */}
@@ -170,13 +181,19 @@ export default function OnboardingScreen({ onComplete }) {
                     'Advanced AI interpretations',
                     'Dream Analyst chat (memory)',
                     'History & global search',
-                    'Trends: 7/30/90/All‑time',
+                    'Trends over time',
                     'Reports & export (PDF/CSV)'
                   ].map((label, idx) => (
-                    <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border }}>
-                      <Text style={{ flex: 1, color: colors.text, paddingVertical: 10, paddingHorizontal: 10, fontSize: 14 }}>{label}</Text>
-                      <Text style={{ width: 70, textAlign: 'center', color: '#ef4444', fontSize: 16 }}>✕</Text>
-                      <Text style={{ width: 70, textAlign: 'center', color: '#22c55e', fontSize: 16 }}>✓</Text>
+                    <View key={idx} style={{ 
+                      flexDirection: 'row', 
+                      alignItems: 'center', 
+                      borderTopWidth: 1, 
+                      borderTopColor: colors.border,
+                      ...(idx === 5 && { borderBottomLeftRadius: 12, borderBottomRightRadius: 12 })
+                    }}>
+                      <Text style={{ flex: 2, color: colors.text, paddingVertical: 10, paddingHorizontal: 10, fontSize: 14 }}>{label}</Text>
+                      <Text style={{ width: 100, textAlign: 'center', color: '#ef4444', fontSize: 16 }}>✕</Text>
+                      <Text style={{ width: 100, textAlign: 'center', color: '#22c55e', fontSize: 16 }}>✓</Text>
                     </View>
                   ))}
                 </View>
