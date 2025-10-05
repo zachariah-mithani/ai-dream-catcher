@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 
 export default function MarkdownText({ children, style, selectable = true }) {
@@ -77,23 +77,23 @@ export default function MarkdownText({ children, style, selectable = true }) {
       return;
     }
 
-    // Unordered list
+  // Unordered list
     const ulMatch = line.match(/^(\s*)([-*])\s+(.*)$/);
     if (ulMatch) {
       flushParagraph(i);
       const indent = ulMatch[1] || '';
       const level = Math.min(3, Math.floor(indent.length / 2));
       const item = ulMatch[3];
-      content.push(
-        <View key={`ul-${i}`} style={{ flexDirection: 'row', marginVertical: 2, paddingLeft: level * 12 }}>
-          <Text style={[baseStyle, { marginRight: 8 }]} selectable={selectable}>•</Text>
-          <Text style={[baseStyle, { flex: 1 }]} selectable={selectable}>{renderInline(item, `uli-${i}`, baseStyle)}</Text>
-        </View>
-      );
+    content.push(
+      <Text key={`ul-${i}`} style={baseStyle} selectable={selectable}>
+        {`${'  '.repeat(level)}• `}
+        {renderInline(item, `uli-${i}`, baseStyle)}
+      </Text>
+    );
       return;
     }
 
-    // Ordered list
+  // Ordered list
     const olMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
     if (olMatch) {
       flushParagraph(i);
@@ -101,12 +101,12 @@ export default function MarkdownText({ children, style, selectable = true }) {
       const level = Math.min(3, Math.floor(indent.length / 2));
       const num = olMatch[2];
       const item = olMatch[3];
-      content.push(
-        <View key={`ol-${i}`} style={{ flexDirection: 'row', marginVertical: 2, paddingLeft: level * 12 }}>
-          <Text style={[baseStyle, { marginRight: 8, fontWeight: '700' }]} selectable={selectable}>{num}.</Text>
-          <Text style={[baseStyle, { flex: 1 }]} selectable={selectable}>{renderInline(item, `oli-${i}`, baseStyle)}</Text>
-        </View>
-      );
+    content.push(
+      <Text key={`ol-${i}`} style={baseStyle} selectable={selectable}>
+        {`${'  '.repeat(level)}${num}. `}
+        {renderInline(item, `oli-${i}`, baseStyle)}
+      </Text>
+    );
       return;
     }
 
@@ -116,5 +116,10 @@ export default function MarkdownText({ children, style, selectable = true }) {
 
   flushParagraph('end');
 
-  return <View>{content}</View>;
+  // Wrap in a parent Text so iOS selection flows across lines
+  return (
+    <Text selectable={selectable} style={baseStyle}>
+      {content}
+    </Text>
+  );
 }
