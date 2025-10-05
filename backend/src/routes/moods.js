@@ -190,7 +190,7 @@ Keep responses under 500 words and use simple formatting.`;
 
     try {
       console.log('=== MOOD INSIGHTS AI CALL ===');
-      console.log('Calling OpenRouter with model:', process.env.OPENROUTER_MODEL || 'x-ai/grok-4-fast:free');
+      console.log('Calling OpenRouter with model:', process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat-v3.1:free');
       console.log('Prompt length:', aiPrompt.length);
       
       const aiResult = await callOpenRouter({
