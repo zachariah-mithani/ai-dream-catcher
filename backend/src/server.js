@@ -13,7 +13,7 @@ import { chatRouter } from './routes/chat.js';
 import { statisticsRouter } from './routes/statistics.js';
 import { moodsRouter } from './routes/moods.js';
 import { promptsRouter } from './routes/prompts.js';
-import { billingRouter } from './routes/billing.js';
+import { billingRouter, billingWebhook } from './routes/billing.js';
 import { 
   errorHandler, 
   notFoundHandler, 
@@ -28,6 +28,9 @@ import {
 } from './middleware/monitoring.js';
 
 const app = express();
+
+// Stripe webhook MUST be registered before express.json so we can use raw body
+app.post('/billing/webhook', express.raw({ type: 'application/json' }), billingWebhook);
 
 const APP_PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
 const APP_ORIGIN = process.env.APP_ORIGIN || '*';

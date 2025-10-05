@@ -16,6 +16,45 @@ import {
 
 export const billingRouter = express.Router();
 
+// Exportable webhook handler so it can be mounted before body parsers
+export async function billingWebhook(req, res) {
+  try {
+    const signature = req.headers['stripe-signature'];
+    const event = verifyWebhookSignature(req.body, signature);
+    console.log('Received Stripe webhook:', event.type);
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        console.log('Checkout session completed:', session.id);
+        break;
+      }
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object;
+        await handleSubscriptionEvent(subscription);
+        break;
+      }
+      case 'customer.subscription.deleted': {
+        const deletedSubscription = event.data.object;
+        await handleSubscriptionEvent(deletedSubscription);
+        break;
+      }
+      case 'invoice.payment_succeeded':
+        console.log('Invoice payment succeeded:', event.data.object.id);
+        break;
+      case 'invoice.payment_failed':
+        console.log('Invoice payment failed:', event.data.object.id);
+        break;
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+    }
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    res.status(400).json({ error: 'Webhook signature verification failed' });
+  }
+}
+
 // Public routes (no auth required)
 billingRouter.get('/pricing', async (req, res) => {
   try {
@@ -83,44 +122,7 @@ billingRouter.get('/cancel', (req, res) => {
 </html>`);
 });
 
-// Public: Stripe webhook handler (must NOT require auth)
-billingRouter.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  try {
-    const signature = req.headers['stripe-signature'];
-    const event = verifyWebhookSignature(req.body, signature);
-    console.log('Received Stripe webhook:', event.type);
-    switch (event.type) {
-      case 'checkout.session.completed': {
-        const session = event.data.object;
-        console.log('Checkout session completed:', session.id);
-        break;
-      }
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated': {
-        const subscription = event.data.object;
-        await handleSubscriptionEvent(subscription);
-        break;
-      }
-      case 'customer.subscription.deleted': {
-        const deletedSubscription = event.data.object;
-        await handleSubscriptionEvent(deletedSubscription);
-        break;
-      }
-      case 'invoice.payment_succeeded':
-        console.log('Invoice payment succeeded:', event.data.object.id);
-        break;
-      case 'invoice.payment_failed':
-        console.log('Invoice payment failed:', event.data.object.id);
-        break;
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
-    }
-    res.json({ received: true });
-  } catch (error) {
-    console.error('Webhook error:', error);
-    res.status(400).json({ error: 'Webhook signature verification failed' });
-  }
-});
+// (Webhook route is mounted at the app level before JSON parsing.)
 
 // Protected routes (auth required)
 billingRouter.use(requireAuth);
