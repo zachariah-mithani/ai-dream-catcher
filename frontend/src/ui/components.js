@@ -43,10 +43,10 @@ export function Card({ children, style }) {
   );
 }
 
-export function Text({ children, style }) {
+export function Text({ children, style, ...props }) {
   const { colors } = useTheme();
   return (
-    <RNText style={[{ color: colors.text, fontSize: 16 }, style]}>
+    <RNText style={[{ color: colors.text, fontSize: 16 }, style]} {...props}>
       {children}
     </RNText>
   );

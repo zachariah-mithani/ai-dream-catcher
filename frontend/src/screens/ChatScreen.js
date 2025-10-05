@@ -213,7 +213,6 @@ export default function ChatScreen({ route, navigation }) {
       alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
       maxWidth: '85%'
     }}>
-      <TouchableOpacity activeOpacity={0.9} onLongPress={item.role === 'assistant' ? () => setSelectIndex(index) : undefined} onPress={() => { if (selectIndex === index) setSelectIndex(-1); }}>
       <Card style={{
         backgroundColor: item.role === 'user' ? colors.primary : colors.surface,
         padding: spacing(2),
@@ -242,7 +241,6 @@ export default function ChatScreen({ route, navigation }) {
           </CustomText>
         )}
       </Card>
-      </TouchableOpacity>
     </View>
   );
 
