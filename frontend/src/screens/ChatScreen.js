@@ -22,6 +22,7 @@ export default function ChatScreen({ route, navigation }) {
   const [chatSessions, setChatSessions] = useState([]);
   const [historyRetention, setHistoryRetention] = useState('7 days');
   const [billingLoaded, setBillingLoaded] = useState(false);
+  const [selectIndex, setSelectIndex] = useState(-1);
 
   useEffect(() => {
     loadDreams();
@@ -188,12 +189,27 @@ export default function ChatScreen({ route, navigation }) {
     setHistory([contextMessage]);
   };
 
+  // Minimal markdown -> plain text for selection mode
+  const markdownToPlainText = (s) => {
+    if (typeof s !== 'string') return '';
+    return s
+      .replace(/\r\n/g, '\n')
+      .replace(/^###\s+/gm, '')
+      .replace(/^##\s+/gm, '')
+      .replace(/^#\s+/gm, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .replace(/^\s*[-*]\s+/gm, '• ')
+      .replace(/^(\d+)\.\s+/gm, '$1. ');
+  };
+
   const renderMessage = ({ item, index }) => (
     <View style={{ 
       marginBottom: spacing(2),
       alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
       maxWidth: '85%'
     }}>
+      <TouchableOpacity activeOpacity={0.9} onLongPress={item.role === 'assistant' ? () => setSelectIndex(index) : undefined} onPress={() => { if (selectIndex === index) setSelectIndex(-1); }}>
       <Card style={{
         backgroundColor: item.role === 'user' ? colors.primary : colors.surface,
         padding: spacing(2),
@@ -201,12 +217,18 @@ export default function ChatScreen({ route, navigation }) {
         borderColor: colors.border
       }}>
         {item.role === 'assistant' ? (
-          <MarkdownText style={{ 
-            color: colors.text,
-            fontSize: 16
-          }} selectable>
-            {item.content}
-          </MarkdownText>
+          index === selectIndex ? (
+            <Text selectable style={{ color: colors.text, fontSize: 16, lineHeight: 22 }}>
+              {markdownToPlainText(item.content)}
+            </Text>
+          ) : (
+            <MarkdownText style={{ 
+              color: colors.text,
+              fontSize: 16
+            }} selectable>
+              {item.content}
+            </MarkdownText>
+          )
         ) : (
           <CustomText style={{ 
             color: colors.primaryText,
@@ -216,6 +238,7 @@ export default function ChatScreen({ route, navigation }) {
           </CustomText>
         )}
       </Card>
+      </TouchableOpacity>
     </View>
   );
 
