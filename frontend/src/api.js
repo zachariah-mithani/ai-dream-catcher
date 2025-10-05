@@ -13,6 +13,52 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// Response interceptor to handle 401 errors and auto-refresh tokens
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // If we get a 401 and haven't already tried to refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      const refreshToken = await AsyncStorage.getItem('refresh');
+      if (refreshToken) {
+        try {
+          console.log('🔄 Attempting token refresh...');
+          const response = await api.post('/auth/refresh', { refresh: refreshToken });
+          
+          if (response.data?.access && response.data?.refresh) {
+            console.log('✅ Token refreshed successfully');
+            await AsyncStorage.setItem('token', response.data.access);
+            await AsyncStorage.setItem('refresh', response.data.refresh);
+            
+            // Retry the original request with the new token
+            originalRequest.headers.Authorization = `Bearer ${response.data.access}`;
+            return api(originalRequest);
+          }
+        } catch (refreshError) {
+          console.log('❌ Token refresh failed:', refreshError.message);
+          // Refresh failed, clear tokens and emit auth change
+          await AsyncStorage.removeItem('token');
+          await AsyncStorage.removeItem('refresh');
+          await AsyncStorage.removeItem('user');
+          emitAuthChanged();
+        }
+      } else {
+        console.log('❌ No refresh token available');
+        // No refresh token, clear everything
+        await AsyncStorage.removeItem('token');
+        await AsyncStorage.removeItem('user');
+        emitAuthChanged();
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 export async function login(email, password) {
   const { data } = await api.post('/auth/login', { email, password });
   await AsyncStorage.setItem('token', data.token);
@@ -39,27 +85,8 @@ export async function logout() {
 }
 
 export async function getProfile() {
-  try {
-    const { data } = await api.get('/auth/profile');
-    return data;
-  } catch (e) {
-    // Attempt refresh on 401
-    if (e.response?.status === 401) {
-      const refresh = await AsyncStorage.getItem('refresh');
-      if (refresh) {
-        try {
-          const res = await api.post('/auth/refresh', { refresh });
-          if (res.data?.access && res.data?.refresh) {
-            await AsyncStorage.setItem('token', res.data.access);
-            await AsyncStorage.setItem('refresh', res.data.refresh);
-            const retry = await api.get('/auth/profile');
-            return retry.data;
-          }
-        } catch {}
-      }
-    }
-    throw e;
-  }
+  const { data } = await api.get('/auth/profile');
+  return data;
 }
 
 export async function updateProfile(updates) {
