@@ -2,7 +2,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 
-export default function MarkdownText({ children, style }) {
+export default function MarkdownText({ children, style, selectable = true }) {
   const { colors } = useTheme();
   
   if (!children) return null;
@@ -16,19 +16,19 @@ export default function MarkdownText({ children, style }) {
     let match;
     while ((match = regex.exec(remaining)) !== null) {
       const before = remaining.slice(0, match.index);
-      if (before) nodes.push(<Text key={`${keyBase}-t${idx++}`} style={baseStyle}>{before}</Text>);
+      if (before) nodes.push(<Text key={`${keyBase}-t${idx++}`} style={baseStyle} selectable={selectable}>{before}</Text>);
       const token = match[0];
       const isBold = token.startsWith('**');
       const content = token.replace(/^\*\*|\*\*$/g, '').replace(/^\*|\*$/g, '');
       nodes.push(
-        <Text key={`${keyBase}-m${idx++}`} style={[baseStyle, isBold ? { fontWeight: '700' } : { fontStyle: 'italic' }]}>
+        <Text key={`${keyBase}-m${idx++}`} style={[baseStyle, isBold ? { fontWeight: '700' } : { fontStyle: 'italic' }]} selectable={selectable}>
           {content}
         </Text>
       );
       remaining = remaining.slice(match.index + token.length);
       regex.lastIndex = 0;
     }
-    if (remaining) nodes.push(<Text key={`${keyBase}-t${idx++}`} style={baseStyle}>{remaining}</Text>);
+    if (remaining) nodes.push(<Text key={`${keyBase}-t${idx++}`} style={baseStyle} selectable={selectable}>{remaining}</Text>);
     return nodes;
   };
 
@@ -70,7 +70,7 @@ export default function MarkdownText({ children, style }) {
       const sizes = { 1: 1.8, 2: 1.5, 3: 1.3 };
       const weights = { 1: '800', 2: '700', 3: '600' };
       content.push(
-        <Text key={`h-${i}`} style={[baseStyle, { fontSize: (baseStyle.fontSize || 14) * sizes[level], fontWeight: weights[level], marginTop: 12, marginBottom: 6 }]}>
+        <Text key={`h-${i}`} style={[baseStyle, { fontSize: (baseStyle.fontSize || 14) * sizes[level], fontWeight: weights[level], marginTop: 12, marginBottom: 6 }]} selectable={selectable}>
           {text}
         </Text>
       );
@@ -86,8 +86,8 @@ export default function MarkdownText({ children, style }) {
       const item = ulMatch[3];
       content.push(
         <View key={`ul-${i}`} style={{ flexDirection: 'row', marginVertical: 2, paddingLeft: level * 12 }}>
-          <Text style={[baseStyle, { marginRight: 8 }]}>•</Text>
-          <Text style={[baseStyle, { flex: 1 }]}>{renderInline(item, `uli-${i}`, baseStyle)}</Text>
+          <Text style={[baseStyle, { marginRight: 8 }]} selectable={selectable}>•</Text>
+          <Text style={[baseStyle, { flex: 1 }]} selectable={selectable}>{renderInline(item, `uli-${i}`, baseStyle)}</Text>
         </View>
       );
       return;
@@ -103,8 +103,8 @@ export default function MarkdownText({ children, style }) {
       const item = olMatch[3];
       content.push(
         <View key={`ol-${i}`} style={{ flexDirection: 'row', marginVertical: 2, paddingLeft: level * 12 }}>
-          <Text style={[baseStyle, { marginRight: 8, fontWeight: '700' }]}>{num}.</Text>
-          <Text style={[baseStyle, { flex: 1 }]}>{renderInline(item, `oli-${i}`, baseStyle)}</Text>
+          <Text style={[baseStyle, { marginRight: 8, fontWeight: '700' }]} selectable={selectable}>{num}.</Text>
+          <Text style={[baseStyle, { flex: 1 }]} selectable={selectable}>{renderInline(item, `oli-${i}`, baseStyle)}</Text>
         </View>
       );
       return;

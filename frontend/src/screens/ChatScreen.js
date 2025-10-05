@@ -204,14 +204,14 @@ export default function ChatScreen({ route, navigation }) {
           <MarkdownText style={{ 
             color: colors.text,
             fontSize: 16
-          }}>
+          }} selectable>
             {item.content}
           </MarkdownText>
         ) : (
           <CustomText style={{ 
             color: colors.primaryText,
             fontSize: 16
-          }}>
+          }} selectable>
             {item.content}
           </CustomText>
         )}
