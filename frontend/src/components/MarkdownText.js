@@ -6,181 +6,110 @@ export default function MarkdownText({ children, style }) {
   const { colors } = useTheme();
   
   if (!children) return null;
-  
-  // Enhanced markdown parser for headings, bold, italic, and lists
-  const parseMarkdown = (text) => {
-    const parts = [];
-    let currentIndex = 0;
-    
-    // Combined regex for all markdown patterns
-    const patterns = [
-      { regex: /^### (.*$)/gm, type: 'h3' },
-      { regex: /^## (.*$)/gm, type: 'h2' },
-      { regex: /^# (.*$)/gm, type: 'h1' },
-      { regex: /\*\*(.*?)\*\*/g, type: 'bold' },
-      { regex: /\*(.*?)\*/g, type: 'italic' },
-      { regex: /^- (.*$)/gm, type: 'list' },
-      { regex: /^\d+\. (.*$)/gm, type: 'orderedList' }
-    ];
-    
-    // Find all matches
-    const allMatches = [];
-    patterns.forEach(({ regex, type }) => {
-      let match;
-      const regexCopy = new RegExp(regex.source, regex.flags);
-      while ((match = regexCopy.exec(text)) !== null) {
-        allMatches.push({
-          type,
-          content: match[1] || match[0],
-          start: match.index,
-          end: match.index + match[0].length,
-          fullMatch: match[0]
-        });
-      }
-    });
-    
-    // Sort matches by position
-    allMatches.sort((a, b) => a.start - b.start);
-    
-    // Remove overlapping matches (keep the first one)
-    const filteredMatches = [];
-    let lastEnd = 0;
-    allMatches.forEach(match => {
-      if (match.start >= lastEnd) {
-        filteredMatches.push(match);
-        lastEnd = match.end;
-      }
-    });
-    
-    // Build parts array
-    filteredMatches.forEach(match => {
-      // Add text before the match
-      if (match.start > currentIndex) {
-        const beforeText = text.substring(currentIndex, match.start);
-        if (beforeText.trim()) {
-          parts.push({
-            text: beforeText,
-            type: 'text'
-          });
-        }
-      }
-      
-      // Add the match
-      parts.push({
-        text: match.content,
-        type: match.type
-      });
-      
-      currentIndex = match.end;
-    });
-    
-    // Add remaining text
-    if (currentIndex < text.length) {
-      const remainingText = text.substring(currentIndex);
-      if (remainingText.trim()) {
-        parts.push({
-          text: remainingText,
-          type: 'text'
-        });
-      }
+
+  // Render inline bold/italic inside a single line
+  const renderInline = (text, keyBase, baseStyle) => {
+    const nodes = [];
+    let remaining = text;
+    let idx = 0;
+    const regex = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
+    let match;
+    while ((match = regex.exec(remaining)) !== null) {
+      const before = remaining.slice(0, match.index);
+      if (before) nodes.push(<Text key={`${keyBase}-t${idx++}`} style={baseStyle}>{before}</Text>);
+      const token = match[0];
+      const isBold = token.startsWith('**');
+      const content = token.replace(/^\*\*|\*\*$/g, '').replace(/^\*|\*$/g, '');
+      nodes.push(
+        <Text key={`${keyBase}-m${idx++}`} style={[baseStyle, isBold ? { fontWeight: '700' } : { fontStyle: 'italic' }]}>
+          {content}
+        </Text>
+      );
+      remaining = remaining.slice(match.index + token.length);
+      regex.lastIndex = 0;
     }
-    
-    // If no matches found, return the original text
-    if (parts.length === 0) {
-      parts.push({ text, type: 'text' });
-    }
-    
-    return parts;
+    if (remaining) nodes.push(<Text key={`${keyBase}-t${idx++}`} style={baseStyle}>{remaining}</Text>);
+    return nodes;
   };
-  
-  const parsedParts = parseMarkdown(children);
-  
-  const renderPart = (part, index) => {
-    const baseStyle = { ...style };
-    
-    switch (part.type) {
-      case 'h1':
-        return (
-          <Text key={index} style={[baseStyle, { 
-            fontSize: (baseStyle.fontSize || 14) * 1.8, 
-            fontWeight: '800', 
-            marginTop: 16, 
-            marginBottom: 8,
-            color: colors.text
-          }]}>
-            {part.text}
-          </Text>
-        );
-      case 'h2':
-        return (
-          <Text key={index} style={[baseStyle, { 
-            fontSize: (baseStyle.fontSize || 14) * 1.5, 
-            fontWeight: '700', 
-            marginTop: 14, 
-            marginBottom: 6,
-            color: colors.text
-          }]}>
-            {part.text}
-          </Text>
-        );
-      case 'h3':
-        return (
-          <Text key={index} style={[baseStyle, { 
-            fontSize: (baseStyle.fontSize || 14) * 1.3, 
-            fontWeight: '600', 
-            marginTop: 12, 
-            marginBottom: 4,
-            color: colors.text
-          }]}>
-            {part.text}
-          </Text>
-        );
-      case 'bold':
-        return (
-          <Text key={index} style={[baseStyle, { fontWeight: 'bold' }]}>
-            {part.text}
-          </Text>
-        );
-      case 'italic':
-        return (
-          <Text key={index} style={[baseStyle, { fontStyle: 'italic' }]}>
-            {part.text}
-          </Text>
-        );
-      case 'list':
-        return (
-          <View key={index} style={{ flexDirection: 'row', marginVertical: 2 }}>
-            <Text style={[baseStyle, { marginRight: 8 }]}>•</Text>
-            <View style={{ flex: 1 }}>
-              <MarkdownText style={baseStyle}>{part.text}</MarkdownText>
-            </View>
-          </View>
-        );
-      case 'orderedList':
-        return (
-          <View key={index} style={{ flexDirection: 'row', marginVertical: 2 }}>
-            <Text style={[baseStyle, { marginRight: 8, fontWeight: 'bold' }]}>
-              {part.text.match(/^\d+\./)?.[0] || '•'}
-            </Text>
-            <View style={{ flex: 1 }}>
-              <MarkdownText style={baseStyle}>
-                {part.text.replace(/^\d+\.\s*/, '')}
-              </MarkdownText>
-            </View>
-          </View>
-        );
-      default:
-        return (
-          <Text key={index} style={baseStyle}>
-            {part.text}
-          </Text>
-        );
-    }
+
+  const lines = String(children).replace(/\r\n/g, '\n').split('\n');
+  const content = [];
+  const baseStyle = { ...style, color: colors.text };
+  let paragraphBuffer = [];
+
+  const flushParagraph = (key) => {
+    if (paragraphBuffer.length === 0) return;
+    const text = paragraphBuffer.join(' ');
+    content.push(
+      <Text key={`p-${key}`} style={[baseStyle, { lineHeight: (baseStyle.fontSize || 14) * 1.4, marginBottom: 8 }]}>
+        {renderInline(text, `pi-${key}`, baseStyle)}
+      </Text>
+    );
+    paragraphBuffer = [];
   };
-  
-  return (
-    <View>
-      {parsedParts.map((part, index) => renderPart(part, index))}
-    </View>
-  );
+
+  lines.forEach((raw, i) => {
+    const line = raw.trimEnd();
+    // Blank line separates paragraphs
+    if (line.trim() === '') {
+      flushParagraph(i);
+      return;
+    }
+
+    // Headings
+    const hMatch = line.match(/^(###|##|#)\s+(.*)$/);
+    if (hMatch) {
+      flushParagraph(i);
+      const level = hMatch[1].length;
+      const text = hMatch[2];
+      const sizes = { 1: 1.8, 2: 1.5, 3: 1.3 };
+      const weights = { 1: '800', 2: '700', 3: '600' };
+      content.push(
+        <Text key={`h-${i}`} style={[baseStyle, { fontSize: (baseStyle.fontSize || 14) * sizes[level], fontWeight: weights[level], marginTop: 12, marginBottom: 6 }]}>
+          {text}
+        </Text>
+      );
+      return;
+    }
+
+    // Unordered list
+    const ulMatch = line.match(/^(\s*)([-*])\s+(.*)$/);
+    if (ulMatch) {
+      flushParagraph(i);
+      const indent = ulMatch[1] || '';
+      const level = Math.min(3, Math.floor(indent.length / 2));
+      const item = ulMatch[3];
+      content.push(
+        <View key={`ul-${i}`} style={{ flexDirection: 'row', marginVertical: 2, paddingLeft: level * 12 }}>
+          <Text style={[baseStyle, { marginRight: 8 }]}>•</Text>
+          <Text style={[baseStyle, { flex: 1 }]}>{renderInline(item, `uli-${i}`, baseStyle)}</Text>
+        </View>
+      );
+      return;
+    }
+
+    // Ordered list
+    const olMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
+    if (olMatch) {
+      flushParagraph(i);
+      const indent = olMatch[1] || '';
+      const level = Math.min(3, Math.floor(indent.length / 2));
+      const num = olMatch[2];
+      const item = olMatch[3];
+      content.push(
+        <View key={`ol-${i}`} style={{ flexDirection: 'row', marginVertical: 2, paddingLeft: level * 12 }}>
+          <Text style={[baseStyle, { marginRight: 8, fontWeight: '700' }]}>{num}.</Text>
+          <Text style={[baseStyle, { flex: 1 }]}>{renderInline(item, `oli-${i}`, baseStyle)}</Text>
+        </View>
+      );
+      return;
+    }
+
+    // Default: add to paragraph buffer
+    paragraphBuffer.push(line);
+  });
+
+  flushParagraph('end');
+
+  return <View>{content}</View>;
 }
