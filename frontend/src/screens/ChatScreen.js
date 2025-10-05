@@ -220,18 +220,9 @@ export default function ChatScreen({ route, navigation }) {
         borderColor: colors.border
       }}>
         {item.role === 'assistant' ? (
-          index === selectIndex ? (
-            <Text selectable style={{ color: colors.text, fontSize: 16, lineHeight: 22 }}>
-              {markdownToPlainText(item.content)}
-            </Text>
-          ) : (
-            <MarkdownText style={{ 
-              color: colors.text,
-              fontSize: 16
-            }} selectable>
-              {item.content}
-            </MarkdownText>
-          )
+          <Text selectable style={{ color: colors.text, fontSize: 16, lineHeight: 22 }}>
+            {item.content}
+          </Text>
         ) : (
           <CustomText style={{ 
             color: colors.primaryText,
