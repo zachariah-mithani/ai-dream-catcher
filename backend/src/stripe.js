@@ -176,18 +176,37 @@ export async function handleSubscriptionEvent(subscription) {
     await db.prepare('UPDATE users SET plan = ?, trial_end = ? WHERE id = ?')
       .run('premium', trialEnd, userId);
     
-    // Store subscription ID for future reference
-    await db.prepare(`
-      INSERT OR REPLACE INTO user_subscriptions 
-      (user_id, stripe_customer_id, stripe_subscription_id, status, current_period_end, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    `).run(
-      userId,
-      customerId,
-      subscription.id,
-      status,
-      currentPeriodEndIso
-    );
+    // Store subscription ID for future reference (SQLite vs Postgres upsert)
+    if (db.isPostgres) {
+      await db.prepare(`
+        INSERT INTO user_subscriptions (user_id, stripe_customer_id, stripe_subscription_id, status, current_period_end, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id) DO UPDATE SET
+          stripe_customer_id = EXCLUDED.stripe_customer_id,
+          stripe_subscription_id = EXCLUDED.stripe_subscription_id,
+          status = EXCLUDED.status,
+          current_period_end = EXCLUDED.current_period_end,
+          updated_at = CURRENT_TIMESTAMP
+      `).run(
+        userId,
+        customerId,
+        subscription.id,
+        status,
+        currentPeriodEndIso
+      );
+    } else {
+      await db.prepare(`
+        INSERT OR REPLACE INTO user_subscriptions 
+        (user_id, stripe_customer_id, stripe_subscription_id, status, current_period_end, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `).run(
+        userId,
+        customerId,
+        subscription.id,
+        status,
+        currentPeriodEndIso
+      );
+    }
     
     console.log(`User ${userId} upgraded to premium via Stripe subscription ${subscription.id}`);
   } else if (status === 'canceled' || status === 'unpaid' || status === 'past_due') {
