@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
+import { onAuthChanged } from '../utils/events';
 
 const BillingCtx = createContext(null);
 
@@ -46,6 +47,15 @@ export function BillingProvider({ children }) {
 
   useEffect(() => {
     refresh();
+  }, []);
+
+  // Auto-refresh billing whenever auth state changes (login/logout/token refresh)
+  useEffect(() => {
+    const unsubscribe = onAuthChanged(() => {
+      // Debounce lightly in case multiple auth events fire back-to-back
+      setTimeout(() => refresh().catch(() => {}), 50);
+    });
+    return unsubscribe;
   }, []);
 
   const isPremium = plan === 'premium';

@@ -32,7 +32,12 @@ export default function MarkdownText({ children, style }) {
     return nodes;
   };
 
-  const lines = String(children).replace(/\r\n/g, '\n').split('\n');
+  // Pre-normalize: ensure a newline before headings or list markers if they follow text without a break (e.g., "...better:### heading")
+  const normalized = String(children)
+    .replace(/\r\n/g, '\n')
+    .replace(/([^.\n])(#\s)/g, '$1\n$2')
+    .replace(/([^\n])(\n?)([-*]|\d+\.)\s/g, (m, a, b, c) => `${a}\n${c} `);
+  const lines = normalized.split('\n');
   const content = [];
   const baseStyle = { ...style, color: colors.text };
   let paragraphBuffer = [];

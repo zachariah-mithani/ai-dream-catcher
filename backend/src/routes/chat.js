@@ -112,7 +112,10 @@ chatRouter.post('/', createBillingMiddleware('chat_message'), async (req, res) =
       setTimeout(() => reject(new Error('Chat request timed out after 25 seconds')), 25000);
     });
     
-    const chatPromise = chatWithAnalyst(history, processedMessage);
+    const chatPromise = chatWithAnalyst(history, processedMessage, {
+      max_tokens: req.billing?.isPremium ? 900 : 400,
+      temperature: req.billing?.isPremium ? 0.8 : 0.7
+    });
     const { text, model } = await Promise.race([chatPromise, timeoutPromise]);
     console.log('Chat response:', { text: text.substring(0, 100), model });
     const info = db.prepare('INSERT INTO analyses (user_id, type, prompt, response, model) VALUES (?, ?, ?, ?, ?)')

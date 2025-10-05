@@ -144,7 +144,7 @@ IMPORTANT: You ONLY analyze dreams and provide basic psychological insights. You
   });
 }
 
-export async function chatWithAnalyst(history, userMessage) {
+export async function chatWithAnalyst(history, userMessage, options = {}) {
   const system = {
     role: 'system',
     content: `You are a specialized dream analyst and mood tracker assistant for the AI Dream Catcher app. You ONLY provide guidance and insights about:
@@ -168,7 +168,8 @@ If asked about topics outside your scope, politely redirect: "I'm specialized in
 Be empathetic, non-judgmental, and focus on helping users understand their dreams and emotional patterns.`
   };
   const messages = [system, ...history, { role: 'user', content: userMessage }];
-  return await callOpenRouter({ messages });
+  const { max_tokens, temperature } = options;
+  return await callOpenRouter({ messages, max_tokens, temperature });
 }
 
 export { callOpenRouter };
