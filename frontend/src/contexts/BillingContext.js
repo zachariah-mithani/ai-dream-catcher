@@ -20,6 +20,7 @@ export function BillingProvider({ children }) {
   const [period, setPeriod] = useState(null);
   const [loading, setLoading] = useState(false);
   const lastRefreshAtRef = useRef(0);
+  const triedReconcileRef = useRef(false);
 
   const refresh = async () => {
     try {
@@ -46,6 +47,22 @@ export function BillingProvider({ children }) {
       setPlan(data.plan || 'free');
       setUsage(data.usage || {});
       setPeriod(data.period || null);
+
+      // If still free, try one-time reconcile to sync Stripe status
+      if ((data.plan || 'free') === 'free' && !triedReconcileRef.current) {
+        triedReconcileRef.current = true;
+        try {
+          await api.post('/billing/reconcile');
+          const re = await api.get('/billing/status');
+          const d2 = re?.data || re;
+          setPlan(d2.plan || 'free');
+          setUsage(d2.usage || {});
+          setPeriod(d2.period || null);
+          console.log('BillingContext: Post-reconcile billing data:', d2);
+        } catch (e) {
+          // Ignore errors; fallback display remains
+        }
+      }
     } catch (e) {
       console.log('BillingContext: Billing endpoint failed, trying profile fallback:', e.message);
       // Fallback: try profile if billing endpoint unavailable
