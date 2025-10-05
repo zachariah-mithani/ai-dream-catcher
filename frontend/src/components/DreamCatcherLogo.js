@@ -10,15 +10,15 @@ export default function DreamCatcherLogo({ size = 80, style }) {
     console.log('DreamCatcherLogo theme:', theme); // Debug log
     switch (theme) {
       case 'minimalistLight':
-        console.log('Using light-in-app-icon.png for light theme');
-        return require('../../assets/light-in-app-icon.png');
+        console.log('Using light-icon.png for light theme');
+        return require('../../assets/light-icon.png');
       case 'minimalistBlack':
         console.log('Using in-app-icon.png for dark theme');
         return require('../../assets/in-app-icon.png'); // Use the white icon for dark theme
       case 'dreamy':
       default:
         console.log('Using in-app-icon.png for dreamy theme');
-        return require('../../assets/in-app-icon.png'); // Use the white icon for dreamy theme
+        return require('../../assets/in-app-icon.png'); // Use the in-app icon for dreamy theme
     }
   };
 
