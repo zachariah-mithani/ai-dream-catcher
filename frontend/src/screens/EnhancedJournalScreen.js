@@ -11,7 +11,14 @@ const DreamItem = memo(function DreamItem({ item, onPress, onDelete }) {
     <View style={{ paddingHorizontal: spacing(2), marginTop: spacing(1) }}>
       <Card>
         <TouchableOpacity onPress={onPress}>
-          <Text style={{ color: 'white', fontWeight: '700' }}>{item.title || 'Untitled dream'}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <Text style={{ color: 'white', fontWeight: '700', flex: 1 }}>{item.title || 'Untitled dream'}</Text>
+            {item.user_dream_number && (
+              <Text style={{ color: '#60a5fa', fontSize: 12, fontWeight: '600' }}>
+                Dream #{item.user_dream_number}
+              </Text>
+            )}
+          </View>
           <Text style={{ color: '#cbd5e1' }} numberOfLines={2}>{item.content}</Text>
           {(item.moods || item.tags) && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 }}>

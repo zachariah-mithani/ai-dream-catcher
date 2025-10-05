@@ -107,17 +107,21 @@ dreamsRouter.post('/', createBillingMiddleware('dream_create'), async (req, res)
   }
   
   try {
+    // Get the next dream number for this user
+    const lastDream = await db.prepare('SELECT user_dream_number FROM dreams WHERE user_id = ? ORDER BY user_dream_number DESC LIMIT 1').get(req.user.id);
+    const nextDreamNumber = (lastDream?.user_dream_number || 0) + 1;
+    
     let query, params;
     
     if (dream_date) {
       // Use custom date if provided
       const createdAt = `${dream_date} 00:00:00`;
-      query = 'INSERT INTO dreams (user_id, title, content, voice_uri, mood, moods, tags, ai_tags, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-      params = [req.user.id, title || null, content, voice_uri || null, mood || null, JSON.stringify(moods || []), JSON.stringify(tags || []), JSON.stringify(aiTags), createdAt];
+      query = 'INSERT INTO dreams (user_id, user_dream_number, title, content, voice_uri, mood, moods, tags, ai_tags, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      params = [req.user.id, nextDreamNumber, title || null, content, voice_uri || null, mood || null, JSON.stringify(moods || []), JSON.stringify(tags || []), JSON.stringify(aiTags), createdAt];
     } else {
       // Use default timestamp
-      query = 'INSERT INTO dreams (user_id, title, content, voice_uri, mood, moods, tags, ai_tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-      params = [req.user.id, title || null, content, voice_uri || null, mood || null, JSON.stringify(moods || []), JSON.stringify(tags || []), JSON.stringify(aiTags)];
+      query = 'INSERT INTO dreams (user_id, user_dream_number, title, content, voice_uri, mood, moods, tags, ai_tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+      params = [req.user.id, nextDreamNumber, title || null, content, voice_uri || null, mood || null, JSON.stringify(moods || []), JSON.stringify(tags || []), JSON.stringify(aiTags)];
     }
     
     const info = await db.prepare(query).run(...params);
@@ -132,6 +136,26 @@ dreamsRouter.post('/', createBillingMiddleware('dream_create'), async (req, res)
   } catch (error) {
     console.error('Database error creating dream:', error);
     res.status(500).json({ error: 'Failed to save dream' });
+  }
+});
+
+// Get a specific dream by user's dream number
+dreamsRouter.get('/number/:number', async (req, res) => {
+  try {
+    const dreamNumber = parseInt(req.params.number);
+    if (isNaN(dreamNumber) || dreamNumber < 1) {
+      return res.status(400).json({ error: 'Invalid dream number' });
+    }
+    
+    const dream = await db.prepare('SELECT * FROM dreams WHERE user_id = ? AND user_dream_number = ?').get(req.user.id, dreamNumber);
+    if (!dream) {
+      return res.status(404).json({ error: `Dream ${dreamNumber} not found` });
+    }
+    
+    res.json(dream);
+  } catch (error) {
+    console.error('Database error fetching dream by number:', error);
+    res.status(500).json({ error: 'Failed to fetch dream' });
   }
 });
 

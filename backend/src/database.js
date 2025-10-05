@@ -228,6 +228,22 @@ export async function initSchema() {
     console.log('Dreams table does not exist yet, will be created with new schema');
   }
 
+  // Check if dreams table needs user_dream_number column
+  try {
+    const hasUserDreamNumber = await dbWrapper.checkColumnExists('dreams', 'user_dream_number');
+    
+    if (!hasUserDreamNumber) {
+      console.log('Migrating dreams table to add user_dream_number field...');
+      if (dbWrapper.isPostgres) {
+        await dbWrapper.exec(`ALTER TABLE dreams ADD COLUMN IF NOT EXISTS user_dream_number INTEGER;`);
+      } else {
+        await dbWrapper.exec(`ALTER TABLE dreams ADD COLUMN user_dream_number INTEGER;`);
+      }
+    }
+  } catch (e) {
+    console.log('Dreams table does not exist yet, will be created with new schema');
+  }
+
   // Create tables with PostgreSQL/SQLite compatible syntax
   const createUsersTable = dbWrapper.isPostgres ? `
     CREATE TABLE IF NOT EXISTS users (
@@ -273,6 +289,7 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS dreams (
       id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL,
+      user_dream_number INTEGER,
       title TEXT,
       content TEXT NOT NULL,
       voice_uri TEXT,
@@ -287,6 +304,7 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS dreams (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
+      user_dream_number INTEGER,
       title TEXT,
       content TEXT NOT NULL,
       voice_uri TEXT,

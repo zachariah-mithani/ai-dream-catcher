@@ -82,7 +82,32 @@ chatRouter.post('/', createBillingMiddleware('chat_message'), async (req, res) =
   
   try {
     console.log('Chat request:', { history, message });
-    const { text, model } = await chatWithAnalyst(history, message);
+    
+    // Parse dream number references in the message (e.g., "analyze dream 1", "tell me about dream 3")
+    let processedMessage = message;
+    const dreamNumberMatches = message.match(/dream\s+(\d+)/gi);
+    
+    if (dreamNumberMatches) {
+      for (const match of dreamNumberMatches) {
+        const dreamNumber = parseInt(match.match(/\d+/)[0]);
+        try {
+          const dream = await db.prepare('SELECT * FROM dreams WHERE user_id = ? AND user_dream_number = ?').get(req.user.id, dreamNumber);
+          if (dream) {
+            processedMessage = processedMessage.replace(
+              new RegExp(match, 'gi'), 
+              `dream ${dreamNumber} (${dream.title || 'Untitled'}): "${dream.content.substring(0, 200)}${dream.content.length > 200 ? '...' : ''}"`
+            );
+          } else {
+            processedMessage = processedMessage.replace(new RegExp(match, 'gi'), `dream ${dreamNumber} (not found)`);
+          }
+        } catch (error) {
+          console.error('Error fetching dream by number:', error);
+          processedMessage = processedMessage.replace(new RegExp(match, 'gi'), `dream ${dreamNumber} (error loading)`);
+        }
+      }
+    }
+    
+    const { text, model } = await chatWithAnalyst(history, processedMessage);
     console.log('Chat response:', { text: text.substring(0, 100), model });
     const info = db.prepare('INSERT INTO analyses (user_id, type, prompt, response, model) VALUES (?, ?, ?, ?, ?)')
       .run(req.user.id, 'chat', message, text, model || null);
