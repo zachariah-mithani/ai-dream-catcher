@@ -13,6 +13,9 @@ import {
   STRIPE_CONFIG,
   verifyWebhookSignature
 } from '../stripe.js';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const billingRouter = express.Router();
 
@@ -26,6 +29,13 @@ export async function billingWebhook(req, res) {
       case 'checkout.session.completed': {
         const session = event.data.object;
         console.log('Checkout session completed:', session.id);
+        
+        // Get the subscription from the checkout session
+        if (session.subscription) {
+          const subscription = await stripe.subscriptions.retrieve(session.subscription);
+          console.log('Retrieved subscription from checkout session:', subscription.id, 'status:', subscription.status);
+          await handleSubscriptionEvent(subscription);
+        }
         break;
       }
       case 'customer.subscription.created':
