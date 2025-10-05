@@ -28,7 +28,7 @@ export default function ForgotPasswordScreen({ navigation }) {
       <Card>
         <Text style={{ fontSize: 22, fontWeight: '800', marginBottom: spacing(1) }}>Forgot Password</Text>
         <Subtle style={{ marginBottom: spacing(2) }}>Enter your account email to receive a reset link.</Subtle>
-        <Input placeholder="Email" autoCapitalize='none' keyboardType='email-address' value={email} onChangeText={setEmail} style={{ marginBottom: spacing(2) }} />
+        <Input placeholder="Email" autoCapitalize='none' keyboardType='email-address' textContentType='emailAddress' value={email} onChangeText={setEmail} style={{ marginBottom: spacing(2) }} />
         <Button title={busy ? 'Sending...' : 'Send Reset Link'} onPress={onRequest} disabled={busy} />
         {token && (
           <View style={{ marginTop: spacing(2) }}>

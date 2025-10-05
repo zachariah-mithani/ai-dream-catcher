@@ -5,7 +5,9 @@
     "scheme": "dreamcatcher",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#0f172a"
     },
@@ -19,42 +21,61 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.aidreamcatcher.app",
       "buildNumber": "1",
+      "icon": "./assets/icon.png",
       "infoPlist": {
         "NSCameraUsageDescription": "This app uses the camera to take photos for dream journaling.",
         "NSMicrophoneUsageDescription": "This app uses the microphone to record voice notes for dreams.",
-        "NSPhotoLibraryUsageDescription": "This app uses the photo library to attach images to your dreams."
+        "NSPhotoLibraryUsageDescription": "This app uses the photo library to attach images to your dreams.",
+        "NSUserNotificationsUsageDescription": "This app sends notifications to remind you to log your dreams."
       }
     },
     "android": {
       "package": "com.aidreamcatcher.app",
       "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0f172a"
+      },
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "extra": {
+      "API_URL": "https://ai-dream-catcher-api.onrender.com",
       "eas": {
-        "projectId": "your-project-id"
-      },
-      "API_URL": "https://ai-dream-catcher-api.onrender.com"
+        "projectId": "91d7ebf7-06b6-480a-adee-e7629a03c549"
+      }
     },
-    "privacy": "public",
+    "privacy": "https://aidreamcatcher.com/privacy-policy",
+    "supportUrl": "https://aidreamcatcher.com/support",
     "description": "AI-powered dream journaling app that analyzes your dreams and tracks patterns to help you understand your subconscious mind.",
     "keywords": [
-      "dreams",
-      "journal",
-      "AI",
-      "analysis",
-      "sleep",
-      "psychology"
+      "dream journal",
+      "AI analysis",
+      "sleep tracking",
+      "dream interpretation",
+      "subconscious",
+      "dream patterns",
+      "mood tracking",
+      "dream diary"
     ],
-    "category": "lifestyle",
+    "primaryCategory": "lifestyle",
+    "secondaryCategory": "health-fitness",
+    "ageRating": "4+",
+    "languages": ["en"],
+    "userInterfaceStyle": "automatic",
+    "review": {
+      "notes": "AI Dream Catcher is a dream journaling app that uses AI to analyze dreams and track patterns. Users can log dreams, get AI analysis, and track mood patterns. The app uses OpenRouter API for AI analysis and Stripe for payments. No medical advice is provided - this is for personal reflection only."
+    },
     "plugins": [
       "expo-asset",
       "expo-font",
       "expo-sqlite",
-      "expo-secure-store"
-    ]
+      "expo-secure-store",
+      "expo-notifications"
+    ],
+    "owner": "zmit"
   }
 }

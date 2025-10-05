@@ -164,7 +164,15 @@ export async function handleSubscriptionEvent(subscription) {
   
   if (status === 'active' || status === 'trialing') {
     // Set user to premium
-    const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null;
+    // Convert Stripe epoch seconds to ISO safely. During trialing, current_period_end can be undefined.
+    const trialEnd = subscription.trial_end
+      ? new Date(subscription.trial_end * 1000).toISOString()
+      : null;
+    const currentPeriodEndIso = subscription.current_period_end
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : (subscription.trial_end
+        ? new Date(subscription.trial_end * 1000).toISOString()
+        : null);
     await db.prepare('UPDATE users SET plan = ?, trial_end = ? WHERE id = ?')
       .run('premium', trialEnd, userId);
     
@@ -178,7 +186,7 @@ export async function handleSubscriptionEvent(subscription) {
       customerId,
       subscription.id,
       status,
-      new Date(subscription.current_period_end * 1000).toISOString()
+      currentPeriodEndIso
     );
     
     console.log(`User ${userId} upgraded to premium via Stripe subscription ${subscription.id}`);

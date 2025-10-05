@@ -1,11 +1,15 @@
 {
   "cli": {
-    "version": ">= 5.9.0"
+    "version": ">= 5.9.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      }
     },
     "preview": {
       "distribution": "internal",
@@ -25,9 +29,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "your-apple-id@example.com",
-        "ascAppId": "your-app-store-connect-app-id",
-        "appleTeamId": "your-team-id"
+        "appleId": "zachmithani@gmail.com",
+        "ascAppId": "6753618602",
+        "appleTeamId": "Y6X4MUVR42"
       },
       "android": {
         "serviceAccountKeyPath": "./path-to-service-account-key.json",

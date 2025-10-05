@@ -3,7 +3,9 @@ import axios from 'axios';
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const DEFAULT_MODEL = process.env.OPENROUTER_MODEL || 'deepseek/deepseek-chat-v3.1:free';
+// Order fast, reliable free models first
 const FALLBACK_MODELS = [
+  'deepseek/deepseek-chat-v3.1:free',
   'meta-llama/llama-3.2-3b-instruct:free',
   'microsoft/phi-3-mini-128k-instruct:free',
   'google/gemma-2-2b-it:free'
@@ -37,11 +39,19 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
   console.log('Request headers:', { ...headers, 'Authorization': 'Bearer [REDACTED]' });
   console.log('Request body:', { ...body, messages: `[${messages.length} messages]` });
 
-  let currentModel = model;
-  for (let attempt = 0; attempt < 2; attempt++) {
+  // Build a try-order: requested model (env/default) then known-good fallbacks (deduped)
+  const tryOrder = [model, ...FALLBACK_MODELS].filter((m, i, arr) => m && arr.indexOf(m) === i);
+  // Keep individual attempts snappy to respect route-level timeout
+  const perAttemptTimeoutMs = 10_000;
+  let currentModel = tryOrder[0];
+  for (let attempt = 0; attempt < Math.min(tryOrder.length, 3); attempt++) {
     try {
-      console.log(`Attempt ${attempt + 1}/2`);
-      const { data } = await axios.post(OPENROUTER_BASE_URL, { ...body, model: currentModel }, { headers, timeout: 15_000 });
+      console.log(`Attempt ${attempt + 1}/${Math.min(tryOrder.length, 3)}`);
+      const { data } = await axios.post(
+        OPENROUTER_BASE_URL,
+        { ...body, model: currentModel },
+        { headers, timeout: perAttemptTimeoutMs }
+      );
       console.log('OpenRouter response received:', {
         model: data?.model,
         choices: data?.choices?.length || 0,
@@ -59,15 +69,16 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
       });
       
       const status = err?.response?.status;
-      if ((status === 429 || status === 502 || status === 503) && attempt < 1) {
+      if ((status === 429 || status === 502 || status === 503) && attempt < tryOrder.length - 1) {
         console.log(`Rate limited, waiting ${1000 * (attempt + 1)}ms before retry...`);
         await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+        currentModel = tryOrder[attempt + 1];
         continue;
       }
 
       // Try a fallback free model if available
       const isModelError = status === 404 || String(err?.response?.data?.error?.message || '').toLowerCase().includes('model');
-      const nextModel = FALLBACK_MODELS[attempt];
+      const nextModel = tryOrder[attempt + 1];
       if (isModelError && nextModel) {
         console.log(`Switching to fallback model: ${nextModel}`);
         currentModel = nextModel;
@@ -79,7 +90,7 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
       const errorCode = err?.response?.data?.error?.code || err?.response?.status || 'UNKNOWN';
       
       // If all models failed, provide a helpful message
-      if (attempt === 1) {
+      if (attempt >= Math.min(tryOrder.length, 3) - 1) {
         throw new Error(`AI service is currently unavailable. Please try again later. Last error: ${errorMessage}`);
       }
       

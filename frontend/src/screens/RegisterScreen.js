@@ -67,6 +67,7 @@ export default function RegisterScreen({ navigation }) {
             placeholder="Email" 
             autoCapitalize='none' 
             keyboardType='email-address' 
+            textContentType='emailAddress'
             value={email} 
             onChangeText={setEmail} 
             style={{ marginBottom: 12 }} 

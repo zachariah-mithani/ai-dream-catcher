@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, Alert, TouchableOpacity } from 'react-native';
+import { View, Alert, TouchableOpacity, Image } from 'react-native';
 import { login } from '../api';
 import { Screen, Card, Text, Input, Button, Subtle } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import DreamCatcherLogo from '../components/DreamCatcherLogo';
 
 export default function LoginScreen({ navigation }) {
-  const { colors, spacing } = useTheme();
+  const { colors, spacing, theme } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -27,7 +27,20 @@ export default function LoginScreen({ navigation }) {
   return (
     <Screen style={{ justifyContent: 'center', padding: 24 }}>
       <View style={{ alignItems: 'center', marginBottom: spacing(4) }}>
-        <DreamCatcherLogo size={100} />
+        {theme === 'dreamy' ? (
+          <View style={{ width: 100, height: 100 }}>
+            <Image
+              source={require('../../assets/in-app-icon.png')}
+              style={{
+                width: '100%',
+                height: '100%',
+              }}
+              resizeMode="contain"
+            />
+          </View>
+        ) : (
+          <DreamCatcherLogo size={100} />
+        )}
         <Text style={{ 
           fontSize: 28, 
           fontWeight: '800', 
@@ -48,7 +61,7 @@ export default function LoginScreen({ navigation }) {
       
       <Card>
         <Text style={{ fontSize: 24, fontWeight: '800', marginBottom: 12, textAlign: 'center' }}>Welcome back</Text>
-        <Input placeholder="Email" autoCapitalize='none' keyboardType='email-address' value={email} onChangeText={setEmail} style={{ marginBottom: 12 }} />
+        <Input placeholder="Email" autoCapitalize='none' keyboardType='email-address' textContentType='emailAddress' value={email} onChangeText={setEmail} style={{ marginBottom: 12 }} />
         <Input placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} style={{ marginBottom: 12 }} />
         <Button title={busy ? 'Signing in...' : 'Sign In'} onPress={onLogin} />
         <View style={{ alignItems: 'center', marginTop: spacing(2) }}>

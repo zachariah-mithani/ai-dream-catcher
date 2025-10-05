@@ -117,7 +117,7 @@ export async function authenticate(email, password) {
 }
 
 export async function getUserProfile(userId) {
-  const user = await db.prepare('SELECT id, email, first_name, last_name, username, theme_preference, bedtime_hour, bedtime_minute, wakeup_hour, wakeup_minute, notifications_enabled, created_at FROM users WHERE id = ?').get(userId);
+  const user = await db.prepare('SELECT id, email, first_name, last_name, username, theme_preference, bedtime_hour, bedtime_minute, wakeup_hour, wakeup_minute, notifications_enabled, plan, trial_end, created_at FROM users WHERE id = ?').get(userId);
   if (!user) throw new Error('User not found');
   return {
     ...user,

@@ -297,6 +297,30 @@ billingRouter.post('/portal', async (req, res) => {
 
 // (moved public webhook handler above)
 
+// Manually reconcile subscription status for the current user
+billingRouter.post('/reconcile', async (req, res) => {
+  try {
+    const subRow = await db
+      .prepare('SELECT stripe_customer_id FROM user_subscriptions WHERE user_id = ?')
+      .get(req.user.id);
+    if (!subRow?.stripe_customer_id) {
+      return res.status(404).json({ error: 'No Stripe customer found for this user' });
+    }
+    const subscription = await getCustomerSubscription(subRow.stripe_customer_id);
+    if (!subscription) {
+      return res.status(404).json({ error: 'No Stripe subscription found for this customer' });
+    }
+    await handleSubscriptionEvent(subscription);
+    const status = await db
+      .prepare('SELECT plan, trial_end FROM users WHERE id = ?')
+      .get(req.user.id);
+    return res.json({ ok: true, plan: status?.plan || 'free', trial_end: status?.trial_end || null });
+  } catch (error) {
+    console.error('Reconcile failed:', error);
+    return res.status(500).json({ error: 'Failed to reconcile subscription status' });
+  }
+});
+
 // Cancel the active subscription (at period end by default)
 const cancelSchema = z.object({ immediately: z.boolean().optional().default(false) });
 billingRouter.post('/cancel', async (req, res) => {
