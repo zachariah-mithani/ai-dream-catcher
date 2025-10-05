@@ -50,7 +50,7 @@ function Tabs() {
         return require('../assets/in-app-icon.png');
       case 'dreamy':
       default:
-        return require('../assets/light-icon.png'); // Use colorful icon for dreamy nav bar
+        return require('../assets/in-app-icon.png'); // Use in-app icon for dreamy nav bar
     }
   };
   return (
