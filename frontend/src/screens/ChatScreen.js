@@ -200,7 +200,11 @@ export default function ChatScreen({ route, navigation }) {
       .replace(/\*\*(.*?)\*\*/g, '$1')
       .replace(/\*(.*?)\*/g, '$1')
       .replace(/^\s*[-*]\s+/gm, '• ')
-      .replace(/^(\d+)\.\s+/gm, '$1. ');
+      .replace(/^(\d+)\.\s+/gm, '$1. ')
+      .replace(/^\s*\*\s*$/gm, '') // remove orphan asterisk lines
+      .replace(/^\s*#+\s*$/gm, '') // remove orphan heading markers
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
   };
 
   const renderMessage = ({ item, index }) => (
