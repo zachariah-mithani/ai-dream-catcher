@@ -107,7 +107,13 @@ chatRouter.post('/', createBillingMiddleware('chat_message'), async (req, res) =
       }
     }
     
-    const { text, model } = await chatWithAnalyst(history, processedMessage);
+    // Add timeout wrapper to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Chat request timed out after 25 seconds')), 25000);
+    });
+    
+    const chatPromise = chatWithAnalyst(history, processedMessage);
+    const { text, model } = await Promise.race([chatPromise, timeoutPromise]);
     console.log('Chat response:', { text: text.substring(0, 100), model });
     const info = db.prepare('INSERT INTO analyses (user_id, type, prompt, response, model) VALUES (?, ?, ?, ?, ?)')
       .run(req.user.id, 'chat', message, text, model || null);
@@ -121,6 +127,15 @@ chatRouter.post('/', createBillingMiddleware('chat_message'), async (req, res) =
     res.json({ response: text, model });
   } catch (e) {
     console.error('Chat error:', e.message, e.response?.data);
+    
+    // Check if it's a timeout error
+    if (e.message.includes('timed out') || e.code === 'ECONNABORTED') {
+      return res.status(408).json({ 
+        error: 'Request timeout', 
+        details: 'The AI service is taking too long to respond. Please try again with a shorter message.' 
+      });
+    }
+    
     const status = e?.response?.status || 500;
     res.status(status).json({ error: 'AI service error', details: e.message });
   }

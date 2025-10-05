@@ -5,7 +5,7 @@ import { emitAuthChanged } from './utils/events';
 
 const API_URL = Constants?.expoConfig?.extra?.API_URL || 'http://localhost:4000';
 
-export const api = axios.create({ baseURL: API_URL, timeout: 30000 }); // Reduced from 120s to 30s
+export const api = axios.create({ baseURL: API_URL, timeout: 25000 }); // Reduced to 25s to match backend timeout
 
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('token');

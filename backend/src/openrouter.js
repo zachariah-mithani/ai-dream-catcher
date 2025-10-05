@@ -9,7 +9,7 @@ const FALLBACK_MODELS = [
   'google/gemma-2-2b-it:free'
 ];
 
-async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0.7, max_tokens = 800 }) {
+async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0.7, max_tokens = 300 }) {
   console.log('=== OPENROUTER DEBUG ===');
   console.log('API Key present:', !!OPENROUTER_API_KEY);
   console.log('API Key length:', OPENROUTER_API_KEY?.length || 0);
@@ -38,10 +38,10 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
   console.log('Request body:', { ...body, messages: `[${messages.length} messages]` });
 
   let currentModel = model;
-  for (let attempt = 0; attempt < 4; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      console.log(`Attempt ${attempt + 1}/3`);
-      const { data } = await axios.post(OPENROUTER_BASE_URL, { ...body, model: currentModel }, { headers, timeout: 30_000 });
+      console.log(`Attempt ${attempt + 1}/2`);
+      const { data } = await axios.post(OPENROUTER_BASE_URL, { ...body, model: currentModel }, { headers, timeout: 15_000 });
       console.log('OpenRouter response received:', {
         model: data?.model,
         choices: data?.choices?.length || 0,
@@ -59,7 +59,7 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
       });
       
       const status = err?.response?.status;
-      if ((status === 429 || status === 502 || status === 503) && attempt < 3) {
+      if ((status === 429 || status === 502 || status === 503) && attempt < 1) {
         console.log(`Rate limited, waiting ${1000 * (attempt + 1)}ms before retry...`);
         await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
         continue;
@@ -79,8 +79,8 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
       const errorCode = err?.response?.data?.error?.code || err?.response?.status || 'UNKNOWN';
       
       // If all models failed, provide a helpful message
-      if (attempt === 3) {
-        throw new Error(`All AI models are currently unavailable. Please try again later. Last error: ${errorMessage}`);
+      if (attempt === 1) {
+        throw new Error(`AI service is currently unavailable. Please try again later. Last error: ${errorMessage}`);
       }
       
       throw new Error(`OpenRouter API Error (${errorCode}): ${errorMessage}`);
