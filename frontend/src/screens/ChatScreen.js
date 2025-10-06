@@ -247,20 +247,7 @@ export default function ChatScreen({ route, navigation }) {
         borderBottomWidth: 1,
         borderBottomColor: colors.border
       }}>
-        <TouchableOpacity 
-          onPress={() => setShowHistory(true)}
-          style={{
-            padding: spacing(1),
-            borderRadius: 8,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border
-          }}
-        >
-          <CustomText style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
-            📚 History
-          </CustomText>
-        </TouchableOpacity>
+        <View />
         
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <CustomText style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>

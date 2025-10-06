@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 
 export default function MarkdownText({ children, style, selectable = true }) {
@@ -142,7 +142,7 @@ export default function MarkdownText({ children, style, selectable = true }) {
       const level = Math.min(3, Math.floor(indent.length / 2));
       const item = ulMatch[3];
     content.push(
-      <Text key={`ul-${i}`} style={baseStyle} selectable={selectable}>
+      <Text key={`ul-${i}`} style={[baseStyle, { marginBottom: 4 }]} selectable={selectable}>
         {`${'  '.repeat(level)}• `}
         {renderInline(item, `uli-${i}`, baseStyle)}
       </Text>
@@ -159,7 +159,7 @@ export default function MarkdownText({ children, style, selectable = true }) {
       const num = olMatch[2];
       const item = olMatch[3];
     content.push(
-      <Text key={`ol-${i}`} style={baseStyle} selectable={selectable}>
+      <Text key={`ol-${i}`} style={[baseStyle, { marginBottom: 4 }]} selectable={selectable}>
         {`${'  '.repeat(level)}${num}. `}
         {renderInline(item, `oli-${i}`, baseStyle)}
       </Text>
@@ -173,10 +173,10 @@ export default function MarkdownText({ children, style, selectable = true }) {
 
   flushParagraph('end');
 
-  // Wrap in a parent Text so iOS selection flows across lines
+  // Wrap in a View so list items and paragraphs stack vertically
   return (
-    <Text selectable={selectable} style={baseStyle}>
+    <View>
       {content}
-    </Text>
+    </View>
   );
 }
