@@ -73,6 +73,10 @@ export function BillingProvider({ children }) {
         if (profile?.plan) setPlan(profile.plan);
       } catch (profileError) {
         console.log('BillingContext: Profile fallback also failed:', profileError.message);
+        // If both fail with 401, it might be an auth issue
+        if (profileError.response?.status === 401) {
+          console.log('BillingContext: Authentication issue detected, skipping billing refresh');
+        }
       }
     } finally {
       setLoading(false);

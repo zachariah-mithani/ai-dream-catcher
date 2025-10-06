@@ -26,8 +26,20 @@ export const ThemeProvider = ({ children }) => {
       // Check if user is authenticated first
       const token = await AsyncStorage.getItem('token');
       if (token) {
-        const profile = await getProfile();
-        setTheme(profile.theme_preference || 'dreamy');
+        try {
+          const profile = await getProfile();
+          setTheme(profile.theme_preference || 'dreamy');
+        } catch (profileError) {
+          console.log('Failed to load theme from profile:', profileError.message);
+          // If profile fails with 401, it's likely an auth issue - use local data
+          if (profileError.response?.status === 401) {
+            console.log('Authentication issue detected, using local theme data');
+          }
+          // Fallback to stored user data
+          const userJson = await AsyncStorage.getItem('user');
+          const user = userJson ? JSON.parse(userJson) : null;
+          setTheme(user?.theme_preference || 'dreamy');
+        }
       } else {
         // No token, use stored theme or default
         const userJson = await AsyncStorage.getItem('user');
