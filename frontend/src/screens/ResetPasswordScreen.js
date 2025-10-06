@@ -22,7 +22,8 @@ export default function ResetPasswordScreen({ route, navigation }) {
       Alert.alert('Success', 'Password has been reset. Please sign in.');
       navigation.navigate('Login');
     } catch (e) {
-      Alert.alert('Error', e.response?.data?.error || 'Reset failed.');
+      const msg = e.response?.data?.error || e.message || 'Reset failed.';
+      Alert.alert('Error', msg);
     } finally {
       setBusy(false);
     }

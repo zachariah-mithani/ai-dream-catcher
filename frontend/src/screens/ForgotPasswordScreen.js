@@ -17,7 +17,8 @@ export default function ForgotPasswordScreen({ navigation }) {
       setToken(res.token || null);
       Alert.alert('Check your email', 'If an account exists, a reset link was sent. For testing, a token may show below.');
     } catch (e) {
-      Alert.alert('Error', 'Failed to request reset.');
+      const msg = e.response?.data?.error || e.message || 'Failed to request reset.';
+      Alert.alert('Error', msg);
     } finally {
       setBusy(false);
     }
