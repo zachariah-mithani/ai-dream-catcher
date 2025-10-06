@@ -6,6 +6,7 @@ import { chat, listDreams, analyzeDream, getChatHistory } from '../api';
 import { useBilling } from '../contexts/BillingContext';
 import MarkdownText from '../components/MarkdownText';
 import { InlineUpgradePrompt } from '../components/UpgradePrompt';
+import { track } from '../utils/events';
 
 export default function ChatScreen({ route, navigation }) {
   const { colors, spacing } = useTheme();
@@ -176,15 +177,18 @@ export default function ChatScreen({ route, navigation }) {
     setBusy(true);
     
     try {
+      track('chat_send', { length: message.trim().length });
       console.log('Sending chat message:', { history: nextHistory, message: message.trim() });
       const res = await chat(nextHistory, message.trim());
       console.log('Chat response received:', res);
       setHistory(h => [...h, { role: 'assistant', content: res.response }]);
       billing?.recordUsage('chat_message');
+      track('chat_response', { length: res?.response?.length || 0 });
     } catch (e) {
       console.error('Chat error:', e);
       const errorMessage = e.response?.data?.error || e.message || 'Chat failed. Please try again.';
       Alert.alert('Error', errorMessage);
+      track('chat_error', { message: String(e?.message || e) });
     } finally {
       setBusy(false);
     }
