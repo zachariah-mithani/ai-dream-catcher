@@ -106,7 +106,7 @@ export default function BillingScreen({ navigation }) {
         // For now, we'll show a message directing to App Store
         Alert.alert(
           'Restore Purchases',
-          'To restore purchases, please:\n\n1. Go to App Store\n2. Tap your profile\n3. Tap "Purchased"\n4. Find this app and tap "Download"\n\nOr contact support if you need assistance.',
+          'To restore your subscription:\n\n1. Open App Store\n2. Tap your profile picture (top right)\n3. Tap "Subscriptions"\n4. Find "AI Dream Catcher" and tap "Manage"\n\nOr go to Settings > Apple ID > Subscriptions.',
           [{ text: 'OK' }]
         );
       } else {
