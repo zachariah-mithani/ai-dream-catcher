@@ -39,7 +39,12 @@ api.interceptors.request.use(async (config) => {
   if (token) {
     // Check if token is expired before making the request
     if (isTokenExpired(token)) {
-      console.log('🔄 Token expired, will trigger refresh on 401');
+      // Throttle noisy log: print at most once every 30s
+      const now = Date.now();
+      if (!api.__lastExpiredLogAt || now - api.__lastExpiredLogAt > 30000) {
+        console.log('🔄 Token expired, will trigger refresh on 401');
+        api.__lastExpiredLogAt = now;
+      }
     }
     config.headers.Authorization = `Bearer ${token}`;
   }
