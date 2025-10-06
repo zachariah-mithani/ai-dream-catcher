@@ -42,7 +42,7 @@ async function callOpenRouter({ messages, model = DEFAULT_MODEL, temperature = 0
   // Build a try-order: requested model (env/default) then known-good fallbacks (deduped)
   const tryOrder = [model, ...FALLBACK_MODELS].filter((m, i, arr) => m && arr.indexOf(m) === i);
   // Keep individual attempts snappy to respect route-level timeout
-  const perAttemptTimeoutMs = 10_000;
+  const perAttemptTimeoutMs = 15_000; // allow a bit more time per attempt
   let currentModel = tryOrder[0];
   for (let attempt = 0; attempt < Math.min(tryOrder.length, 3); attempt++) {
     try {

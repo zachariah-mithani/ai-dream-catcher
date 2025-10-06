@@ -55,9 +55,9 @@ chatRouter.post('/', createBillingMiddleware('chat_message'), async (req, res) =
       }
     }
     
-    // Add timeout wrapper to prevent hanging
+    // Add timeout wrapper to prevent hanging (increase to 40s)
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Chat request timed out after 25 seconds')), 25000);
+      setTimeout(() => reject(new Error('Chat request timed out after 40 seconds')), 40000);
     });
     
     const chatPromise = chatWithAnalyst(history, processedMessage, {
