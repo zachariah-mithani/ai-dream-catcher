@@ -66,14 +66,20 @@ export default function MarkdownText({ children, style, selectable = true }) {
     // Convert middle-dot bullets to list items when starting a line or after punctuation
     .replace(/^\s*•\s*/gm, '- ')
     .replace(/([\.!\?:])\s*•\s*/g, '$1\n- ')
+    // Convert the common sequence "• -" into a new bullet line
+    .replace(/(^|[\.!\?:\n])\s*•\s*-\s*/g, '$1\n- ')
+    // As a fallback, convert standalone middle-dot to bullet when surrounded by spaces
+    .replace(/\s•\s(?!\()/g, '\n- ')
     // Convert punctuation + hyphen into a new bullet line (e.g., ". - ")
     .replace(/([\.!\?:])\s*-\s+/g, '$1\n- ')
     // Convert italic/heading end star + period + hyphen into new bullet
     .replace(/\*\\.\s*-\s+/g, '.\n- ')
     // Clean stray hash after making a bullet (e.g., "- #🌙 ...")
     .replace(/^-\s*#\s*/gm, '- ')
-    // Fix unmatched bold endings like **Title* → **Title**
-    .replace(/\*\*([^*]+)\*(?=\s|$)/g, '**$1**')
+    // Fix unmatched bold endings like **Title* → **Title** (allow punctuation after)
+    .replace(/\*\*([^*]+)\*(?=[\s\.,;:!\?]|$)/g, '**$1**')
+    // If we see a bold-ish heading followed by a middle-dot bullet, promote to heading and newline bullet
+    .replace(/\*\*([^*]+)\*\s*•\s*-\s*/g, '### $1\n- ')
     // Remove mid-sentence middle-dot used as separator before parentheses
     .replace(/([^\n])•\s*\(/g, '$1 (')
     // Transform headings like "### #1. Title" into ordered list items
