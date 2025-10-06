@@ -244,7 +244,7 @@ export default function ChatScreen({ route, navigation }) {
       .trim();
   };
 
-  const renderMessage = ({ item, index }) => (
+  const renderMessage = React.useCallback(({ item, index }) => (
     <View style={{ 
       marginBottom: spacing(2),
       alignSelf: item.role === 'user' ? 'flex-end' : 'flex-start',
@@ -270,7 +270,7 @@ export default function ChatScreen({ route, navigation }) {
         )}
       </Card>
     </View>
-  );
+  ), [colors, spacing]);
 
   return (
     <Screen>
@@ -394,6 +394,15 @@ export default function ChatScreen({ route, navigation }) {
             keyExtractor={(_, i) => String(i)}
             renderItem={renderMessage}
             contentContainerStyle={{ padding: spacing(2) }}
+            initialNumToRender={10}
+            maxToRenderPerBatch={5}
+            windowSize={10}
+            removeClippedSubviews={true}
+            getItemLayout={(data, index) => ({
+              length: 100, // estimated item height
+              offset: 100 * index,
+              index,
+            })}
             ListEmptyComponent={
               <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <CustomText style={{ color: colors.textSecondary, textAlign: 'center' }}>
