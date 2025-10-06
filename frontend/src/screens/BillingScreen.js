@@ -96,6 +96,34 @@ export default function BillingScreen({ navigation }) {
   const aiActionsUsed = billing?.getAiActionsUsed?.() || 0;
   const aiActionsLimit = billing?.AI_ACTIONS_LIMIT || 10;
 
+  const handleRestorePurchases = async () => {
+    try {
+      setLoading(true);
+      // Import expo-store-review for restore purchases
+      const { requestReview } = await import('expo-store-review');
+      
+      // For iOS, we need to implement StoreKit restore
+      if (Platform.OS === 'ios') {
+        // This would typically use react-native-iap or similar
+        // For now, we'll show a message directing to App Store
+        Alert.alert(
+          'Restore Purchases',
+          'To restore purchases, please:\n\n1. Go to App Store\n2. Tap your profile\n3. Tap "Purchased"\n4. Find this app and tap "Download"\n\nOr contact support if you need assistance.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        // For Android, refresh billing status
+        await billing?.refresh?.();
+        Alert.alert('Success', 'Purchase restoration completed.');
+      }
+    } catch (error) {
+      console.error('Restore purchases failed:', error);
+      Alert.alert('Error', 'Failed to restore purchases. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // If running on iOS, hide web-based billing UI (StoreKit-only policy)
   if (Platform.OS === 'ios') {
     return (
@@ -105,11 +133,19 @@ export default function BillingScreen({ navigation }) {
             Subscription
           </Text>
           <Card>
-            <Text style={{ color: colors.text, marginBottom: spacing(1) }}>
+            <Text style={{ color: colors.text, marginBottom: spacing(2) }}>
               In-app purchases are handled by Apple. Please use the App Store subscription settings to manage your plan.
             </Text>
-            <Text style={{ color: colors.textSecondary }}>
-              Restore purchases from the Profile screen if needed.
+            
+            <Button
+              title="Restore Purchases"
+              onPress={handleRestorePurchases}
+              loading={loading}
+              style={{ marginTop: spacing(2) }}
+            />
+            
+            <Text style={{ color: colors.textSecondary, marginTop: spacing(2), fontSize: 12 }}>
+              Current plan: {billing?.isPremium ? 'Dream Explorer+' : 'Free Plan'}
             </Text>
           </Card>
         </ScrollView>

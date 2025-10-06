@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, Linking } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 import { Text, Button, Card } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { useBilling } from '../contexts/BillingContext';
@@ -46,6 +46,15 @@ export default function UpgradePrompt({
   };
 
   const handleUpgrade = async (priceId) => {
+    if (Platform.OS === 'ios') {
+      Alert.alert(
+        'Upgrade to Dream Explorer+',
+        'To upgrade your subscription:\n\n1. Go to the App Store\n2. Search for "AI Dream Catcher"\n3. Tap "Get" or "Subscribe"\n\nOr manage your subscription in Settings > App Store > Subscriptions.',
+        [{ text: 'OK', onPress: onClose }]
+      );
+      return;
+    }
+
     try {
       const { sessionUrl } = await createCheckoutSession(priceId, 7);
       await Linking.openURL(sessionUrl);
@@ -160,6 +169,15 @@ export function InlineUpgradePrompt({ limitType, currentUsage, limit, period = '
   };
 
   const handleUpgrade = async () => {
+    if (Platform.OS === 'ios') {
+      Alert.alert(
+        'Upgrade to Dream Explorer+',
+        'To upgrade your subscription:\n\n1. Go to the App Store\n2. Search for "AI Dream Catcher"\n3. Tap "Get" or "Subscribe"\n\nOr manage your subscription in Settings > App Store > Subscriptions.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     try {
       const { sessionUrl } = await createCheckoutSession('monthly', 7);
       await Linking.openURL(sessionUrl);

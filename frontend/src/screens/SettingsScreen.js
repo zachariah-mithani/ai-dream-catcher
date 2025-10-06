@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, Alert, Switch, Modal } from 'react-native';
+import { View, ScrollView, Alert, Switch, Modal, Platform } from 'react-native';
 import { Screen, Text, Card, Input, Button, Subtle } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { getProfile, updateProfile, deleteAccount, upgradePlan, exportMyData } from '../api';
@@ -304,7 +304,21 @@ export default function SettingsScreen({ navigation }) {
                 style={{ flex: 1 }} 
               />
             ) : (
-              <Button title="Upgrade" onPress={() => navigation.navigate('Billing')} style={{ flex: 1 }} />
+              <Button 
+                title="Upgrade" 
+                onPress={() => {
+                  if (Platform.OS === 'ios') {
+                    Alert.alert(
+                      'Upgrade to Dream Explorer+',
+                      'To upgrade your subscription:\n\n1. Go to the App Store\n2. Search for "AI Dream Catcher"\n3. Tap "Get" or "Subscribe"\n\nOr manage your subscription in Settings > App Store > Subscriptions.',
+                      [{ text: 'OK' }]
+                    );
+                  } else {
+                    navigation.navigate('Billing');
+                  }
+                }} 
+                style={{ flex: 1 }} 
+              />
             )}
           </View>
         </Card>
