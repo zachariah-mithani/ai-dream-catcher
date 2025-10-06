@@ -126,8 +126,10 @@ export default function MarkdownText({ children, style, selectable = true }) {
       const text = hMatch[2];
       const sizes = { 1: 1.8, 2: 1.5, 3: 1.3 };
       const weights = { 1: '800', 2: '700', 3: '600' };
+      const fontSize = (baseStyle.fontSize || 14) * sizes[level];
+      const lineHeight = Math.round(fontSize * 1.25);
       content.push(
-        <Text key={`h-${i}`} style={[baseStyle, { fontSize: (baseStyle.fontSize || 14) * sizes[level], fontWeight: weights[level], marginTop: 12, marginBottom: 6 }]} selectable={selectable}>
+        <Text key={`h-${i}`} style={[baseStyle, { fontSize, lineHeight, fontWeight: weights[level], marginTop: 14, marginBottom: 8 }]} selectable={selectable}>
           {text}
         </Text>
       );
