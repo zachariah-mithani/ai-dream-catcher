@@ -4,9 +4,14 @@ import { db } from '../database.js';
 import { requireAuth } from '../auth.js';
 import { chatWithAnalyst } from '../openrouter.js';
 import { createBillingMiddleware, incrementUsage } from '../billing.js';
+import rateLimit from 'express-rate-limit';
 
 export const chatRouter = express.Router();
 chatRouter.use(requireAuth);
+
+// Per-IP + per-user limiter for chat to prevent abuse
+const chatLimiter = rateLimit({ windowMs: 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
+chatRouter.use(chatLimiter);
 
 const chatSchema = z.object({
   history: z.array(z.object({ 
@@ -29,7 +34,15 @@ chatRouter.post('/', createBillingMiddleware('chat_message'), async (req, res) =
   const { history = [], message } = parse.data;
   
   try {
-    console.log('Chat request:', { history, message });
+    console.log('Chat request:', { historyLength: history?.length || 0, messageLength: message?.length || 0 });
+
+    // Lightweight moderation: crisis/self-harm keywords
+    const crisisRegex = /(suicide|self\s*harm|kill\s*myself|end\s*my\s*life|hurt\s*myself)/i;
+    if (crisisRegex.test(message)) {
+      return res.json({
+        response: 'I’m really sorry you’re feeling this way. I cannot help with urgent safety issues. Please contact your local emergency services or the Suicide & Crisis Lifeline at 988 (US) or visit 988lifeline.org for immediate support.'
+      });
+    }
     
     // Parse dream number references in the message (e.g., "analyze dream 1", "tell me about dream 3")
     let processedMessage = message;
