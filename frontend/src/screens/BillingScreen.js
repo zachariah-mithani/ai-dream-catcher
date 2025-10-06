@@ -99,8 +99,6 @@ export default function BillingScreen({ navigation }) {
   const handleRestorePurchases = async () => {
     try {
       setLoading(true);
-      // Import expo-store-review for restore purchases
-      const { requestReview } = await import('expo-store-review');
       
       // For iOS, we need to implement StoreKit restore
       if (Platform.OS === 'ios') {
