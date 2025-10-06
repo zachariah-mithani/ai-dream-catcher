@@ -41,10 +41,15 @@ export default function MarkdownText({ children, style, selectable = true }) {
     .replace(/[\t ]*[–—-]{2,}[\t ]*-\s*/g, '\n- ')
     // Convert remaining long dash chains to simple line breaks
     .replace(/[\t ]*[–—-]{2,}[\t ]*/g, '\n')
-    // Convert middle-dot bullets to list items
-    .replace(/\s*•\s*/g, '\n- ')
+    // Convert middle-dot bullets to list items when starting a line or after punctuation
+    .replace(/^\s*•\s*/gm, '- ')
+    .replace(/([\.!\?:])\s*•\s*/g, '$1\n- ')
     // Transform headings like "### #1. Title" into ordered list items
     .replace(/^#{1,6}\s*#?(\d+)\.\s*/gm, '$1. ')
+    // Promote lines that are just an (optional emoji) + **bold** into headings
+    .replace(/^\s*[^\w\s]?\s*\*\*(.+?)\*\*\s*$/gm, '### $1')
+    // Ensure an extra blank line before headings for readability
+    .replace(/\n(#{1,6}[^\n]*)/g, '\n\n$1')
     // Ensure a newline before inline list markers found mid-line
     .replace(/([^\n])(\n?)([-*]|\d+\.)\s/g, (m, a, b, c) => `${a}\n${c} `);
   const lines = normalized.split('\n');
