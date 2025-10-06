@@ -25,6 +25,7 @@ export default function ChatScreen({ route, navigation }) {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [billingLoaded, setBillingLoaded] = useState(false);
   const [selectIndex, setSelectIndex] = useState(-1);
+  const [errorNotice, setErrorNotice] = useState(null); // { message, onRetry }
 
   useEffect(() => {
     loadDreams();
@@ -179,15 +180,38 @@ export default function ChatScreen({ route, navigation }) {
     try {
       track('chat_send', { length: message.trim().length });
       console.log('Sending chat message:', { history: nextHistory, message: message.trim() });
-      const res = await chat(nextHistory, message.trim());
+      // retry on timeout/network up to 2 times with backoff
+      let attempt = 0;
+      let res;
+      while (true) {
+        try {
+          res = await chat(nextHistory, message.trim());
+          break;
+        } catch (err) {
+          const msg = String(err?.message || '');
+          const status = err?.response?.status;
+          const isTimeout = status === 408 || msg.includes('timeout') || msg.includes('Network Error') || err?.code === 'ECONNABORTED';
+          if (!isTimeout || attempt >= 2) throw err;
+          await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt))); // 500ms, 1000ms
+          attempt++;
+        }
+      }
       console.log('Chat response received:', res);
       setHistory(h => [...h, { role: 'assistant', content: res.response }]);
       billing?.recordUsage('chat_message');
       track('chat_response', { length: res?.response?.length || 0 });
+      setErrorNotice(null);
     } catch (e) {
       console.error('Chat error:', e);
       const errorMessage = e.response?.data?.error || e.message || 'Chat failed. Please try again.';
-      Alert.alert('Error', errorMessage);
+      setErrorNotice({
+        message: errorMessage,
+        onRetry: () => {
+          setErrorNotice(null);
+          setMessage(message); // keep original input if needed
+          send();
+        }
+      });
       track('chat_error', { message: String(e?.message || e) });
     } finally {
       setBusy(false);
@@ -350,6 +374,15 @@ export default function ChatScreen({ route, navigation }) {
                 </View>
               )}
             </View>
+          )}
+
+          {errorNotice && (
+            <Card style={{ margin: spacing(2), backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border }}>
+              <CustomText style={{ color: colors.text, marginBottom: 8 }}>
+                {errorNotice.message}
+              </CustomText>
+              <Button title="Retry" onPress={errorNotice.onRetry} />
+            </Card>
           )}
 
           <FlatList
