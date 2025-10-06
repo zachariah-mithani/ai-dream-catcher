@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Alert, Linking, ScrollView } from 'react-native';
+import { Alert, Linking, ScrollView, Platform } from 'react-native';
 import { Screen, Text, Button, Card } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { useBilling } from '../contexts/BillingContext';
@@ -95,6 +95,27 @@ export default function BillingScreen({ navigation }) {
   const usage = formatUsage(billing?.usage);
   const aiActionsUsed = billing?.getAiActionsUsed?.() || 0;
   const aiActionsLimit = billing?.AI_ACTIONS_LIMIT || 10;
+
+  // If running on iOS, hide web-based billing UI (StoreKit-only policy)
+  if (Platform.OS === 'ios') {
+    return (
+      <Screen style={{ padding: spacing(3) }}>
+        <ScrollView>
+          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, marginBottom: spacing(2) }}>
+            Subscription
+          </Text>
+          <Card>
+            <Text style={{ color: colors.text, marginBottom: spacing(1) }}>
+              In-app purchases are handled by Apple. Please use the App Store subscription settings to manage your plan.
+            </Text>
+            <Text style={{ color: colors.textSecondary }}>
+              Restore purchases from the Profile screen if needed.
+            </Text>
+          </Card>
+        </ScrollView>
+      </Screen>
+    );
+  }
 
   return (
     <Screen style={{ padding: spacing(3) }}>
@@ -240,9 +261,11 @@ export default function BillingScreen({ navigation }) {
           <Text style={{ color: colors.textSecondary, marginBottom: spacing(1), fontSize: 12 }}>
             • No commitment required
           </Text>
-          <Text style={{ color: colors.textSecondary, marginBottom: spacing(1), fontSize: 12 }}>
-            • Secure payment processing by Stripe
-          </Text>
+          {Platform.OS !== 'ios' && (
+            <Text style={{ color: colors.textSecondary, marginBottom: spacing(1), fontSize: 12 }}>
+              • Secure payment processing by Stripe
+            </Text>
+          )}
           <Text style={{ color: colors.textSecondary, marginBottom: spacing(1), fontSize: 12 }}>
             • Manage subscription anytime in settings
           </Text>

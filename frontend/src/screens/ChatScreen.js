@@ -21,12 +21,21 @@ export default function ChatScreen({ route, navigation }) {
   const [showHistory, setShowHistory] = useState(false);
   const [chatSessions, setChatSessions] = useState([]);
   const [historyRetention, setHistoryRetention] = useState('7 days');
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [billingLoaded, setBillingLoaded] = useState(false);
   const [selectIndex, setSelectIndex] = useState(-1);
 
   useEffect(() => {
     loadDreams();
     // History disabled: do not fetch chat history
+    // First-time wellness disclaimer
+    (async () => {
+      try {
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        const seen = await AsyncStorage.getItem('seen_wellness_disclaimer');
+        if (!seen) setShowDisclaimer(true);
+      } catch {}
+    })();
   }, []);
 
   // Track when billing is loaded
@@ -247,7 +256,28 @@ export default function ChatScreen({ route, navigation }) {
         borderBottomWidth: 1,
         borderBottomColor: colors.border
       }}>
-        <View />
+        <TouchableOpacity 
+          onPress={() => {
+            // Open crisis resources
+            try {
+              // Basic link; could be a local screen later
+              const url = 'https://988lifeline.org/';
+              // Lazy import to avoid top-level dependency
+              require('react-native').Linking.openURL(url);
+            } catch {}
+          }}
+          style={{
+            padding: spacing(1),
+            borderRadius: 8,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border
+          }}
+        >
+          <CustomText style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
+            Need help?
+          </CustomText>
+        </TouchableOpacity>
         
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <CustomText style={{ color: colors.text, fontSize: 16, fontWeight: '800' }}>
@@ -259,6 +289,28 @@ export default function ChatScreen({ route, navigation }) {
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        {/* Wellness disclaimer modal */}
+        <Modal visible={showDisclaimer} transparent animationType="fade" onRequestClose={() => setShowDisclaimer(false)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+            <Card style={{ maxWidth: '90%', backgroundColor: colors.card }}>
+              <CustomText style={{ color: colors.text, fontSize: 18, fontWeight: '800', marginBottom: spacing(1) }}>
+                Wellness Notice
+              </CustomText>
+              <CustomText style={{ color: colors.text }}>
+                This app provides dream and mood insights for wellness and self-reflection. It does not offer medical or mental health advice. If you need immediate help, contact local emergency services or visit 988lifeline.org.
+              </CustomText>
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: spacing(2), gap: spacing(1) }}>
+                <Button title="Got it" onPress={async () => {
+                  try {
+                    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+                    await AsyncStorage.setItem('seen_wellness_disclaimer', 'true');
+                  } catch {}
+                  setShowDisclaimer(false);
+                }} />
+              </View>
+            </Card>
+          </View>
+        </Modal>
         <View style={{ flex: 1 }}>
           {history.length === 0 && (
             <View style={{ padding: spacing(2) }}>
