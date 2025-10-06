@@ -70,6 +70,8 @@ export default function MarkdownText({ children, style, selectable = true }) {
     .replace(/(^|[\.!\?:\n])\s*•\s*-\s*/g, '$1\n- ')
     // As a fallback, convert standalone middle-dot to bullet when surrounded by spaces
     .replace(/\s•\s(?!\()/g, '\n- ')
+    // Ensure numbered lists break onto new lines when they appear mid-line
+    .replace(/([\.!\?])\s*(\d+)\.\s/g, (m, p1, n) => `${p1}\n${n}. `)
     // Convert punctuation + hyphen into a new bullet line (e.g., ". - ")
     .replace(/([\.!\?:])\s*-\s+/g, '$1\n- ')
     // Convert italic/heading end star + period + hyphen into new bullet
@@ -80,6 +82,8 @@ export default function MarkdownText({ children, style, selectable = true }) {
     .replace(/\*\*([^*]+)\*(?=[\s\.,;:!\?]|$)/g, '**$1**')
     // If we see a bold-ish heading followed by a middle-dot bullet, promote to heading and newline bullet
     .replace(/\*\*([^*]+)\*\s*•\s*-\s*/g, '### $1\n- ')
+    // Promote starting bold title (optionally with leading emoji) into a heading when followed by a numbered list
+    .replace(/^(?:([^\w\s])\s*)?\*\*([^*]+)\*\*(?=\s*\d+\.\s)/gm, (m, emoji, title) => `### ${emoji ? emoji + ' ' : ''}${title}\n`)
     // Remove mid-sentence middle-dot used as separator before parentheses
     .replace(/([^\n])•\s*\(/g, '$1 (')
     // Transform headings like "### #1. Title" into ordered list items
