@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, Platform } from 'react-native';
 import { Screen, Card, Text, Subtle } from '../../ui/components';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -31,8 +31,10 @@ export default function PrivacyScreen() {
           <Text style={{ fontWeight: '600', marginTop: spacing(2), marginBottom: spacing(1) }}>Third-Party Services</Text>
           <Subtle>
             • OpenRouter API: For AI dream analysis (content transmitted securely)
-            • Stripe: For payment processing (no card data stored by us)
-            • Analytics: Anonymous usage data for app improvement
+            {Platform.OS === 'ios' 
+              ? '\n• Apple In‑App Purchases (StoreKit): For purchases and subscription management' 
+              : '\n• Stripe: For payment processing (no card data stored by us)'}
+            {'\n• Analytics: Anonymous usage data for app improvement'}
           </Subtle>
 
           <Text style={{ fontWeight: '600', marginTop: spacing(2), marginBottom: spacing(1) }}>Data Security</Text>
