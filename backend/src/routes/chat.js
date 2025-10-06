@@ -43,6 +43,20 @@ chatRouter.post('/', createBillingMiddleware('chat_message'), async (req, res) =
         response: 'I’m really sorry you’re feeling this way. I cannot help with urgent safety issues. Please contact your local emergency services or the Suicide & Crisis Lifeline at 988 (US) or visit 988lifeline.org for immediate support.'
       });
     }
+
+    // Additional moderation: hate/abuse and sexual content
+    const hateAbuseRegex = /(hate\s*speech|racial\s*slur|kill\s*(him|her|them)|violence\s*against)/i;
+    const sexualContentRegex = /(sexual\s*content|porn|explicit\s*content|nsfw)/i;
+    if (hateAbuseRegex.test(message)) {
+      return res.json({
+        response: 'I can\'t assist with hateful or violent content. I\'m here to talk about dreams, moods, and sleep. If you\'d like, share a recent dream and I\'ll help interpret it.'
+      });
+    }
+    if (sexualContentRegex.test(message)) {
+      return res.json({
+        response: 'I can\'t engage with explicit sexual content. If your dream has sensitive themes, you can describe it in a general way and I\'ll help explore the emotions and symbols.'
+      });
+    }
     
     // Parse dream number references in the message (e.g., "analyze dream 1", "tell me about dream 3")
     let processedMessage = message;
