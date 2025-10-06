@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Alert, Switch, Modal } from 'react-native';
 import { Screen, Text, Card, Input, Button, Subtle } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
-import { getProfile, updateProfile, deleteAccount, upgradePlan } from '../api';
+import { getProfile, updateProfile, deleteAccount, upgradePlan, exportMyData } from '../api';
 import CollapsibleTimePicker from '../components/CollapsibleTimePicker';
 import TermsScreen from './legal/TermsScreen';
 import PrivacyScreen from './legal/PrivacyScreen';
@@ -444,6 +444,23 @@ export default function SettingsScreen({ navigation }) {
             Account Actions
           </Text>
           
+          <Button
+            title="Export My Data (ZIP)"
+            onPress={async () => {
+              try {
+                const data = await exportMyData();
+                const RNFS = require('react-native-fs');
+                const path = RNFS.DocumentDirectoryPath + '/aidreamcatcher-export.zip';
+                await RNFS.writeFile(path, data, 'base64');
+                const { Linking } = require('react-native');
+                await Linking.openURL('file://' + path);
+              } catch (e) {
+                Alert.alert('Error', 'Failed to export data.');
+              }
+            }}
+            style={{ marginBottom: spacing(1) }}
+          />
+
           <Button
             title={deletingAccount ? "Deleting Account..." : "Delete Account & Data"}
             onPress={onDeleteAccount}

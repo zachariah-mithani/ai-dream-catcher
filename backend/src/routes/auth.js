@@ -1,6 +1,8 @@
 import express from 'express';
 import { z } from 'zod';
 import { authenticate, createUser, signToken, getUserProfile, updateUserProfile, deleteUserAccount, requireAuth, changeUserPassword, createPasswordResetToken, resetPasswordWithToken, issueRefreshToken, rotateRefreshToken } from '../auth.js';
+import { db } from '../database.js';
+import archiver from 'archiver';
 
 export const authRouter = express.Router();
 
@@ -98,6 +100,33 @@ authRouter.delete('/account', requireAuth, async (req, res) => {
   } catch (e) {
     console.error('Account deletion error:', e);
     res.status(500).json({ error: e.message || 'Failed to delete account' });
+  }
+});
+
+// Export My Data: ZIP with JSON files for user, dreams, moods, chats
+authRouter.get('/export', requireAuth, async (req, res) => {
+  try {
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="aidreamcatcher-export.zip"');
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('error', err => { throw err; });
+    archive.pipe(res);
+
+    const user = await db.prepare('SELECT id, email, created_at FROM users WHERE id = ?').get(req.user.id);
+    const dreams = await db.prepare('SELECT * FROM dreams WHERE user_id = ? ORDER BY created_at ASC').all(req.user.id);
+    const moods = await db.prepare('SELECT * FROM moods WHERE user_id = ? ORDER BY created_at ASC').all(req.user.id);
+    const chats = await db.prepare('SELECT created_at, prompt, response, model FROM analyses WHERE user_id = ? AND type = ? ORDER BY created_at ASC').all(req.user.id, 'chat');
+
+    archive.append(JSON.stringify(user || {}, null, 2), { name: 'user.json' });
+    archive.append(JSON.stringify(dreams || [], null, 2), { name: 'dreams.json' });
+    archive.append(JSON.stringify(moods || [], null, 2), { name: 'moods.json' });
+    archive.append(JSON.stringify(chats || [], null, 2), { name: 'chat.json' });
+
+    await archive.finalize();
+  } catch (e) {
+    console.error('Export error:', e);
+    if (!res.headersSent) res.status(500).json({ error: 'Failed to export data' });
   }
 });
 

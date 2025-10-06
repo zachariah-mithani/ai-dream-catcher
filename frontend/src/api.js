@@ -170,6 +170,11 @@ export async function deleteAccount() {
   emitAuthChanged();
 }
 
+export async function exportMyData() {
+  const response = await api.get('/auth/export', { responseType: 'blob' });
+  return response.data; // ZIP blob
+}
+
 export async function changePassword(currentPassword, newPassword) {
   const { data } = await api.post('/auth/change-password', {
     current_password: currentPassword,
