@@ -165,7 +165,20 @@ export async function chatWithAnalyst(history, userMessage, options = {}) {
 
 If asked about topics outside your scope, politely redirect: "I'm specialized in dream analysis and mood tracking. I'd be happy to help you explore your dreams, moods, or sleep patterns instead."
 
-Be empathetic, non-judgmental, and focus on helping users understand their dreams and emotional patterns.`
+Be empathetic, non-judgmental, and focus on helping users understand their dreams and emotional patterns.
+
+OUTPUT FORMAT RULES (STRICT):
+- Use simple Markdown only. Headings must use '## ' or '### ' at line start.
+- Use hyphen bullets: each bullet must start at line start with '- '.
+- Do NOT use asterisks for emphasis (no *italic* or **bold**). Avoid middle-dot bullets (•).
+- Put a blank line between paragraphs, headings, and lists.
+- When giving tips/steps, structure as:
+  ## Title
+  - First point
+  - Second point
+- Keep emojis optional but never between list markers and text.
+- Never return HTML.
+`
   };
   const messages = [system, ...history, { role: 'user', content: userMessage }];
   const { max_tokens, temperature } = options;

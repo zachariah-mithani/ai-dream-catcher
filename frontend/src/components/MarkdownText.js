@@ -7,29 +7,51 @@ export default function MarkdownText({ children, style, selectable = true }) {
   
   if (!children) return null;
 
-  // Render inline bold/italic inside a single line
+  // Render inline emphasis using a small state machine for robustness
   const renderInline = (text, keyBase, baseStyle) => {
-    const nodes = [];
-    let remaining = text;
+    const segments = [];
+    let buffer = '';
     let idx = 0;
-    const regex = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
-    let match;
-    while ((match = regex.exec(remaining)) !== null) {
-      const before = remaining.slice(0, match.index);
-      if (before) nodes.push(<Text key={`${keyBase}-t${idx++}`} style={baseStyle} selectable={selectable}>{before}</Text>);
-      const token = match[0];
-      const isBold = token.startsWith('**');
-      const content = token.replace(/^\*\*|\*\*$/g, '').replace(/^\*|\*$/g, '');
-      nodes.push(
-        <Text key={`${keyBase}-m${idx++}`} style={[baseStyle, isBold ? { fontWeight: '700' } : { fontStyle: 'italic' }]} selectable={selectable}>
-          {content}
-        </Text>
-      );
-      remaining = remaining.slice(match.index + token.length);
-      regex.lastIndex = 0;
+    let bold = false;
+    let italic = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      const next = text[i + 1];
+      if (ch === '*' && next === '*') {
+        // flush current buffer
+        if (buffer) {
+          segments.push({ text: buffer, bold, italic });
+          buffer = '';
+        }
+        bold = !bold;
+        i++; // consume second '*'
+        continue;
+      }
+      if (ch === '*') {
+        if (buffer) {
+          segments.push({ text: buffer, bold, italic });
+          buffer = '';
+        }
+        italic = !italic;
+        continue;
+      }
+      buffer += ch;
     }
-    if (remaining) nodes.push(<Text key={`${keyBase}-t${idx++}`} style={baseStyle} selectable={selectable}>{remaining}</Text>);
-    return nodes;
+    if (buffer) segments.push({ text: buffer, bold, italic });
+
+    return segments.map((seg, i2) => (
+      <Text
+        key={`${keyBase}-s${idx++}-${i2}`}
+        style={[
+          baseStyle,
+          seg.bold ? { fontWeight: '700' } : null,
+          seg.italic ? { fontStyle: 'italic' } : null
+        ]}
+        selectable={selectable}
+      >
+        {seg.text}
+      </Text>
+    ));
   };
 
   // Pre-normalize common artifacts and ensure proper breaks
@@ -44,10 +66,20 @@ export default function MarkdownText({ children, style, selectable = true }) {
     // Convert middle-dot bullets to list items when starting a line or after punctuation
     .replace(/^\s*•\s*/gm, '- ')
     .replace(/([\.!\?:])\s*•\s*/g, '$1\n- ')
+    // Convert punctuation + hyphen into a new bullet line (e.g., ". - ")
+    .replace(/([\.!\?:])\s*-\s+/g, '$1\n- ')
+    // Convert italic/heading end star + period + hyphen into new bullet
+    .replace(/\*\\.\s*-\s+/g, '.\n- ')
+    // Clean stray hash after making a bullet (e.g., "- #🌙 ...")
+    .replace(/^-\s*#\s*/gm, '- ')
+    // Fix unmatched bold endings like **Title* → **Title**
+    .replace(/\*\*([^*]+)\*(?=\s|$)/g, '**$1**')
+    // Remove mid-sentence middle-dot used as separator before parentheses
+    .replace(/([^\n])•\s*\(/g, '$1 (')
     // Transform headings like "### #1. Title" into ordered list items
     .replace(/^#{1,6}\s*#?(\d+)\.\s*/gm, '$1. ')
     // Promote lines that are just an (optional emoji) + **bold** into headings
-    .replace(/^\s*[^\w\s]?\s*\*\*(.+?)\*\*\s*$/gm, '### $1')
+    .replace(/^\s*[^\w\s]?\s*\*\*(.+?)\*\*?\s*$/gm, '### $1')
     // Ensure an extra blank line before headings for readability
     .replace(/\n(#{1,6}[^\n]*)/g, '\n\n$1')
     // Ensure a newline before inline list markers found mid-line
