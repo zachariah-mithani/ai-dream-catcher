@@ -26,7 +26,7 @@ export default function ChatScreen({ route, navigation }) {
 
   useEffect(() => {
     loadDreams();
-    loadChatHistory();
+    // History disabled: do not fetch chat history
   }, []);
 
   // Track when billing is loaded
@@ -374,98 +374,7 @@ export default function ChatScreen({ route, navigation }) {
         </View>
       </KeyboardAvoidingView>
 
-      {/* History Modal */}
-      <Modal
-        visible={showHistory}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setShowHistory(false)}
-      >
-        <Screen>
-          <View style={{ 
-            flexDirection: 'row', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            paddingHorizontal: spacing(2), 
-            paddingVertical: spacing(2),
-            borderBottomWidth: 1,
-            borderBottomColor: colors.border
-          }}>
-            <CustomText style={{ color: colors.text, fontSize: 20, fontWeight: '800' }}>
-              Chat History
-            </CustomText>
-            <TouchableOpacity onPress={() => setShowHistory(false)}>
-              <CustomText style={{ color: colors.primary, fontSize: 16, fontWeight: '600' }}>
-                Done
-              </CustomText>
-            </TouchableOpacity>
-          </View>
-
-          <View style={{ padding: spacing(2) }}>
-            <CustomText style={{ 
-              color: colors.textSecondary, 
-              fontSize: 14, 
-              marginBottom: spacing(2),
-              textAlign: 'center'
-            }}>
-              {billing?.isPremium ? 'Unlimited history' : `History retained for ${historyRetention}`}
-            </CustomText>
-
-            {chatSessions.length === 0 ? (
-              <View style={{ 
-                flex: 1, 
-                justifyContent: 'center', 
-                alignItems: 'center',
-                paddingVertical: spacing(4)
-              }}>
-                <CustomText style={{ color: colors.textSecondary, textAlign: 'center' }}>
-                  No chat history found
-                </CustomText>
-                <CustomText style={{ color: colors.textSecondary, textAlign: 'center', marginTop: spacing(1) }}>
-                  Start a conversation to see your history here
-                </CustomText>
-              </View>
-            ) : (
-              <ScrollView style={{ flex: 1 }}>
-                {chatSessions.map((session, index) => (
-                  <Card key={session.id} style={{ 
-                    marginBottom: spacing(2),
-                    backgroundColor: colors.surface,
-                    borderWidth: 1,
-                    borderColor: colors.border
-                  }}>
-                    <TouchableOpacity onPress={() => loadChatSession(session)}>
-                      <View style={{ padding: spacing(2) }}>
-                        <CustomText style={{ 
-                          color: colors.text, 
-                          fontSize: 16, 
-                          fontWeight: '600',
-                          marginBottom: spacing(1)
-                        }}>
-                          {session.date}
-                        </CustomText>
-                        <CustomText style={{ 
-                          color: colors.textSecondary, 
-                          fontSize: 14,
-                          marginBottom: spacing(1)
-                        }}>
-                          {session.preview}
-                        </CustomText>
-                        <CustomText style={{ 
-                          color: colors.textSecondary, 
-                          fontSize: 12
-                        }}>
-                          {session.messages.length} messages
-                        </CustomText>
-                      </View>
-                    </TouchableOpacity>
-                  </Card>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-        </Screen>
-      </Modal>
+      {/* History UI removed per requirements */}
     </Screen>
   );
 }
