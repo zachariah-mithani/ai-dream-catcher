@@ -83,7 +83,7 @@ export function Input(props) {
   );
 }
 
-export function Button({ title, onPress, style, kind = 'primary', disabled = false }) {
+export function Button({ title, onPress, style, kind = 'primary', disabled = false, accessibilityLabel, accessibilityHint, ...props }) {
   const { colors, borderRadius, gradients, shadow } = useTheme();
   
   // Determine if this is a secondary button (unselected theme button)
@@ -99,6 +99,9 @@ export function Button({ title, onPress, style, kind = 'primary', disabled = fal
     <TouchableOpacity 
       onPress={onPress} 
       disabled={disabled}
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityHint={accessibilityHint}
+      accessibilityRole="button"
       style={[
         { 
           backgroundColor: disabled ? colors.border : palette.bg, 
@@ -112,6 +115,7 @@ export function Button({ title, onPress, style, kind = 'primary', disabled = fal
         }, 
         style
       ]}
+      {...props}
     >
       <RNText 
         style={{ 

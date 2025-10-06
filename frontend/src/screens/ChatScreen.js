@@ -301,6 +301,9 @@ export default function ChatScreen({ route, navigation }) {
             borderWidth: 1,
             borderColor: colors.border
           }}
+          accessibilityLabel="Need help? Crisis resources"
+          accessibilityHint="Opens crisis support website"
+          accessibilityRole="button"
         >
           <CustomText style={{ color: colors.text, fontSize: 14, fontWeight: '600' }}>
             Need help?
@@ -432,6 +435,8 @@ export default function ChatScreen({ route, navigation }) {
                 fontSize: 16
               }}
               multiline
+              accessibilityLabel="Message input"
+              accessibilityHint="Type your dream question or message"
             />
             <Button
               onPress={send}
@@ -441,6 +446,8 @@ export default function ChatScreen({ route, navigation }) {
                 paddingHorizontal: spacing(3),
                 paddingVertical: spacing(2)
               }}
+              accessibilityLabel={busy ? 'Sending message' : (!billingLoaded ? 'Loading' : 'Send message')}
+              accessibilityHint="Sends your dream question to the AI analyst"
             >
               <CustomText style={{ color: 'white', fontWeight: '600' }}>
                 {busy ? '...' : (!billingLoaded ? 'Loading...' : 'Send')}
