@@ -45,7 +45,7 @@ chatRouter.get('/', async (req, res) => {
       LIMIT ? OFFSET ?
     `).all(...params, limitNum, offsetNum);
     
-    // Convert to chat history format
+    // Convert to chat history format (sessionized per day)
     const history = [];
     for (let i = rows.length - 1; i >= 0; i--) {
       const row = rows[i];

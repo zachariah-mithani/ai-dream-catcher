@@ -40,23 +40,22 @@ export default function ChatScreen({ route, navigation }) {
     try {
       const data = await getChatHistory();
       if (data.history && data.history.length > 0) {
-        // If there's a seed, prepend it to the loaded history
+        // Do not preload history into the active chat. Show it only in the History modal.
+        // If a seed is provided, we still start the chat with that seed context.
         if (seed) {
           const seedHistory = [
             { role: 'user', content: `I want to discuss this dream:\n\nTitle: ${seed.title || 'Untitled'}\nContent: ${seed.content}` },
             ...(seed.analysis ? [{ role: 'assistant', content: `Here's my analysis of your dream:\n\n${seed.analysis}\n\nWhat would you like to know more about?` }] : [])
           ];
-          setHistory([...seedHistory, ...data.history]);
-        } else {
-          setHistory(data.history);
+          setHistory(seedHistory);
         }
-        
+
         // Set retention info
         if (data.retention) {
           setHistoryRetention(data.retention);
         }
-        
-        // Group history into sessions for the history modal
+
+        // Group history into sessions for the history modal only
         groupHistoryIntoSessions(data.history);
       }
     } catch (e) {
@@ -93,6 +92,7 @@ export default function ChatScreen({ route, navigation }) {
   };
 
   const loadChatSession = (session) => {
+    // Load a past session into the active chat
     setHistory(session.messages);
     setShowHistory(false);
   };
