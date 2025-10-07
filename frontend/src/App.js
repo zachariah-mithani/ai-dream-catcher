@@ -8,6 +8,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'react-native';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { BillingProvider } from './contexts/BillingContext';
+import { IAPProvider } from './contexts/IAPService';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import ThemeSelectionScreen from './screens/ThemeSelectionScreen';
@@ -230,7 +231,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <BillingProvider>
-        <AppContent />
+        <IAPProvider>
+          <AppContent />
+        </IAPProvider>
       </BillingProvider>
     </ThemeProvider>
   );

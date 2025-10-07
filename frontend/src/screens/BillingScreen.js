@@ -4,10 +4,12 @@ import { Screen, Text, Button, Card } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { useBilling } from '../contexts/BillingContext';
 import { getPricing, createCheckoutSession, createBillingPortalSession, cancelSubscription } from '../api';
+import { useIAP } from '../contexts/IAPService';
 
 export default function BillingScreen({ navigation }) {
   const { colors, spacing } = useTheme();
   const billing = useBilling();
+  const iap = useIAP();
   const [pricing, setPricing] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -99,16 +101,10 @@ export default function BillingScreen({ navigation }) {
   const handleRestorePurchases = async () => {
     try {
       setLoading(true);
-      
-      // For iOS, we need to implement StoreKit restore
       if (Platform.OS === 'ios') {
-        // This would typically use react-native-iap or similar
-        // For now, we'll show a message directing to App Store
-        Alert.alert(
-          'Restore Purchases',
-          'To restore your subscription:\n\n1. Open App Store\n2. Tap your profile picture (top right)\n3. Tap "Subscriptions"\n4. Find "AI Dream Catcher" and tap "Manage"\n\nOr go to Settings > Apple ID > Subscriptions.',
-          [{ text: 'OK' }]
-        );
+        await iap?.restorePurchases?.();
+        await billing?.refresh?.();
+        Alert.alert('Restored', 'Purchases restored.');
       } else {
         // For Android, refresh billing status
         await billing?.refresh?.();
@@ -136,7 +132,7 @@ export default function BillingScreen({ navigation }) {
             </Text>
             
             <Button
-              title="Restore Purchases"
+              title={iap?.products?.length ? 'Restore Purchases' : 'Loading Purchases...'}
               onPress={handleRestorePurchases}
               loading={loading}
               style={{ marginTop: spacing(2) }}

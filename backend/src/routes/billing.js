@@ -19,6 +19,44 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export const billingRouter = express.Router();
 
+// ---- Apple IAP verification helpers ----
+async function callAppleVerify(url, body) {
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await resp.json();
+  return data;
+}
+
+async function verifyAppleReceipt(receiptData) {
+  if (!process.env.APPLE_SHARED_SECRET) {
+    throw new Error('APPLE_SHARED_SECRET not configured');
+  }
+  const payload = { 'receipt-data': receiptData, password: process.env.APPLE_SHARED_SECRET, 'exclude-old-transactions': true };
+  // Try production first
+  let data = await callAppleVerify('https://buy.itunes.apple.com/verifyReceipt', payload);
+  // If receipt is from sandbox (status 21007), retry sandbox
+  if (data?.status === 21007) {
+    data = await callAppleVerify('https://sandbox.itunes.apple.com/verifyReceipt', payload);
+  }
+  if (data?.status !== 0) {
+    const code = typeof data?.status === 'number' ? data.status : 'unknown';
+    throw new Error(`Apple verifyReceipt failed (status ${code})`);
+  }
+  // Extract latest expiration
+  const infos = data?.latest_receipt_info || data?.receipt?.in_app || [];
+  let latestMs = 0;
+  for (const r of infos) {
+    const ms = Number(r?.expires_date_ms || r?.expiration_intent || 0);
+    const candidate = Number(r?.expires_date_ms || r?.expires_date || 0);
+    const exp = isNaN(candidate) ? 0 : candidate;
+    if (exp > latestMs) latestMs = exp;
+  }
+  return { expiresAt: latestMs ? new Date(Number(latestMs)).toISOString() : null };
+}
+
 // Exportable webhook handler so it can be mounted before body parsers
 export async function billingWebhook(req, res) {
   try {
@@ -181,6 +219,32 @@ billingRouter.get('/status', async (req, res) => {
     });
   } catch (e) {
     res.status(500).json({ error: 'Failed to load billing status' });
+  }
+});
+
+// Verify Apple IAP receipt and grant premium
+const appleVerifySchema = z.object({ receiptData: z.string().min(10) });
+billingRouter.post('/apple/verify', async (req, res) => {
+  try {
+    const parse = appleVerifySchema.safeParse(req.body);
+    if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
+    const { receiptData } = parse.data;
+
+    const { expiresAt } = await verifyAppleReceipt(receiptData);
+    if (!expiresAt) return res.status(400).json({ error: 'Receipt has no active subscription' });
+
+    // Store or update subscription expiry for this user
+    await db
+      .prepare('INSERT INTO user_subscriptions (user_id, apple_expires_at, status) VALUES (?, ?, ?) ON CONFLICT (user_id) DO UPDATE SET apple_expires_at = ?, status = ?')
+      .run(req.user.id, expiresAt, 'active', expiresAt, 'active');
+
+    // Mark user premium while active
+    await db.prepare('UPDATE users SET plan = ? WHERE id = ?').run('premium', req.user.id);
+
+    res.json({ ok: true, plan: 'premium', expires_at: expiresAt });
+  } catch (e) {
+    console.error('Apple verify failed:', e);
+    res.status(400).json({ error: e.message || 'Verification failed' });
   }
 });
 
