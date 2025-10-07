@@ -44,6 +44,10 @@
     },
     "extra": {
       "API_URL": "https://ai-dream-catcher-api.onrender.com",
+      "iosProductIds": {
+        "monthly": "com.aidreamcatcher.premium.monthly",
+        "yearly": "com.aidreamcatcher.premium.yearly"
+      },
       "eas": {
         "projectId": "91d7ebf7-06b6-480a-adee-e7629a03c549"
       }
