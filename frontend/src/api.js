@@ -170,9 +170,27 @@ export async function deleteAccount() {
   emitAuthChanged();
 }
 
+// Convert ArrayBuffer -> base64 string (RN-safe)
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i += 1) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  // btoa is available in RN Hermes; if not, use global Buffer
+  if (typeof btoa === 'function') {
+    return btoa(binary);
+  }
+  // Fallback
+  // eslint-disable-next-line no-undef
+  return Buffer.from(binary, 'binary').toString('base64');
+}
+
 export async function exportMyData() {
-  const response = await api.get('/auth/export', { responseType: 'blob' });
-  return response.data; // ZIP blob
+  // Get raw bytes so we can encode to base64 for FileSystem
+  const response = await api.get('/auth/export', { responseType: 'arraybuffer' });
+  return arrayBufferToBase64(response.data);
 }
 
 export async function changePassword(currentPassword, newPassword) {

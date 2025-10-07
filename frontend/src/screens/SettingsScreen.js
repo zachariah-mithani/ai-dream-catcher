@@ -468,11 +468,17 @@ export default function SettingsScreen({ navigation }) {
                 // 2) Persist to local documents dir
                 const FileSystem = await import('expo-file-system');
                 const Sharing = await import('expo-sharing');
-                const uri = FileSystem.default.documentDirectory + 'aidreamcatcher-export.zip';
-                await FileSystem.default.writeAsStringAsync(uri, data, { encoding: FileSystem.default.EncodingType.Base64 });
+
+                if (!FileSystem || !FileSystem.documentDirectory || !FileSystem.writeAsStringAsync) {
+                  Alert.alert('Rebuild Required', 'Please rebuild the iOS dev client to enable file export.');
+                  return;
+                }
+
+                const uri = FileSystem.documentDirectory + 'aidreamcatcher-export.zip';
+                await FileSystem.writeAsStringAsync(uri, data, { encoding: FileSystem.EncodingType.Base64 });
 
                 // 3) Open native share sheet so user can Save to Files, iCloud Drive, etc.
-                if (await Sharing.isAvailableAsync()) {
+                if (Sharing && (await Sharing.isAvailableAsync())) {
                   await Sharing.shareAsync(uri, { mimeType: 'application/zip', dialogTitle: 'Export My Data (ZIP)' });
                 } else {
                   Alert.alert('Saved', 'Export saved to app documents folder. Open the Files app and browse to AI Dream Catcher.');
