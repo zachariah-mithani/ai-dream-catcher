@@ -115,7 +115,7 @@ authRouter.get('/export', requireAuth, async (req, res) => {
 
     const user = await db.prepare('SELECT id, email, created_at FROM users WHERE id = ?').get(req.user.id);
     const dreams = await db.prepare('SELECT * FROM dreams WHERE user_id = ? ORDER BY created_at ASC').all(req.user.id);
-    const moods = await db.prepare('SELECT * FROM moods WHERE user_id = ? ORDER BY created_at ASC').all(req.user.id);
+    const moods = await db.prepare('SELECT * FROM user_moods WHERE user_id = ? ORDER BY created_at ASC').all(req.user.id);
     const chats = await db.prepare('SELECT created_at, prompt, response, model FROM analyses WHERE user_id = ? AND type = ? ORDER BY created_at ASC').all(req.user.id, 'chat');
 
     archive.append(JSON.stringify(user || {}, null, 2), { name: 'user.json' });
