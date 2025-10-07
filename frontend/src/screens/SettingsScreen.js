@@ -463,12 +463,19 @@ export default function SettingsScreen({ navigation }) {
             onPress={async () => {
               try {
                 const data = await exportMyData();
-                const RNFS = require('react-native-fs');
-                const path = RNFS.DocumentDirectoryPath + '/aidreamcatcher-export.zip';
-                await RNFS.writeFile(path, data, 'base64');
-                const { Linking } = require('react-native');
-                await Linking.openURL('file://' + path);
+                const { FileSystem } = require('expo-file-system');
+                const { Sharing } = require('expo-sharing');
+                
+                const uri = FileSystem.documentDirectory + 'aidreamcatcher-export.zip';
+                await FileSystem.writeAsStringAsync(uri, data, { encoding: FileSystem.EncodingType.Base64 });
+                
+                if (await Sharing.isAvailableAsync()) {
+                  await Sharing.shareAsync(uri);
+                } else {
+                  Alert.alert('Success', 'Data exported successfully! Check your device\'s Downloads folder.');
+                }
               } catch (e) {
+                console.error('Export error:', e);
                 Alert.alert('Error', 'Failed to export data.');
               }
             }}
