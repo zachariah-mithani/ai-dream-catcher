@@ -9,10 +9,12 @@ import PrivacyScreen from './legal/PrivacyScreen';
 import AboutScreen from './legal/AboutScreen';
 import { rescheduleAllReminders } from '../utils/notifications';
 import { useBilling } from '../contexts/BillingContext';
+import { useIAP } from '../contexts/IAPService';
 
 export default function SettingsScreen({ navigation }) {
   const { theme, themeName, colors, spacing, changeTheme, availableThemes } = useTheme();
   const billing = useBilling();
+  const iap = useIAP();
   const [profile, setProfile] = useState({
     first_name: '',
     last_name: '',
@@ -308,11 +310,7 @@ export default function SettingsScreen({ navigation }) {
                 title="Upgrade" 
                 onPress={() => {
                   if (Platform.OS === 'ios') {
-                    Alert.alert(
-                      'Upgrade to Dream Explorer+',
-                      'To upgrade your subscription:\n\n1. Go to the App Store\n2. Search for "AI Dream Catcher"\n3. Tap "Get" or "Subscribe"\n\nOr manage your subscription in Settings > App Store > Subscriptions.',
-                      [{ text: 'OK' }]
-                    );
+                    navigation.navigate('Billing');
                   } else {
                     navigation.navigate('Billing');
                   }

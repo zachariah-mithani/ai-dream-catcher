@@ -118,7 +118,20 @@ export default function BillingScreen({ navigation }) {
     }
   };
 
-  // If running on iOS, hide web-based billing UI (StoreKit-only policy)
+  const handleIAPUpgrade = async (sku) => {
+    try {
+      setLoading(true);
+      await iap?.requestPurchase?.(sku);
+      await billing?.refresh?.();
+    } catch (error) {
+      console.error('IAP upgrade failed:', error);
+      Alert.alert('Error', 'Failed to start purchase. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // If running on iOS, show StoreKit-based billing UI
   if (Platform.OS === 'ios') {
     return (
       <Screen style={{ padding: spacing(3) }}>
@@ -126,9 +139,80 @@ export default function BillingScreen({ navigation }) {
           <Text style={{ fontSize: 24, fontWeight: '800', color: colors.text, marginBottom: spacing(2) }}>
             Subscription
           </Text>
+          
+          {/* Current Plan Status */}
+          <Card style={{ padding: spacing(3), marginBottom: spacing(3) }}>
+            <Text style={{ fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: spacing(2) }}>
+              Current Plan
+            </Text>
+            
+            <Text style={{ fontSize: 20, fontWeight: '700', color: billing?.isPremium ? colors.primary : colors.textSecondary, marginBottom: spacing(1) }}>
+              {billing?.isPremium ? 'Dream Explorer+' : 'Free Plan'}
+            </Text>
+            
+            {!billing?.isPremium && (
+              <Text style={{ color: colors.textSecondary, marginBottom: spacing(2) }}>
+                Upgrade to unlock unlimited features
+              </Text>
+            )}
+          </Card>
+
+          {/* Upgrade Options */}
+          {!billing?.isPremium && iap?.products?.length > 0 && (
+            <Card style={{ padding: spacing(3), marginBottom: spacing(3) }}>
+              <Text style={{ fontSize: 18, fontWeight: '600', color: colors.text, marginBottom: spacing(2) }}>
+                Upgrade Options
+              </Text>
+              
+              {/* Monthly Plan */}
+              <Card style={{ padding: spacing(2), marginBottom: spacing(2), backgroundColor: colors.backgroundSecondary }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: spacing(1) }}>
+                  Monthly Plan
+                </Text>
+                <Text style={{ fontSize: 20, fontWeight: '700', color: colors.primary, marginBottom: spacing(1) }}>
+                  $4.99/month
+                </Text>
+                <Text style={{ color: colors.textSecondary, marginBottom: spacing(2), fontSize: 12 }}>
+                  7-day free trial
+                </Text>
+                
+                <Button
+                  title="Start Free Trial"
+                  onPress={() => handleIAPUpgrade('com.aidreamcatcher.premium.monthly')}
+                  loading={loading}
+                  style={{ marginTop: spacing(2) }}
+                />
+              </Card>
+
+              {/* Yearly Plan */}
+              <Card style={{ padding: spacing(2), backgroundColor: colors.backgroundSecondary, borderWidth: 2, borderColor: colors.primary }}>
+                <Text style={{ fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: spacing(1) }}>
+                  Yearly Plan (Best Value)
+                </Text>
+                <Text style={{ fontSize: 20, fontWeight: '700', color: colors.primary, marginBottom: spacing(1) }}>
+                  $39.99/year
+                </Text>
+                <Text style={{ color: colors.success, marginBottom: spacing(1), fontSize: 12, fontWeight: '600' }}>
+                  Save 33%
+                </Text>
+                <Text style={{ color: colors.textSecondary, marginBottom: spacing(2), fontSize: 12 }}>
+                  7-day free trial
+                </Text>
+                
+                <Button
+                  title="Start Free Trial"
+                  onPress={() => handleIAPUpgrade('com.aidreamcatcher.premium.yearly')}
+                  loading={loading}
+                  style={{ marginTop: spacing(2), backgroundColor: colors.primary }}
+                />
+              </Card>
+            </Card>
+          )}
+
+          {/* Restore Purchases */}
           <Card>
             <Text style={{ color: colors.text, marginBottom: spacing(2) }}>
-              In-app purchases are handled by Apple. Please use the App Store subscription settings to manage your plan.
+              Restore previous purchases or manage your subscription through the App Store.
             </Text>
             
             <Button
@@ -137,10 +221,6 @@ export default function BillingScreen({ navigation }) {
               loading={loading}
               style={{ marginTop: spacing(2) }}
             />
-            
-            <Text style={{ color: colors.textSecondary, marginTop: spacing(2), fontSize: 12 }}>
-              Current plan: {billing?.isPremium ? 'Dream Explorer+' : 'Free Plan'}
-            </Text>
           </Card>
         </ScrollView>
       </Screen>
