@@ -1,57 +1,179 @@
-import * as React from 'react';
-import Constants from 'expo-constants';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { Platform, Alert } from 'react-native';
 import * as RNIap from 'react-native-iap';
+import Constants from 'expo-constants';
 import { api } from '../api';
+import { useBilling } from './BillingContext';
 
-const IAPCtx = React.createContext(null);
+const IAPContext = createContext(null);
+
+const productIds = Constants.expoConfig.extra.iosProductIds;
+const itemSkus = Platform.select({
+  ios: Object.values(productIds),
+  android: [], // Not implementing Android IAP for now
+});
 
 export function IAPProvider({ children }) {
-  const [products, setProducts] = React.useState([]);
-  const [initialized, setInitialized] = React.useState(false);
+  const [products, setProducts] = useState([]);
+  const [connected, setConnected] = useState(false);
+  const purchaseUpdateSubscription = useRef(null);
+  const purchaseErrorSubscription = useRef(null);
+  const isInitializing = useRef(false);
+  const billing = useBilling();
 
-  React.useEffect(() => {
-    let unsub = null;
-    (async () => {
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+
+    const initIAP = async () => {
+      if (isInitializing.current) {
+        console.log('IAPService: Already initializing, skipping...');
+        return;
+      }
+
+      isInitializing.current = true;
+
       try {
-        await RNIap.initConnection();
-        setInitialized(true);
-        const ids = Object.values(Constants.expoConfig?.extra?.iosProductIds || {});
-        if (ids.length) {
-          const list = await RNIap.getSubscriptions({ skus: ids });
-          setProducts(list);
+        console.log('IAPService: Initializing StoreKit...');
+        
+        // Clean up any existing connection first
+        try {
+          await RNIap.endConnection();
+        } catch (e) {
+          // Ignore cleanup errors
         }
-        unsub = RNIap.purchaseUpdatedListener(async (purchase) => {
-          try {
-            const receipt = purchase.transactionReceipt;
-            if (receipt) {
-              await api.post('/billing/apple/verify', { receiptData: receipt });
+
+        await RNIap.initConnection();
+        setConnected(true);
+        console.log('IAPService: StoreKit connected.');
+
+        // Fetch products
+        const fetchedProducts = await RNIap.getProducts({ skus: itemSkus });
+        setProducts(fetchedProducts);
+        console.log('IAPService: Fetched products:', fetchedProducts.map(p => p.productId));
+
+        // Set up listeners
+        purchaseUpdateSubscription.current = RNIap.purchaseUpdatedListener(async (purchase) => {
+          const receipt = purchase.transactionReceipt;
+          if (receipt) {
+            try {
+              console.log('IAPService: Purchase updated, verifying receipt...');
+              await api.post('/billing/apple/verify', {
+                receiptData: receipt,
+                originalTransactionId: purchase.originalTransactionIdentifierIOS,
+              });
+              await RNIap.finishTransaction({ purchase, isConsumable: false });
+              console.log('IAPService: Receipt verified and transaction finished.');
+              Alert.alert('Success', 'Your subscription is now active!');
+              billing?.refresh?.(); // Refresh billing status
+            } catch (error) {
+              console.error('IAPService: Receipt verification failed:', error);
+              Alert.alert('Error', 'Failed to verify purchase. Please contact support.');
+              // Optionally finish transaction even on error to prevent pending state
               await RNIap.finishTransaction({ purchase, isConsumable: false });
             }
-          } catch (e) {
-            // ignore
           }
         });
-      } catch {}
-    })();
-    return () => { unsub && unsub.remove?.(); RNIap.endConnection?.(); };
+
+        purchaseErrorSubscription.current = RNIap.purchaseErrorListener((error) => {
+          console.error('IAPService: Purchase error:', error);
+          if (error.code === 'E_USER_CANCELLED') {
+            Alert.alert('Purchase Canceled', 'You cancelled the purchase.');
+          } else {
+            Alert.alert('Purchase Error', error.message || 'An unknown error occurred during purchase.');
+          }
+        });
+
+      } catch (error) {
+        console.error('IAPService: IAP initialization failed:', error);
+        setConnected(false);
+        setProducts([]);
+        // Don't show alert for cancelled requests - this is expected behavior
+        if (!error.message?.includes('cancelled')) {
+          Alert.alert('Error', 'Failed to connect to App Store. Please try again later.');
+        }
+      } finally {
+        isInitializing.current = false;
+      }
+    };
+
+    initIAP();
+
+    return () => {
+      console.log('IAPService: Disconnecting StoreKit...');
+      isInitializing.current = false;
+      purchaseUpdateSubscription.current?.remove();
+      purchaseUpdateSubscription.current = null;
+      purchaseErrorSubscription.current?.remove();
+      purchaseErrorSubscription.current = null;
+      RNIap.endConnection();
+    };
   }, []);
 
-  const requestPurchase = React.useCallback(async (sku) => {
-    await RNIap.requestSubscription({ sku });
-  }, []);
-
-  const restorePurchases = React.useCallback(async () => {
-    const purchases = await RNIap.getAvailablePurchases();
-    const latest = purchases?.[0];
-    if (latest?.transactionReceipt) {
-      await api.post('/billing/apple/verify', { receiptData: latest.transactionReceipt });
+  const requestPurchase = async (sku) => {
+    if (!connected) {
+      Alert.alert('Error', 'App Store connection not ready.');
+      return;
     }
-  }, []);
+    try {
+      console.log('IAPService: Requesting purchase for SKU:', sku);
+      await RNIap.requestPurchase({ sku });
+    } catch (error) {
+      console.error('IAPService: Request purchase failed:', error);
+      throw error;
+    }
+  };
 
-  const value = React.useMemo(() => ({ initialized, products, requestPurchase, restorePurchases }), [initialized, products, requestPurchase, restorePurchases]);
-  return <IAPCtx.Provider value={value}>{children}</IAPCtx.Provider>;
+  const restorePurchases = async () => {
+    if (!connected) {
+      Alert.alert('Error', 'App Store connection not ready.');
+      return;
+    }
+    try {
+      console.log('IAPService: Restoring purchases...');
+      const restored = await RNIap.getAvailablePurchases();
+      if (restored.length === 0) {
+        Alert.alert('No Purchases', 'No previous purchases found to restore.');
+        return;
+      }
+      // Process each restored purchase
+      for (const purchase of restored) {
+        const receipt = purchase.transactionReceipt;
+        if (receipt) {
+          try {
+            console.log('IAPService: Restored purchase, verifying receipt...');
+            await api.post('/billing/apple/verify', {
+              receiptData: receipt,
+              originalTransactionId: purchase.originalTransactionIdentifierIOS,
+            });
+            await RNIap.finishTransaction({ purchase, isConsumable: false });
+            console.log('IAPService: Restored receipt verified and transaction finished.');
+            Alert.alert('Success', 'Your subscription has been restored!');
+            billing?.refresh?.();
+            return; // Only need to restore one active subscription
+          } catch (error) {
+            console.error('IAPService: Restored receipt verification failed:', error);
+            Alert.alert('Error', 'Failed to verify restored purchase. Please contact support.');
+            await RNIap.finishTransaction({ purchase, isConsumable: false });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('IAPService: Restore purchases failed:', error);
+      Alert.alert('Error', 'Failed to restore purchases. Please try again.');
+      throw error;
+    }
+  };
+
+  const value = {
+    products,
+    requestPurchase,
+    restorePurchases,
+    connected,
+  };
+
+  return <IAPContext.Provider value={value}>{children}</IAPContext.Provider>;
 }
 
-export function useIAP() { return React.useContext(IAPCtx); }
-
-
+export function useIAP() {
+  return useContext(IAPContext);
+}
