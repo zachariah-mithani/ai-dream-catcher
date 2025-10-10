@@ -495,6 +495,7 @@ export async function initSchema() {
       user_id INTEGER NOT NULL,
       stripe_customer_id TEXT,
       stripe_subscription_id TEXT,
+      apple_expires_at TIMESTAMP,
       status TEXT NOT NULL,
       current_period_end TIMESTAMP,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -508,6 +509,7 @@ export async function initSchema() {
       user_id INTEGER NOT NULL,
       stripe_customer_id TEXT,
       stripe_subscription_id TEXT,
+      apple_expires_at TEXT,
       status TEXT NOT NULL,
       current_period_end TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -528,6 +530,19 @@ export async function initSchema() {
   await dbWrapper.exec(createPasswordResetsTable);
   await dbWrapper.exec(createUsageCountersTable);
   await dbWrapper.exec(createUserSubscriptionsTable);
+
+  // Add missing apple_expires_at column to existing user_subscriptions tables
+  try {
+    if (dbWrapper.isPostgres) {
+      await dbWrapper.exec(`ALTER TABLE user_subscriptions ADD COLUMN IF NOT EXISTS apple_expires_at TIMESTAMP;`);
+    } else {
+      await dbWrapper.exec(`ALTER TABLE user_subscriptions ADD COLUMN apple_expires_at TEXT;`);
+    }
+    console.log('Added apple_expires_at column to user_subscriptions table');
+  } catch (error) {
+    // Column might already exist, ignore error
+    console.log('apple_expires_at column may already exist:', error.message);
+  }
 }
 
 // Create database instance but export immediately with rename to eliminate shadows
