@@ -98,15 +98,25 @@ export function IAPProvider({ children }) {
               
               Alert.alert('Success (Dev Mode)', 'Purchase completed in development mode. Premium features unlocked!');
             } catch (devError) {
-              console.log('IAPService: Development premium grant failed, simulating success');
+              console.log('IAPService: Development premium grant failed, using local fallback');
               console.error('IAPService: Dev grant error:', devError);
               await RNIap.finishTransaction({ purchase, isConsumable: false });
               
-              // Still try to refresh billing even if dev grant failed
-              setTimeout(async () => {
-                console.log('IAPService: Forcing billing refresh after dev grant failure...');
-                await billing?.refresh?.(true); // Force refresh
-              }, 1000);
+              // Local fallback: directly update billing context for development
+              console.log('IAPService: Using local premium simulation for development');
+              
+              // Try to call the billing context directly to simulate premium
+              if (billing && typeof billing.setPremium === 'function') {
+                billing.setPremium(true);
+              } else {
+                // Force refresh billing status multiple times to catch any updates
+                for (let i = 0; i < 3; i++) {
+                  setTimeout(async () => {
+                    console.log(`IAPService: Forcing billing refresh attempt ${i + 1}...`);
+                    await billing?.refresh?.(true);
+                  }, (i + 1) * 1000);
+                }
+              }
               
               Alert.alert('Success (Dev Mode)', 'Purchase completed in development mode. Premium features unlocked!');
             }
