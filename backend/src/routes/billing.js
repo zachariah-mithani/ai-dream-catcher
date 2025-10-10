@@ -222,6 +222,37 @@ billingRouter.get('/status', async (req, res) => {
   }
 });
 
+// Development-only endpoint to manually grant premium (for simulator testing)
+billingRouter.post('/dev-grant-premium', async (req, res) => {
+  try {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ error: 'Not available in production' });
+    }
+    
+    const parse = z.object({ 
+      productId: z.string(),
+      transactionId: z.string().optional()
+    }).safeParse(req.body);
+    
+    if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
+    
+    // Grant premium access for 1 year from now
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+    
+    await db
+      .prepare('INSERT INTO user_subscriptions (user_id, apple_expires_at, status) VALUES (?, ?, ?) ON CONFLICT (user_id) DO UPDATE SET apple_expires_at = ?, status = ?')
+      .run(req.user.id, expiresAt, 'active', expiresAt, 'active');
+
+    await db.prepare('UPDATE users SET plan = ? WHERE id = ?').run('premium', req.user.id);
+
+    res.json({ ok: true, plan: 'premium', expires_at: expiresAt, dev_mode: true });
+  } catch (e) {
+    console.error('Dev premium grant failed:', e);
+    res.status(400).json({ error: e.message || 'Grant failed' });
+  }
+});
+
 // Verify Apple IAP receipt and grant premium
 const appleVerifySchema = z.object({ receiptData: z.string().min(10) });
 billingRouter.post('/apple/verify', async (req, res) => {

@@ -22,7 +22,7 @@ export function BillingProvider({ children }) {
   const lastRefreshAtRef = useRef(0);
   const triedReconcileRef = useRef(false);
 
-  const refresh = async () => {
+  const refresh = async (force = false) => {
     try {
       // Skip if we don't have a token
       const token = await AsyncStorage.getItem('token');
@@ -31,12 +31,15 @@ export function BillingProvider({ children }) {
         return;
       }
 
-      // Throttle to once every 4s
-      const now = Date.now();
-      if (now - lastRefreshAtRef.current < 4000) {
-        return;
+      // Throttle to once every 4s (unless forced)
+      if (!force) {
+        const now = Date.now();
+        if (now - lastRefreshAtRef.current < 4000) {
+          console.log('BillingContext: Throttled refresh, skipping');
+          return;
+        }
       }
-      lastRefreshAtRef.current = now;
+      lastRefreshAtRef.current = Date.now();
 
       if (loading) return; // prevent concurrent calls
       setLoading(true);
