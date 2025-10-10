@@ -93,10 +93,14 @@ export function IAPProvider({ children }) {
               // Force billing refresh with delay to ensure backend is updated
               setTimeout(async () => {
                 console.log('IAPService: Forcing billing refresh...');
-                if (billing && typeof billing.refresh === 'function') {
-                  await billing.refresh(true); // Force refresh
-                } else {
-                  console.log('IAPService: Billing context not available, skipping refresh');
+                try {
+                  if (billing && typeof billing.refresh === 'function') {
+                    await billing.refresh(true); // Force refresh
+                  } else {
+                    console.log('IAPService: Billing context not available, skipping refresh');
+                  }
+                } catch (refreshError) {
+                  console.log('IAPService: Billing refresh failed:', refreshError);
                 }
               }, 1000);
               
@@ -117,10 +121,14 @@ export function IAPProvider({ children }) {
                 for (let i = 0; i < 3; i++) {
                   setTimeout(async () => {
                     console.log(`IAPService: Forcing billing refresh attempt ${i + 1}...`);
-                    if (billing && typeof billing.refresh === 'function') {
-                      await billing.refresh(true);
-                    } else {
-                      console.log(`IAPService: Billing context not available for attempt ${i + 1}`);
+                    try {
+                      if (billing && typeof billing.refresh === 'function') {
+                        await billing.refresh(true);
+                      } else {
+                        console.log(`IAPService: Billing context not available for attempt ${i + 1}`);
+                      }
+                    } catch (refreshError) {
+                      console.log(`IAPService: Billing refresh attempt ${i + 1} failed:`, refreshError);
                     }
                   }, (i + 1) * 1000);
                 }
@@ -205,7 +213,7 @@ export function IAPProvider({ children }) {
       purchaseErrorSubscription.current = null;
       RNIap.endConnection();
     };
-  }, [billing]); // Re-initialize when billing context changes
+  }, []); // Only run once on mount
 
   const requestPurchase = async (sku) => {
     if (!connected) {
