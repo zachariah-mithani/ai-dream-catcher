@@ -53,24 +53,47 @@ export function IAPProvider({ children }) {
 
         // Set up listeners
         purchaseUpdateSubscription.current = RNIap.purchaseUpdatedListener(async (purchase) => {
-          const receipt = purchase.transactionReceipt;
-          if (receipt) {
+          console.log('IAPService: Purchase updated, purchase object:', purchase);
+          
+          // Get the receipt data properly
+          let receiptData = null;
+          try {
+            receiptData = await RNIap.getReceiptIOS();
+            console.log('IAPService: Got receipt data:', receiptData ? 'Present' : 'Missing');
+          } catch (error) {
+            console.error('IAPService: Failed to get receipt:', error);
+          }
+          
+          if (receiptData) {
             try {
-              console.log('IAPService: Purchase updated, verifying receipt...');
-              await api.post('/billing/apple/verify', {
-                receiptData: receipt,
+              console.log('IAPService: Verifying receipt with backend...');
+              const response = await api.post('/billing/apple/verify', {
+                receiptData: receiptData,
                 originalTransactionId: purchase.originalTransactionIdentifierIOS,
               });
+              console.log('IAPService: Receipt verification successful:', response.data);
               await RNIap.finishTransaction({ purchase, isConsumable: false });
-              console.log('IAPService: Receipt verified and transaction finished.');
+              console.log('IAPService: Transaction finished successfully.');
               Alert.alert('Success', 'Your subscription is now active!');
               billing?.refresh?.(); // Refresh billing status
             } catch (error) {
               console.error('IAPService: Receipt verification failed:', error);
-              Alert.alert('Error', 'Failed to verify purchase. Please contact support.');
-              // Optionally finish transaction even on error to prevent pending state
+              console.error('IAPService: Error details:', error.response?.data || error.message);
+              
+              // Still finish the transaction to prevent it from staying pending
               await RNIap.finishTransaction({ purchase, isConsumable: false });
+              
+              // Show more specific error message
+              const errorMessage = error.response?.data?.error || error.message || 'Unknown error';
+              Alert.alert(
+                'Verification Error', 
+                `Purchase completed but verification failed: ${errorMessage}. Please contact support if this persists.`
+              );
             }
+          } else {
+            console.error('IAPService: No receipt data available');
+            await RNIap.finishTransaction({ purchase, isConsumable: false });
+            Alert.alert('Error', 'No receipt data available. Please try again.');
           }
         });
 

@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Dimensions, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Dimensions, Image, Platform } from 'react-native';
 import { Screen, Card, Button, Text as Txt } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
+import { useIAP } from '../contexts/IAPService';
 import { api, createCheckoutSession, upgradePlan } from '../api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DreamCatcherLogo from '../components/DreamCatcherLogo';
@@ -53,6 +54,7 @@ const SLIDES = [
 
 export default function OnboardingScreen({ onComplete }) {
   const { colors, spacing, theme } = useTheme();
+  const iap = useIAP();
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollViewRef = useRef(null);
   const [selectedPlan, setSelectedPlan] = useState('free');
@@ -78,15 +80,27 @@ export default function OnboardingScreen({ onComplete }) {
   const handleComplete = async () => {
     try {
       if (selectedPlan === 'premium') {
-        try {
-          // Prefer sending the user to Stripe Checkout from onboarding
-          const { sessionUrl } = await createCheckoutSession('monthly', 7);
-          // If running on device, open external URL
-          const { Linking } = require('react-native');
-          await Linking.openURL(sessionUrl);
-        } catch {
-          // Fallback: mark plan upgrade via API if checkout creation fails
-          await upgradePlan('premium', 7);
+        if (Platform.OS === 'ios') {
+          try {
+            // Use StoreKit for iOS
+            const productId = billingPeriod === 'monthly' 
+              ? 'com.aidreamcatcher.premium.monthly' 
+              : 'com.aidreamcatcher.premium.yearly';
+            await iap.requestPurchase(productId);
+          } catch (error) {
+            console.error('IAP purchase failed:', error);
+            // Continue with onboarding even if purchase fails
+          }
+        } else {
+          try {
+            // Use Stripe for other platforms
+            const { sessionUrl } = await createCheckoutSession(billingPeriod, 7);
+            const { Linking } = require('react-native');
+            await Linking.openURL(sessionUrl);
+          } catch {
+            // Fallback: mark plan upgrade via API if checkout creation fails
+            await upgradePlan('premium', 7);
+          }
         }
       } else {
         try {
@@ -212,9 +226,9 @@ export default function OnboardingScreen({ onComplete }) {
             {/* Price and CTAs */}
             <View style={{ alignItems: 'center', marginBottom: spacing(1) }}>
               {billingPeriod === 'yearly' ? (
-                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>$49.99/yr <Text style={{ color: '#22c55e', fontSize: 14 }}>(7‑day trial)</Text></Text>
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>$39.99/yr <Text style={{ color: '#22c55e', fontSize: 14 }}>(7‑day trial)</Text></Text>
               ) : (
-                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>$6.99/mo <Text style={{ color: '#22c55e', fontSize: 14 }}>(7‑day trial)</Text></Text>
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>$4.99/mo <Text style={{ color: '#22c55e', fontSize: 14 }}>(7‑day trial)</Text></Text>
               )}
             </View>
 

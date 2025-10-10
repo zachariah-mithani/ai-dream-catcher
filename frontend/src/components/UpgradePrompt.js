@@ -1,8 +1,9 @@
 import React from 'react';
-import { Alert, Linking, Platform } from 'react-native';
+import { Alert, Linking, Platform, View } from 'react-native';
 import { Text, Button, Card } from '../ui/components';
 import { useTheme } from '../contexts/ThemeContext';
 import { useBilling } from '../contexts/BillingContext';
+import { useIAP } from '../contexts/IAPService';
 import { createCheckoutSession } from '../api';
 
 export default function UpgradePrompt({ 
@@ -15,6 +16,7 @@ export default function UpgradePrompt({
 }) {
   const { colors, spacing } = useTheme();
   const billing = useBilling();
+  const iap = useIAP();
 
   if (!visible) return null;
 
@@ -47,11 +49,14 @@ export default function UpgradePrompt({
 
   const handleUpgrade = async (priceId) => {
     if (Platform.OS === 'ios') {
-      Alert.alert(
-        'Upgrade to Dream Explorer+',
-        'To upgrade your subscription:\n\n1. Go to the App Store\n2. Search for "AI Dream Catcher"\n3. Tap "Get" or "Subscribe"\n\nOr manage your subscription in Settings > App Store > Subscriptions.',
-        [{ text: 'OK', onPress: onClose }]
-      );
+      try {
+        const productId = priceId === 'monthly' ? 'com.aidreamcatcher.premium.monthly' : 'com.aidreamcatcher.premium.yearly';
+        await iap.requestPurchase(productId);
+        onClose?.();
+      } catch (error) {
+        console.error('IAP upgrade failed:', error);
+        Alert.alert('Error', 'Failed to start upgrade. Please try again.');
+      }
       return;
     }
 
@@ -134,6 +139,7 @@ export default function UpgradePrompt({
 export function InlineUpgradePrompt({ limitType, currentUsage, limit, period = 'month' }) {
   const { colors, spacing } = useTheme();
   const billing = useBilling();
+  const iap = useIAP();
 
   const getMessage = () => {
     const periodText = period === 'day' ? 'today' : 'this month';
@@ -170,11 +176,12 @@ export function InlineUpgradePrompt({ limitType, currentUsage, limit, period = '
 
   const handleUpgrade = async () => {
     if (Platform.OS === 'ios') {
-      Alert.alert(
-        'Upgrade to Dream Explorer+',
-        'To upgrade your subscription:\n\n1. Go to the App Store\n2. Search for "AI Dream Catcher"\n3. Tap "Get" or "Subscribe"\n\nOr manage your subscription in Settings > App Store > Subscriptions.',
-        [{ text: 'OK' }]
-      );
+      try {
+        await iap.requestPurchase('com.aidreamcatcher.premium.monthly');
+      } catch (error) {
+        console.error('IAP upgrade failed:', error);
+        Alert.alert('Error', 'Failed to start upgrade. Please try again.');
+      }
       return;
     }
 
@@ -201,12 +208,34 @@ export function InlineUpgradePrompt({ limitType, currentUsage, limit, period = '
         {getMessage()}
       </Text>
       
-      <Button
-        title={getUpgradeText()}
-        onPress={handleUpgrade}
-        kind="secondary"
-        style={{ paddingVertical: spacing(1) }}
-      />
+      <View style={{ flexDirection: 'row', gap: spacing(1) }}>
+        <Button
+          title="Monthly $4.99"
+          onPress={() => {
+            if (Platform.OS === 'ios') {
+              iap.requestPurchase('com.aidreamcatcher.premium.monthly').catch(console.error);
+            } else {
+              handleUpgrade();
+            }
+          }}
+          kind="secondary"
+          style={{ flex: 1, paddingVertical: spacing(1) }}
+        />
+        <Button
+          title="Yearly $39.99"
+          onPress={() => {
+            if (Platform.OS === 'ios') {
+              iap.requestPurchase('com.aidreamcatcher.premium.yearly').catch(console.error);
+            } else {
+              createCheckoutSession('yearly', 7).then(({ sessionUrl }) => 
+                Linking.openURL(sessionUrl)
+              ).catch(console.error);
+            }
+          }}
+          kind="secondary"
+          style={{ flex: 1, paddingVertical: spacing(1) }}
+        />
+      </View>
     </Card>
   );
 }
