@@ -78,7 +78,40 @@ export function IAPProvider({ children }) {
             }
           }
           
-          if (receiptData) {
+          // In development mode, bypass Apple receipt verification entirely
+          if (__DEV__) {
+            console.log('IAPService: Development mode - bypassing Apple receipt verification');
+            try {
+              console.log('IAPService: Attempting development premium grant');
+              await api.post('/billing/dev-grant-premium', {
+                productId: purchase.productId,
+                transactionId: purchase.transactionId
+              });
+              console.log('IAPService: Development premium grant successful');
+              await RNIap.finishTransaction({ purchase, isConsumable: false });
+              
+              // Force billing refresh with delay to ensure backend is updated
+              setTimeout(async () => {
+                console.log('IAPService: Forcing billing refresh...');
+                await billing?.refresh?.(true); // Force refresh
+              }, 1000);
+              
+              Alert.alert('Success (Dev Mode)', 'Purchase completed in development mode. Premium features unlocked!');
+            } catch (devError) {
+              console.log('IAPService: Development premium grant failed, simulating success');
+              console.error('IAPService: Dev grant error:', devError);
+              await RNIap.finishTransaction({ purchase, isConsumable: false });
+              
+              // Still try to refresh billing even if dev grant failed
+              setTimeout(async () => {
+                console.log('IAPService: Forcing billing refresh after dev grant failure...');
+                await billing?.refresh?.(true); // Force refresh
+              }, 1000);
+              
+              Alert.alert('Success (Dev Mode)', 'Purchase completed in development mode. Premium features unlocked!');
+            }
+          } else if (receiptData) {
+            // Production mode - attempt real Apple verification
             try {
               console.log('IAPService: Verifying receipt with backend...');
               const response = await api.post('/billing/apple/verify', {
@@ -113,42 +146,9 @@ export function IAPProvider({ children }) {
               productId: purchase.productId
             });
             
-            // Try alternative approach for simulator testing
-            if (__DEV__) {
-              console.log('IAPService: Development mode - attempting manual premium grant');
-              try {
-                // Try to manually grant premium access for development
-                await api.post('/billing/dev-grant-premium', {
-                  productId: purchase.productId,
-                  transactionId: purchase.transactionId
-                });
-                console.log('IAPService: Manual premium grant successful');
-                await RNIap.finishTransaction({ purchase, isConsumable: false });
-                
-                // Force billing refresh with delay to ensure backend is updated
-                setTimeout(async () => {
-                  console.log('IAPService: Forcing billing refresh...');
-                  await billing?.refresh?.(true); // Force refresh
-                }, 1000);
-                
-                Alert.alert('Success (Dev Mode)', 'Purchase completed in development mode. Premium features unlocked!');
-              } catch (devError) {
-                console.log('IAPService: Manual premium grant failed, simulating success');
-                console.error('IAPService: Dev grant error:', devError);
-                await RNIap.finishTransaction({ purchase, isConsumable: false });
-                
-                // Still try to refresh billing even if dev grant failed
-                setTimeout(async () => {
-                  console.log('IAPService: Forcing billing refresh after dev grant failure...');
-                  await billing?.refresh?.(true); // Force refresh
-                }, 1000);
-                
-                Alert.alert('Success (Dev Mode)', 'Purchase completed in development mode. Premium features unlocked!');
-              }
-            } else {
-              await RNIap.finishTransaction({ purchase, isConsumable: false });
-              Alert.alert('Error', 'No receipt data available. Please try again.');
-            }
+            // This should not happen in development mode since we bypass receipt verification above
+            await RNIap.finishTransaction({ purchase, isConsumable: false });
+            Alert.alert('Error', 'No receipt data available. Please try again.');
           }
         });
 
