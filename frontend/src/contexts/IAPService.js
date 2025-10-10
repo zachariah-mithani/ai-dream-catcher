@@ -83,11 +83,15 @@ export function IAPProvider({ children }) {
             console.log('IAPService: Development mode - bypassing Apple receipt verification');
             try {
               console.log('IAPService: Attempting development premium grant');
-              await api.post('/billing/dev-grant-premium', {
+              console.log('IAPService: Request payload:', {
                 productId: purchase.productId,
                 transactionId: purchase.transactionId
               });
-              console.log('IAPService: Development premium grant successful');
+              const response = await api.post('/billing/dev-grant-premium', {
+                productId: purchase.productId,
+                transactionId: purchase.transactionId
+              });
+              console.log('IAPService: Development premium grant successful:', response.data);
               await RNIap.finishTransaction({ purchase, isConsumable: false });
               
               // Force billing refresh with delay to ensure backend is updated
@@ -108,6 +112,8 @@ export function IAPProvider({ children }) {
             } catch (devError) {
               console.log('IAPService: Development premium grant failed, using local fallback');
               console.error('IAPService: Dev grant error:', devError);
+              console.error('IAPService: Dev grant error response:', devError.response?.data);
+              console.error('IAPService: Dev grant error status:', devError.response?.status);
               await RNIap.finishTransaction({ purchase, isConsumable: false });
               
               // Local fallback: directly update billing context for development
