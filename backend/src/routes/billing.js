@@ -225,17 +225,20 @@ billingRouter.get('/status', async (req, res) => {
 // Development-only endpoint to manually grant premium (for simulator testing)
 billingRouter.post('/dev-grant-premium', async (req, res) => {
   try {
+    console.log('Dev premium grant request:', {
+      userId: req.user?.id,
+      body: req.body,
+      nodeEnv: process.env.NODE_ENV
+    });
+    
     // Allow in production for testing purposes (can be removed later)
     // if (process.env.NODE_ENV === 'production') {
     //   return res.status(403).json({ error: 'Not available in production' });
     // }
     
-    const parse = z.object({ 
-      productId: z.string(),
-      transactionId: z.string().optional()
-    }).safeParse(req.body);
-    
-    if (!parse.success) return res.status(400).json({ error: 'Invalid payload' });
+    // Make the payload validation more lenient for development
+    const productId = req.body?.productId || 'com.aidreamcatcher.premium.yearly';
+    const transactionId = req.body?.transactionId || 'dev-test';
     
     // Grant premium access for 1 year from now
     const expiresAt = new Date();
@@ -246,6 +249,13 @@ billingRouter.post('/dev-grant-premium', async (req, res) => {
       .run(req.user.id, expiresAt, 'active', expiresAt, 'active');
 
     await db.prepare('UPDATE users SET plan = ? WHERE id = ?').run('premium', req.user.id);
+
+    console.log('Dev premium grant successful:', {
+      userId: req.user.id,
+      productId,
+      transactionId,
+      expiresAt
+    });
 
     res.json({ ok: true, plan: 'premium', expires_at: expiresAt, dev_mode: true });
   } catch (e) {
