@@ -93,7 +93,11 @@ export function IAPProvider({ children }) {
               // Force billing refresh with delay to ensure backend is updated
               setTimeout(async () => {
                 console.log('IAPService: Forcing billing refresh...');
-                await billing?.refresh?.(true); // Force refresh
+                if (billing && typeof billing.refresh === 'function') {
+                  await billing.refresh(true); // Force refresh
+                } else {
+                  console.log('IAPService: Billing context not available, skipping refresh');
+                }
               }, 1000);
               
               Alert.alert('Success (Dev Mode)', 'Purchase completed in development mode. Premium features unlocked!');
@@ -113,7 +117,11 @@ export function IAPProvider({ children }) {
                 for (let i = 0; i < 3; i++) {
                   setTimeout(async () => {
                     console.log(`IAPService: Forcing billing refresh attempt ${i + 1}...`);
-                    await billing?.refresh?.(true);
+                    if (billing && typeof billing.refresh === 'function') {
+                      await billing.refresh(true);
+                    } else {
+                      console.log(`IAPService: Billing context not available for attempt ${i + 1}`);
+                    }
                   }, (i + 1) * 1000);
                 }
               }
@@ -132,7 +140,9 @@ export function IAPProvider({ children }) {
               await RNIap.finishTransaction({ purchase, isConsumable: false });
               console.log('IAPService: Transaction finished successfully.');
               Alert.alert('Success', 'Your subscription is now active!');
-              billing?.refresh?.(); // Refresh billing status
+              if (billing && typeof billing.refresh === 'function') {
+                billing.refresh(); // Refresh billing status
+              }
             } catch (error) {
               console.error('IAPService: Receipt verification failed:', error);
               console.error('IAPService: Error details:', error.response?.data || error.message);
@@ -195,7 +205,7 @@ export function IAPProvider({ children }) {
       purchaseErrorSubscription.current = null;
       RNIap.endConnection();
     };
-  }, []);
+  }, [billing]); // Re-initialize when billing context changes
 
   const requestPurchase = async (sku) => {
     if (!connected) {
@@ -236,7 +246,9 @@ export function IAPProvider({ children }) {
             await RNIap.finishTransaction({ purchase, isConsumable: false });
             console.log('IAPService: Restored receipt verified and transaction finished.');
             Alert.alert('Success', 'Your subscription has been restored!');
-            billing?.refresh?.();
+            if (billing && typeof billing.refresh === 'function') {
+              billing.refresh();
+            }
             return; // Only need to restore one active subscription
           } catch (error) {
             console.error('IAPService: Restored receipt verification failed:', error);
