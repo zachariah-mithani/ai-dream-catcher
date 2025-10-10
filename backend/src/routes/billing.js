@@ -192,6 +192,19 @@ function dayPeriod(date = new Date()) {
 billingRouter.get('/status', async (req, res) => {
   try {
     const user = await db.prepare('SELECT plan, trial_end, created_at FROM users WHERE id = ?').get(req.user.id);
+    
+    // Check for active Apple subscription
+    const appleSubscription = await db.prepare('SELECT apple_expires_at, status FROM user_subscriptions WHERE user_id = ?').get(req.user.id);
+    
+    // Determine effective plan - prioritize active Apple subscription over user plan
+    let effectivePlan = user?.plan || 'free';
+    if (appleSubscription && appleSubscription.status === 'active' && appleSubscription.apple_expires_at) {
+      const expiresAt = new Date(appleSubscription.apple_expires_at);
+      if (expiresAt > new Date()) {
+        effectivePlan = 'premium';
+      }
+    }
+    
     const monthPeriodStr = monthPeriod();
     const dayPeriodStr = dayPeriod();
     
@@ -212,7 +225,7 @@ billingRouter.get('/status', async (req, res) => {
     };
     
     res.json({ 
-      plan: user?.plan || 'free', 
+      plan: effectivePlan, 
       trial_end: user?.trial_end || null, 
       period: monthPeriodStr,
       usage 
