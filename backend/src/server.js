@@ -4,6 +4,11 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 import { db, initSchema, pool } from './database.js';
 import { authRouter } from './routes/auth.js';
@@ -73,6 +78,9 @@ initSchema(); // Force redeploy
 app.get('/health', healthCheck);
 app.get('/metrics', metrics);
 app.get('/system', systemInfo);
+
+// Serve static files from public directory
+app.use('/public', express.static(path.join(__dirname, '../public')));
 
 // Minimal root and favicon to avoid noisy 404s
 app.get('/', (req, res) => res.status(200).send('AI Dream Catcher API'));
